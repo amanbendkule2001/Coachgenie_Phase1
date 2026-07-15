@@ -37,6 +37,7 @@ app.add_middleware(
         "https://coachgenie-frontend.onrender.com",
         "https://thecoachgenie.in",
         "https://www.thecoachgenie.in",
+        "https://app.thecoachgenie.in"
     ],
     allow_credentials=True,
     allow_methods=["*"],
