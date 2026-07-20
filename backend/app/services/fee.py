@@ -5,27 +5,64 @@ from app.utils.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.utils.pagination import paginate
 from sqlalchemy.orm import selectinload
 from datetime import date
-
+from sqlalchemy import select, func, extract
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.fee import FeeInvoice
 
 
 async def get_monthly_collection(db: AsyncSession, tenant_id: str) -> list:
-    from sqlalchemy import extract
-    result = await db.execute(
+    print("############################")
+    print("THIS IS THE NEW FUNCTION")
+    print("############################")
+    print("Tenant ID:", tenant_id)
+
+    query = (
         select(
-            extract("year",  FeePayment.paid_at).label("year"),
-            extract("month", FeePayment.paid_at).label("month"),
-            func.coalesce(func.sum(FeePayment.amount), 0).label("collected"),
+            extract("year", FeeInvoice.created_at).label("year"),
+            extract("month", FeeInvoice.created_at).label("month"),
+            func.coalesce(func.sum(FeeInvoice.amount_paid), 0).label("collected"),
         )
-        .where(FeePayment.tenant_id == tenant_id)
-        .group_by("year", "month")
-        .order_by("year", "month")
+        .where(FeeInvoice.tenant_id == tenant_id)
+        .group_by(
+            extract("year", FeeInvoice.created_at),
+            extract("month", FeeInvoice.created_at),
+        )
+        .order_by(
+            extract("year", FeeInvoice.created_at),
+            extract("month", FeeInvoice.created_at),
+        )
     )
+
+    print("Executing Query...")
+
+    result = await db.execute(query)
+
     rows = result.all()
-    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    return [
-        {"month": months[int(r.month) - 1], "fees": float(r.collected)}
-        for r in rows
+
+    print("Database Rows:")
+    for row in rows:
+        print(
+            f"Year={row.year}, Month={row.month}, Collected={row.collected}"
+        )
+
+    months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ]
+
+    response = [
+        {
+            "month": months[int(row.month) - 1],
+            "fees": float(row.collected),
+        }
+        for row in rows
+    ]
+
+    print("API Response:", response)
+    print("========================================\n")
+
+    return response
+
 
 async def get_fee_structures(db: AsyncSession, tenant_id: str) -> list:
     result = await db.execute(

@@ -219,6 +219,129 @@ async def reject_admission(
     return admission
 
 
+# # ── Core: generate student from admission ──────────────────────────────────────
+# # This is the SINGLE function both paths call.
+# # lead_id=None  → walk-in path (direct admission)
+# # lead_id set   → lead-conversion path
+# # Both produce identical Student records.
+# async def generate_student_from_admission(
+#     db: AsyncSession,
+#     admission: Admission,
+# ) -> Student:
+#     # Guard: already generated
+#     from sqlalchemy import and_
+#     existing = await db.scalar(
+#         select(Student).where(
+#             and_(
+#                 Student.tenant_id   == admission.tenant_id,
+#                 Student.admission_id == admission.id,
+#             )
+#         )
+#     )
+#     if existing:
+#         return existing
+
+#     # Fetch linked lead for contact data (lead-path only)
+#     lead: Lead | None = None
+#     if admission.lead_id:
+#         lead = await db.get(Lead, admission.lead_id)
+
+#     # Split full name into first / last
+#     full_name  = (admission.student_name or "").strip()
+#     parts      = full_name.split(" ", 1)
+#     first_name = parts[0] or "Unknown"
+#     last_name  = parts[1] if len(parts) > 1 else ""
+
+#     enrollment_no = await next_enrollment_no(db, str(admission.tenant_id))
+
+   
+#     student = Student(
+#         id            = uuid.uuid4(),
+#         tenant_id     = admission.tenant_id,
+#         admission_id  = admission.id,
+#         enrollment_no = enrollment_no,
+#         first_name    = first_name,
+#         last_name     = last_name,
+#         current_class = admission.grade or "",
+#         is_active     = True,
+#         joined_at     = datetime.now().date(),
+#         email         = (lead.email                  if lead else None) or admission.email,
+#         phone         = (lead.phone                  if lead else None) or admission.phone,
+#         parent_name   = (lead.parent_name            if lead else None) or admission.parent_name,
+#         parent_phone  = (lead.parent_contact_number  if lead else None) or admission.parent_phone,
+#         school_name   = (lead.school_name            if lead else None) or admission.school_name,
+#         target_exam   = lead.interested_course if lead else None,
+#         subjects      = [s for s in (admission.subjects or []) if s and s != "N/A"],
+#     )
+#     db.add(student)
+#     await db.flush()
+
+#     if admission.batch_id:
+#         from app.models.batch import Batch, BatchStudent
+#         batch = await db.get(Batch, admission.batch_id)
+#         if batch:
+#             existing = await db.scalar(
+#                 select(BatchStudent).where(
+#                     and_(
+#                         BatchStudent.batch_id   == batch.id,
+#                         BatchStudent.student_id == student.id,
+#                     )
+#                 )
+#             )
+#             if not existing:
+#                 db.add(BatchStudent(
+#                     batch_id    = batch.id,
+#                     student_id  = student.id,
+#                     enrolled_at = datetime.now().date(),
+#                 ))
+#                 await db.flush()
+
+
+#     fee_amount = float(getattr(admission, "fee_amount", 0) or 0)
+#     fee_paid   = float(getattr(admission, "fee_paid",   0) or 0)
+
+#     if fee_amount > 0:
+#         if fee_paid >= fee_amount:
+#             inv_status = "paid"
+#         elif fee_paid > 0:
+#             inv_status = "partial"
+#         else:
+#             inv_status = "pending"
+
+#         # Parse due date from installment schedule
+#         due_date = date_type.today()
+#         try:
+#             sched_raw = admission.payment_installment_schedule
+#             if sched_raw:
+#                 sched = json.loads(sched_raw) if isinstance(sched_raw, str) else sched_raw
+#                 slots = sched.get("installmentSchedule") or []
+#                 if slots and slots[0].get("dueDate"):
+#                     due_date = date_type.fromisoformat(slots[0]["dueDate"])
+#         except Exception:
+#             pass
+
+#         # Check if invoice already exists
+#         existing_inv = await db.scalar(
+#             select(FeeInvoice).where(
+#                 FeeInvoice.invoice_no == f"INV-{admission.admission_number}"
+#             )
+#         )
+#         if not existing_inv:
+#             invoice = FeeInvoice(
+#                 tenant_id   = str(admission.tenant_id),
+#                 student_id  = student.id,
+#                 invoice_no  = f"INV-{admission.admission_number}",
+#                 amount_due  = fee_amount,
+#                 amount_paid = fee_paid,
+#                 discount    = 0,
+#                 due_date    = due_date,
+#                 status      = inv_status,
+#             )
+#             db.add(invoice)
+#             await db.flush()
+            
+#     return student
+
 # ── Core: generate student from admission ──────────────────────────────────────
 # This is the SINGLE function both paths call.
 # lead_id=None  → walk-in path (direct admission)
@@ -228,9 +351,10 @@ async def generate_student_from_admission(
     db: AsyncSession,
     admission: Admission,
 ) -> Student:
-    # Guard: already generated
     from sqlalchemy import and_
-    existing = await db.scalar(
+
+    # Guard: student already generated for this admission
+    student = await db.scalar(
         select(Student).where(
             and_(
                 Student.tenant_id   == admission.tenant_id,
@@ -238,95 +362,95 @@ async def generate_student_from_admission(
             )
         )
     )
-    if existing:
-        return existing
 
-    # Fetch linked lead for contact data (lead-path only)
-    lead: Lead | None = None
-    if admission.lead_id:
-        lead = await db.get(Lead, admission.lead_id)
+    if not student:
+        # Fetch linked lead for contact data (lead-path only)
+        lead: Lead | None = None
+        if admission.lead_id:
+            lead = await db.get(Lead, admission.lead_id)
 
-    # Split full name into first / last
-    full_name  = (admission.student_name or "").strip()
-    parts      = full_name.split(" ", 1)
-    first_name = parts[0] or "Unknown"
-    last_name  = parts[1] if len(parts) > 1 else ""
+        # Split full name into first / last
+        full_name  = (admission.student_name or "").strip()
+        parts      = full_name.split(" ", 1)
+        first_name = parts[0] or "Unknown"
+        last_name  = parts[1] if len(parts) > 1 else ""
 
-    enrollment_no = await next_enrollment_no(db, str(admission.tenant_id))
+        enrollment_no = await next_enrollment_no(db, str(admission.tenant_id))
 
-   
-    student = Student(
-        id            = uuid.uuid4(),
-        tenant_id     = admission.tenant_id,
-        admission_id  = admission.id,
-        enrollment_no = enrollment_no,
-        first_name    = first_name,
-        last_name     = last_name,
-        current_class = admission.grade or "",
-        is_active     = True,
-        joined_at     = datetime.now().date(),
-        email         = (lead.email                  if lead else None) or admission.email,
-        phone         = (lead.phone                  if lead else None) or admission.phone,
-        parent_name   = (lead.parent_name            if lead else None) or admission.parent_name,
-        parent_phone  = (lead.parent_contact_number  if lead else None) or admission.parent_phone,
-        school_name   = (lead.school_name            if lead else None) or admission.school_name,
-        target_exam   = lead.interested_course if lead else None,
-        subjects      = [s for s in (admission.subjects or []) if s and s != "N/A"],
-    )
-    db.add(student)
-    await db.flush()
+        student = Student(
+            id            = uuid.uuid4(),
+            tenant_id     = admission.tenant_id,
+            admission_id  = admission.id,
+            enrollment_no = enrollment_no,
+            first_name    = first_name,
+            last_name     = last_name,
+            current_class = admission.grade or "",
+            is_active     = True,
+            joined_at     = datetime.now().date(),
+            email         = (lead.email                  if lead else None) or admission.email,
+            phone         = (lead.phone                  if lead else None) or admission.phone,
+            parent_name   = (lead.parent_name            if lead else None) or admission.parent_name,
+            parent_phone  = (lead.parent_contact_number  if lead else None) or admission.parent_phone,
+            school_name   = (lead.school_name            if lead else None) or admission.school_name,
+            target_exam   = lead.interested_course if lead else None,
+            subjects      = [s for s in (admission.subjects or []) if s and s != "N/A"],
+        )
+        db.add(student)
+        await db.flush()
 
-    if admission.batch_id:
-        from app.models.batch import Batch, BatchStudent
-        batch = await db.get(Batch, admission.batch_id)
-        if batch:
-            existing = await db.scalar(
-                select(BatchStudent).where(
-                    and_(
-                        BatchStudent.batch_id   == batch.id,
-                        BatchStudent.student_id == student.id,
+        if admission.batch_id:
+            from app.models.batch import Batch, BatchStudent
+            batch = await db.get(Batch, admission.batch_id)
+            if batch:
+                existing_bs = await db.scalar(
+                    select(BatchStudent).where(
+                        and_(
+                            BatchStudent.batch_id   == batch.id,
+                            BatchStudent.student_id == student.id,
+                        )
                     )
                 )
-            )
-            if not existing:
-                db.add(BatchStudent(
-                    batch_id    = batch.id,
-                    student_id  = student.id,
-                    enrolled_at = datetime.now().date(),
-                ))
-                await db.flush()
+                if not existing_bs:
+                    db.add(BatchStudent(
+                        batch_id    = batch.id,
+                        student_id  = student.id,
+                        enrolled_at = datetime.now().date(),
+                    ))
+                    await db.flush()
 
-
+    # ── Invoice creation is now independent of whether the student already
+    #    existed — it's keyed off the admission itself, so it still runs
+    #    when fee_amount is set/updated AFTER the student was first created
+    #    (e.g. admission confirmed later with fee details filled in). ──
     fee_amount = float(getattr(admission, "fee_amount", 0) or 0)
     fee_paid   = float(getattr(admission, "fee_paid",   0) or 0)
 
     if fee_amount > 0:
-        if fee_paid >= fee_amount:
-            inv_status = "paid"
-        elif fee_paid > 0:
-            inv_status = "partial"
-        else:
-            inv_status = "pending"
-
-        # Parse due date from installment schedule
-        due_date = date_type.today()
-        try:
-            sched_raw = admission.payment_installment_schedule
-            if sched_raw:
-                sched = json.loads(sched_raw) if isinstance(sched_raw, str) else sched_raw
-                slots = sched.get("installmentSchedule") or []
-                if slots and slots[0].get("dueDate"):
-                    due_date = date_type.fromisoformat(slots[0]["dueDate"])
-        except Exception:
-            pass
-
-        # Check if invoice already exists
         existing_inv = await db.scalar(
             select(FeeInvoice).where(
                 FeeInvoice.invoice_no == f"INV-{admission.admission_number}"
             )
         )
         if not existing_inv:
+            if fee_paid >= fee_amount:
+                inv_status = "paid"
+            elif fee_paid > 0:
+                inv_status = "partial"
+            else:
+                inv_status = "pending"
+
+            # Parse due date from installment schedule
+            due_date = date_type.today()
+            try:
+                sched_raw = admission.payment_installment_schedule
+                if sched_raw:
+                    sched = json.loads(sched_raw) if isinstance(sched_raw, str) else sched_raw
+                    slots = sched.get("installmentSchedule") or []
+                    if slots and slots[0].get("dueDate"):
+                        due_date = date_type.fromisoformat(slots[0]["dueDate"])
+            except Exception:
+                pass
+
             invoice = FeeInvoice(
                 tenant_id   = str(admission.tenant_id),
                 student_id  = student.id,
@@ -339,8 +463,9 @@ async def generate_student_from_admission(
             )
             db.add(invoice)
             await db.flush()
-            
+
     return student
+
 
 
 # ── Lead conversion: atomic, single entry point ────────────────────────────────

@@ -9,9 +9,6 @@ from app.models.student import Student
 router = APIRouter(prefix="/fees", tags=["Fees"])
 
 
-
-
-
 @router.get("/invoices/{invoice_id}")
 async def get_invoice(
     invoice_id: str,
@@ -28,14 +25,25 @@ async def get_invoice(
 
 
 
+
 @router.get("/monthly-trend")
 async def monthly_trend(
     db: DB,
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner")),
 ):
+    raise RuntimeError("CANARY-BUILD-2026-07-20")
     data = await fee_service.get_monthly_collection(db, str(tenant.id))
-    return {"success": True, "data": data}
+
+    print("===================================")
+    print("Returned Data:", data)
+    print("===================================")
+
+    return {
+        "success": True,
+        "data": data,
+    }
+
 
 @router.get("/structures")
 async def list_structures(
@@ -166,3 +174,6 @@ async def revenue_summary(
 ):
     summary = await fee_service.get_revenue_summary(db, str(tenant.id))
     return {"success": True, "data": summary}
+
+
+

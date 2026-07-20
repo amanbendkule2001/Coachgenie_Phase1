@@ -53,14 +53,27 @@ app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
 
+# @app.exception_handler(Exception)
+# async def global_exception_handler(request: Request, exc: Exception):
+#     logger.error(f"Unhandled exception: {exc}", exc_info=True)
+#     return JSONResponse(
+#         status_code=500,
+#         content={"success": False, "message": "Internal server error"},
+#     )
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    import traceback
+
+    traceback.print_exc()
+
     return JSONResponse(
         status_code=500,
-        content={"success": False, "message": "Internal server error"},
+        content={
+            "success": False,
+            "message": str(exc),
+            "type": type(exc).__name__,
+        },
     )
-
 
 @app.get("/health")
 async def health():

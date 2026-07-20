@@ -27,18 +27,6 @@ async def backfill():
                 skipped += 1
                 continue
 
-            # if not adm.student_id:
-            #     from app.models.student import Student
-            #     stu = await db.execute(
-            #         select(Student).where(
-            #             Student.tenant_id    == adm.tenant_id,
-            #             Student.admission_id == adm.id,
-            #         )
-            #     )
-            #     stu = stu.scalar_one_or_none()
-            #     student_id = str(stu.id) if stu else None
-            # else:
-            #     student_id = str(adm.student_id)
             from app.models.student import Student
             stu = await db.execute(
                 select(Student).where(

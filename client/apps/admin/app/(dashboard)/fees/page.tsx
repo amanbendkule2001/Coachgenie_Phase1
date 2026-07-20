@@ -55,28 +55,7 @@ interface Summary {
   overdue_count?: number;
 }
 
-// ── Map raw API → typed invoice ────────────────────────────────
-// function mapInvoice(r: RawInvoice): Invoice {
-//   const firstName = r.student?.first_name ?? "";
-//   const lastName  = r.student?.last_name  ?? "";
-//   // const name = r.student_name ?? `${firstName} ${lastName}`.trim() || "—";
-//   const name = r.student_name ?? (`${firstName} ${lastName}`.trim() || "—");
 
-//   return {
-//     id:          String(r.id),
-//     invoiceNo:   r.invoice_no,
-//     studentId:   String(r.student_id),
-//     studentName: name,
-//     grade:       r.student?.current_class ?? "",
-//     amountDue:   parseFloat(String(r.amount_due))  || 0,
-//     amountPaid:  parseFloat(String(r.amount_paid)) || 0,
-//     discount:    parseFloat(String(r.discount))    || 0,
-//     dueDate:     r.due_date,
-//     createdAt:   r.created_at,
-//     status:      r.status,
-    
-//   };
-// }
 function mapInvoice(r: RawInvoice): Invoice {
   const firstName = r.student?.first_name ?? "";
   const lastName  = r.student?.last_name  ?? "";
@@ -134,11 +113,7 @@ const MONTHS = [
 const currentYear  = new Date().getFullYear();
 const currentMonth = new Date().getMonth(); // 0-indexed
 
-// const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => {
-//   const monthIdx = (currentMonth - i + 12) % 12;
-//   const year     = currentMonth - i < 0 ? currentYear - 1 : currentYear;
-//   return { label: `${MONTHS[monthIdx]} ${year}`, value: `${year}-${String(monthIdx + 1).padStart(2, "0")}` };
-// });
+
 const MONTH_OPTIONS = Array.from({ length: 24 }, (_, i) => {
   const date = new Date(currentYear, currentMonth - 6 + i); // 6 months back, 18 months forward
   const y = date.getFullYear();
@@ -167,7 +142,9 @@ export default function FeesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // console.log("Calling invoices API...");
     try {
+      // console.log("Calling invoices API...");
       // Fetch all invoices — your backend returns them from /fees/student/{id},
       // but for the main fees page we need all. Try /fees/invoices first, fall back.
       const [invRes, sumRes] = await Promise.all([
@@ -196,23 +173,12 @@ export default function FeesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Derived stats (fallback to client-computed if API summary is empty) ──
-  // const totalCollected   = summary.total_collected   ?? invoices.reduce((s, i) => s + i.amountPaid, 0);
-  // const totalOutstanding = summary.total_outstanding ?? invoices.reduce((s, i) => s + Math.max(0, i.amountDue - i.amountPaid), 0);
-  // const overdueCount     = summary.overdue_count     ?? invoices.filter(i => i.status === "overdue").length;
-  // const totalInvoices    = summary.total_invoices    ?? invoices.length;
-  // ✅ AFTER — correct calculations
+
 const totalCollected   = summary.total_collected   ?? invoices.reduce((s, i) => s + i.amountPaid, 0);
 const totalOutstanding = summary.total_outstanding ?? invoices
   .filter(i => i.status !== "paid")
   .reduce((s, i) => s + Math.max(0, i.amountDue - i.amountPaid - i.discount), 0);
-// const overdueCount     = summary.overdue_count     ?? invoices.filter(i => {
-//   if (i.status === "paid") return false;
-//   try { 
-//     const d = parseISO(i.dueDate); 
-//     return isValid(d) && d < new Date(); 
-//   } catch { return false; }
-// }).length;
+
 const overdueCount = summary.overdue_count ?? invoices.filter(i => {
   if (i.status === "paid") return false;
   try { const d = parseISO(i.dueDate); return isValid(d) && d < new Date(); }

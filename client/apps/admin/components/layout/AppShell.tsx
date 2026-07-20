@@ -31,9 +31,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* AI Copilot — global */}
+      {/* AI Copilot — global
       <CopilotSidebar />
-      <CopilotTrigger />
+      <CopilotTrigger /> */}
     </div>
   );
 }

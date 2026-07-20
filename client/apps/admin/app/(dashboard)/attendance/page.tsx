@@ -16,124 +16,11 @@ import { authHeaders } from "@/lib/auth-headers";
 // type AttendanceStatus = "present" | "absent" | "late";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE";
 
-// type AttendancePayload = {
-//   studentId: string;
-//   batchId:   string;
-//   date:      string;
-//   status:    AttendanceStatus;
-// };
 
-// ─── Inner session component ──────────────────────────────────────────────────
-
-// function AttendanceSession({
-//         batchId,
-//         date,
-//       }: {
-//         batchId: string;
-//         date:    string;
-//       }) {
-//         const store    = useAcademicStore();
-//         const batch    = store.batches.find((b) => b.id === batchId);
-//         const students = store.students.filter((s) => batch?.studentIds.includes(s.id));
-
-//         const { entries, mark, markAll, save, saved, saving } = useAttendanceSession(
-//           students.map((s) => s.id),
-//         );
-// function AttendanceSession({ batchId, date }: { batchId: string; date: string }) {
-//   const store = useAcademicStore();
-//   const batch = store.batches.find((b) => b.id === batchId);
-
-//   // ✅ Fetch students directly from API instead of relying on store
-//   const [students, setStudents] = useState<any[]>([]);
-//   const [loadingStudents, setLoadingStudents] = useState(true);
-
-//   useEffect(() => {
-//     setLoadingStudents(true);
-//     fetch(
-//       `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/batches/${batchId}/students`,
-//       { headers: authHeaders() }   // reuse your existing authHeaders()
-//     )
-//       .then((r) => r.json())
-//       .then((json) => {
-//         const raw: any[] = Array.isArray(json) ? json : (json.data ?? []);
-//         setStudents(raw.map((s: any) => ({
-//           id:    String(s.id),
-//           name:  `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim(),
-//           grade: s.current_class ?? "",
-//         })));
-//       })
-//       .catch(() => {})
-//       .finally(() => setLoadingStudents(false));
-//   }, [batchId]);
-
-//   const { entries, mark, markAll, save, saved, saving } = useAttendanceSession(
-//     students.map((s) => s.id),
-//   );
-
-//   // ... rest of component unchanged
-
-//   if (loadingStudents) return <p className="text-sm text-muted-foreground">Loading students…</p>;
-//   if (students.length === 0) return <p className="text-sm text-muted-foreground">No students found for this batch.</p>;
-
-
-
-// async function handleSave() {
-//   await save(async (data) => {
-//     await api.post("/attendance/", {
-//       class_id:     batchId,
-//       session_date: date,
-//       records: data.map((e) => ({
-//         student_id: e.studentId,
-//         status:     e.status.toLowerCase(),
-//         remarks:    e.note ?? null,
-//       })),
-//     });
-
-//     store.markAttendance(
-//       data.map((e) => ({
-//         studentId: e.studentId,
-//         batchId,
-//         date,
-//         status: e.status as AttendanceStatus,
-//       }))
-//     );
-//   });
-
-//   toast.success("Attendance saved successfully!");
-// }
-
-  // if (students.length === 0) {
-  //   return (
-  //     <p className="text-sm text-muted-foreground">
-  //       No students found for this batch.
-  //     </p>
-  //   );
-  // }
 
   const API = "/api/proxy"
 
-// function AttendanceSession({ batchId, date }: { batchId: string; date: string }) {
-//   const store = useAcademicStore();
-//   const batch = store.batches.find((b) => b.id === batchId);
 
-//   const [students, setStudents] = useState<any[]>([]);
-//   const [loadingStudents, setLoadingStudents] = useState(true);
-
-//   useEffect(() => {
-//     setLoadingStudents(true);
-//     fetch(`${API}/batches/${batchId}/students`, { headers: authHeaders() })
-//       .then((r) => r.json())
-//       .then((json) => {
-//         const raw: any[] = Array.isArray(json) ? json : (json.data ?? []);
-//         setStudents(raw.map((s: any) => ({
-//           id:    String(s.id),
-//           name:  `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim(),
-//           grade: s.current_class ?? "",
-//         })));
-//       })
-//       .catch(() => {})
-//       .finally(() => setLoadingStudents(false));
-//   }, [batchId]);
 function AttendanceSession({ batchId, date }: { batchId: string; date: string }) {
   const store = useAcademicStore();
   const batch = store.batches.find((b) => b.id === batchId);
@@ -179,42 +66,7 @@ function AttendanceSession({ batchId, date }: { batchId: string; date: string })
     students.map((s) => s.id),
   );
 
-  // async function handleSave() {
 
-  //    if (!selectedClassId) {
-  //   toast.error("Please select a class first");
-  //   return;
-  // }
-
-  // if (students.length === 0) {
-  //   toast.error("No students to save attendance for");
-  //   return;
-  // }
-
-
-  //   await save(async (data) => {
-  //     await api.post("/attendance/", {
-  //       // class_id:     batchId,
-  //       class_id:     selectedClassId,
-  //       session_date: date,
-  //       records: data.map((e) => ({
-  //         student_id: e.studentId,
-  //         status:     e.status.toLowerCase(),
-  //         remarks:    e.note ?? null,
-  //       })),
-  //     });
-
-  //     store.markAttendance(
-  //       data.map((e) => ({
-  //         studentId: e.studentId,
-  //         batchId,
-  //         date,
-  //         status: e.status as AttendanceStatus,
-  //       }))
-  //     );
-  //   });
-  //   toast.success("Attendance saved successfully!");
-  // }
   async function handleSave() {
   if (!selectedClassId) {
     toast.error("Please select a class first");
