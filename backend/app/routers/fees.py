@@ -30,7 +30,6 @@ async def monthly_trend(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner")),
 ):
-    raise RuntimeError("CANARY-BUILD-2026-07-20")
     data = await fee_service.get_monthly_collection(db, str(tenant.id))
 
     print("===================================")
