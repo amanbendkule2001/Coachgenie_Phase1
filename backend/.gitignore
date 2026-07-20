@@ -10,7 +10,6 @@ dist/
 *.sqlite3
 .idea/
 .vscode/
-alembic/versions/
 phase1/
 phase2/
 phase3/

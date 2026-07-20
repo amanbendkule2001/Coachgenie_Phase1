@@ -24,8 +24,6 @@ async def get_invoice(
 
 
 
-
-
 @router.get("/monthly-trend")
 async def monthly_trend(
     db: DB,
