@@ -92,10 +92,8 @@ interface AcademicStore {
   students:   Student[];
   batches:    Batch[];
   attendance: AttendanceRecord[];
-  // exams:      Exam[];
-  feeRecords: FeeRecord[];
-
-  setStudents:      (students: Student[]) => void;
+  exams:      Exam[];
+  feeRecords: FeeRecord[];  setStudents:      (students: Student[]) => void;
   addStudent:       (student: Student) => void;
   updateStudent:    (id: string, patch: Partial<Student>) => void;
   deleteStudent:    (id: string) => void;
