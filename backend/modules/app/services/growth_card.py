@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from app.models.growth_card import GrowthCard
-from app.utils.exceptions import NotFoundError
-from app.utils.pagination import paginate
+from backend.app.models.growth_card import GrowthCard
+from backend.app.utils.exceptions import NotFoundError
+from backend.app.utils.pagination import paginate
 
 
 async def get_student_growth_cards(

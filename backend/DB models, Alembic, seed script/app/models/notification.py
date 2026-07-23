@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import String, Boolean, Text, ForeignKey, text, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, JSONB
-from app.database import Base
+from backend.app.database import Base
 
 
 class NotificationTemplate(Base):

@@ -24,7 +24,7 @@ async def get_dashboard(
     elif role == "student":
         # Get student record linked to this user
         from sqlalchemy import select, and_
-        from app.models.student import Student
+        from backend.app.models.student import Student
         result = await db.execute(
             select(Student).where(
                 and_(
@@ -42,7 +42,7 @@ async def get_dashboard(
     elif role == "parent":
         # Get student linked to parent email
         from sqlalchemy import select, and_
-        from app.models.student import Student
+        from backend.app.models.student import Student
         result = await db.execute(
             select(Student).where(
                 and_(

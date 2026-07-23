@@ -1,9 +1,9 @@
 import asyncio
 from datetime import date
 from sqlalchemy import select
-from app.database import AsyncSessionLocal  # adjust if your session factory has a different name
-from app.models.admission import Admission
-from app.models.fee import FeeInvoice
+from backend.app.database import AsyncSessionLocal  # adjust if your session factory has a different name
+from backend.app.models.admission import Admission
+from backend.app.models.fee import FeeInvoice
 import uuid, json
 
 async def backfill():
@@ -27,7 +27,7 @@ async def backfill():
                 skipped += 1
                 continue
 
-            from app.models.student import Student
+            from backend.app.models.student import Student
             stu = await db.execute(
                 select(Student).where(
                     Student.tenant_id    == adm.tenant_id,

@@ -13,7 +13,7 @@ async def attendance_heatmap(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor")),
 ):
-    from app.services.attendance import get_heatmap
+    from backend.app.services.attendance import get_heatmap
     data = await get_heatmap(db, str(tenant.id))
     return {"success": True, "data": data}
 

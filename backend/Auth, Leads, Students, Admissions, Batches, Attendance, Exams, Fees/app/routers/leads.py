@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.lead import LeadCreate, LeadUpdate, LeadOut, ActivityCreate, ActivityOut
-from app.services import lead as lead_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.lead import LeadCreate, LeadUpdate, LeadOut, ActivityCreate, ActivityOut
+from backend.app.services import lead as lead_service
 
 router = APIRouter(prefix="/leads", tags=["Leads"])
 

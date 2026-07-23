@@ -1,8 +1,8 @@
 import asyncio
 import uuid
 from sqlalchemy import select
-from app.database import AsyncSessionLocal
-from app.models.fee import FeeInvoice, FeePayment
+from backend.app.database import AsyncSessionLocal
+from backend.app.models.fee import FeeInvoice, FeePayment
 
 async def backfill():
     async with AsyncSessionLocal() as db:

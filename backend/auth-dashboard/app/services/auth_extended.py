@@ -3,13 +3,13 @@ import string
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from app.models.user import User
-from app.models.otp import OTPCode
-from app.utils.security import hash_password, verify_password
-from app.utils.exceptions import (
+from backend.app.models.user import User
+from backend.app.models.otp import OTPCode
+from backend.app.utils.security import hash_password, verify_password
+from backend.app.utils.exceptions import (
     NotFoundError, BadRequestError, UnauthorizedError
 )
-from app.config import settings
+from backend.app.config import settings
 
 
 def generate_otp(length: int = 6) -> str:

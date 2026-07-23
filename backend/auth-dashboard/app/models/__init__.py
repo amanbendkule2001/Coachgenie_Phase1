@@ -1,17 +1,17 @@
-from app.models.tenant import Tenant
-from app.models.user import User, RefreshToken
-from app.models.lead import Lead, LeadActivity
-from app.models.admission import Admission
-from app.models.student import Student
-from app.models.batch import Subject, Batch, BatchStudent, Class
-from app.models.attendance import AttendanceSession, AttendanceRecord
-from app.models.exam import Exam, ExamResult
-from app.models.fee import FeeStructure, FeeInvoice, FeePayment
-from app.models.syllabus import SyllabusTopic, SyllabusProgress
-from app.models.growth_card import GrowthCard
-from app.models.notification import NotificationTemplate, NotificationLog
-from app.models.ai import AISession, AIMessage, DashboardSnapshot
-from app.models.otp import OTPCode
+from backend.app.models.tenant import Tenant
+from backend.app.models.user import User, RefreshToken
+from backend.app.models.lead import Lead, LeadActivity
+from backend.app.models.admission import Admission
+from backend.app.models.student import Student
+from backend.app.models.batch import Subject, Batch, BatchStudent, Class
+from backend.app.models.attendance import AttendanceSession, AttendanceRecord
+from backend.app.models.exam import Exam, ExamResult
+from backend.app.models.fee import FeeStructure, FeeInvoice, FeePayment
+from backend.app.models.syllabus import SyllabusTopic, SyllabusProgress
+from backend.app.models.growth_card import GrowthCard
+from backend.app.models.notification import NotificationTemplate, NotificationLog
+from backend.app.models.ai import AISession, AIMessage, DashboardSnapshot
+from backend.app.models.otp import OTPCode
 
 __all__ = [
     "Tenant",

@@ -14,13 +14,13 @@ Creates:
 
 import asyncio
 from datetime import date
-from app.database import AsyncSessionLocal
-from app.models.tenant import Tenant
-from app.models.user import User
-from app.models.student import Student
-from app.models.batch import Subject, Batch, BatchStudent
-from app.models.fee import FeeStructure
-from app.models.notification import NotificationTemplate
+from backend.app.database import AsyncSessionLocal
+from backend.app.models.tenant import Tenant
+from backend.app.models.user import User
+from backend.app.models.student import Student
+from backend.app.models.batch import Subject, Batch, BatchStudent
+from backend.app.models.fee import FeeStructure
+from backend.app.models.notification import NotificationTemplate
 from sqlalchemy import select
 import hashlib
 import bcrypt

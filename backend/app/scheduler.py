@@ -10,8 +10,8 @@ scheduler = AsyncIOScheduler()
 
 
 async def create_default_templates():
-    from app.models.notification import NotificationTemplate
-    from app.models.tenant import Tenant
+    from backend.app.models.notification import NotificationTemplate
+    from backend.app.models.tenant import Tenant
 
     DEFAULT_TEMPLATES = [
         {

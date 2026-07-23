@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from app.models.admission import Admission
-from app.utils.exceptions import NotFoundError, ConflictError
-from app.utils.pagination import paginate
+from backend.app.models.admission import Admission
+from backend.app.utils.exceptions import NotFoundError, ConflictError
+from backend.app.utils.pagination import paginate
 
 
 async def get_admissions(db: AsyncSession, tenant_id: str, page: int,

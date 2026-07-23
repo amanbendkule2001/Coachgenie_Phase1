@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.student import StudentCreate, StudentUpdate, StudentOut
-from app.services import student as student_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.student import StudentCreate, StudentUpdate, StudentOut
+from backend.app.services import student as student_service
 
 router = APIRouter(prefix="/students", tags=["Students"])
 

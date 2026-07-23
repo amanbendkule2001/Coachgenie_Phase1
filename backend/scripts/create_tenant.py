@@ -3,7 +3,7 @@
 import asyncio
 import argparse
 
-from app.services.tenant_provisioning import provision_tenant
+from backend.app.services.tenant_provisioning import provision_tenant
 
 
 def parse_args():

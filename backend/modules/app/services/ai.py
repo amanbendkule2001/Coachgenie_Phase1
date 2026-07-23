@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from app.models.ai import AISession, AIMessage
-from app.utils.exceptions import NotFoundError, BadRequestError
-from app.config import settings
+from backend.app.models.ai import AISession, AIMessage
+from backend.app.utils.exceptions import NotFoundError, BadRequestError
+from backend.app.config import settings
 
 # System prompts for each AI feature
 SYSTEM_PROMPTS = {

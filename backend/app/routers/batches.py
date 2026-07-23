@@ -179,7 +179,7 @@ async def get_batch_students(
     current_user=Depends(require_roles("owner", "counselor", "tutor", "student")),
 ):
     """Returns full student objects enrolled in this batch."""
-    from app.schemas.student import StudentOut
+    from backend.app.schemas.student import StudentOut
     students = await batch_service.get_batch_students(db, str(tenant.id), batch_id)
     return {"success": True, "data": [StudentOut.model_validate(s) for s in students]}
 
