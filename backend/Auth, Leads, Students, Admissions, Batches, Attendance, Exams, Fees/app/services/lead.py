@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, or_
-from backend.app.models.lead import Lead, LeadActivity
-from backend.app.utils.exceptions import NotFoundError
-from backend.app.utils.pagination import paginate
+from app.models.lead import Lead, LeadActivity
+from app.utils.exceptions import NotFoundError
+from app.utils.pagination import paginate
 
 
 async def get_leads(db: AsyncSession, tenant_id: str, page: int,

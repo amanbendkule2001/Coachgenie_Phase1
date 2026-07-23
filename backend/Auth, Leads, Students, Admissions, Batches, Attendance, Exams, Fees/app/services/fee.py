@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from backend.app.models.fee import FeeStructure, FeeInvoice, FeePayment
-from backend.app.utils.exceptions import NotFoundError, ConflictError, BadRequestError
-from backend.app.utils.pagination import paginate
+from app.models.fee import FeeStructure, FeeInvoice, FeePayment
+from app.utils.exceptions import NotFoundError, ConflictError, BadRequestError
+from app.utils.pagination import paginate
 
 
 async def get_fee_structures(db: AsyncSession, tenant_id: str) -> list:

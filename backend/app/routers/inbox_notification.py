@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.inbox_notification import InboxNotificationOut
-from backend.app.services import inbox_notification as inbox_service
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.inbox_notification import InboxNotificationOut
+from app.services import inbox_notification as inbox_service
 
 router = APIRouter(prefix="/notifications/inbox", tags=["Inbox Notifications"])
 

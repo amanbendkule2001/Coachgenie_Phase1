@@ -7,13 +7,13 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
-from schemas.request_context import RequestContext
+from copilot_engine.schemas.request_context import RequestContext
 
-from schemas.student_schema import AttendanceMetrics
+from copilot_engine.schemas.student_schema import AttendanceMetrics
 
-from services.backend_client import BackendClient
+from copilot_engine.services.backend_client import BackendClient
 
-from exceptions.tool_exceptions import (
+from copilot_engine.exceptions.tool_exceptions import (
     ToolExecutionError,
     ResponseValidationError,
 )

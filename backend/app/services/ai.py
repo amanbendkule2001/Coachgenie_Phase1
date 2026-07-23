@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from backend.app.models.ai import AISession, AIMessage
-from backend.app.utils.exceptions import NotFoundError, BadRequestError
-from backend.app.config import settings
+from app.models.ai import AISession, AIMessage
+from app.utils.exceptions import NotFoundError, BadRequestError
+from app.config import settings
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_

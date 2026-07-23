@@ -1,6 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.services import admission as admission_service
+from copilot_engine.services.backend_client import (
+    BackendClient,
+)
+
+from copilot_engine.schemas.request_context import (
+    RequestContext,
+)
 
 
 class AdmissionRepository:

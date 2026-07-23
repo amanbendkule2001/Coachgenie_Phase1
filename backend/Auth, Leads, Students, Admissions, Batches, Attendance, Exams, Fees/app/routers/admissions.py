@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.admission import AdmissionCreate, AdmissionUpdate, AdmissionOut
-from backend.app.services import admission as admission_service
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.admission import AdmissionCreate, AdmissionUpdate, AdmissionOut
+from app.services import admission as admission_service
 
 router = APIRouter(prefix="/admissions", tags=["Admissions"])
 

@@ -5,10 +5,10 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from backend.app.models.notification import NotificationTemplate, NotificationLog
-from backend.app.models.user import User
-from backend.app.utils.exceptions import NotFoundError
-from backend.app.config import settings
+from app.models.notification import NotificationTemplate, NotificationLog
+from app.models.user import User
+from app.utils.exceptions import NotFoundError
+from app.config import settings
 
 
 async def get_templates(db: AsyncSession, tenant_id: str) -> list:

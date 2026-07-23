@@ -1,5 +1,5 @@
 from typing import Optional
-from ..agents.student_agent import StudentAgent
+from copilot_engine.agents.student_agent import StudentAgent
 from copilot_engine.core.model_router import ModelRouter
 from copilot_engine.guardrails.input_validator import InputValidator
 from copilot_engine.guardrails.output_validator import OutputValidator

@@ -31,9 +31,6 @@ from copilot_engine.reports.builders.batch_performance_builder import (
 from copilot_engine.reports.builders.attendance_report_builder import (
     AttendanceReportBuilder,
 )
-from copilot_engine.reports.builders.admin_report_builder import (
-    AdminReportBuilder,
-)
 
 from copilot_engine.reports.formatters.response_formatter import (
     ResponseFormatter,

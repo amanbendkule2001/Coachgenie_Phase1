@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
-from backend.app.dependencies import get_tenant, get_current_user, DB
-from backend.app.schemas.auth_extended import (
+from app.dependencies import get_tenant, get_current_user, DB
+from app.schemas.auth_extended import (
     ForgotPasswordRequest, VerifyOTPRequest,
     ResetPasswordRequest, ChangePasswordRequest,
     UpdateProfileRequest, ProfileOut
 )
-from backend.app.services import auth_extended as auth_ext_service
+from app.services import auth_extended as auth_ext_service
 
 router = APIRouter(prefix="/auth", tags=["Auth Extended"])
 

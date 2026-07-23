@@ -1,7 +1,7 @@
 import asyncio
 import argparse
 
-from backend.app.services.user_management import (
+from app.services.user_management import (
     create_user
 )
 

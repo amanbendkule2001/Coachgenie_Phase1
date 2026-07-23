@@ -16,7 +16,7 @@ from sqlalchemy.dialects.postgresql import (
 
 from sqlalchemy.sql import func
 
-from database.database import Base
+from copilot_engine.database.database import Base
 
 
 class AIGeneratedReport(Base):

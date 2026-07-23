@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.fee import (
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.fee import (
     FeeStructureCreate, FeeInvoiceCreate, FeeInvoiceOut,
     PaymentCreate, PaymentOut
 )
-from backend.app.services import fee as fee_service
+from app.services import fee as fee_service
 
 router = APIRouter(prefix="/fees", tags=["Fees"])
 

@@ -1,9 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.services import student as student_service
-from backend.app.services import exam as exam_service
-from backend.app.services import fee as fee_service
-from backend.app.services import growth_card as growth_service
+from copilot_engine.services.backend_client import (
+    BackendClient,
+)
+
+from copilot_engine.schemas.request_context import (
+    RequestContext,
+)
 
 
 class StudentRepository:

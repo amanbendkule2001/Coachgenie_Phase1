@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from typing import Annotated
 
-from backend.app.database import get_db
-from backend.app.models.tenant import Tenant
-from backend.app.models.user import User
-from backend.app.utils.security import decode_access_token
-from backend.app.utils.exceptions import UnauthorizedError, ForbiddenError, TenantNotFoundError
+from app.database import get_db
+from app.models.tenant import Tenant
+from app.models.user import User
+from app.utils.security import decode_access_token
+from app.utils.exceptions import UnauthorizedError, ForbiddenError, TenantNotFoundError
 
 
 async def get_tenant(

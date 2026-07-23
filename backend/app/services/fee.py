@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, case,update
-from backend.app.models.fee import FeeStructure, FeeInvoice, FeePayment
-from backend.app.utils.exceptions import NotFoundError, ConflictError, BadRequestError
-from backend.app.utils.pagination import paginate
+from app.models.fee import FeeStructure, FeeInvoice, FeePayment
+from app.utils.exceptions import NotFoundError, ConflictError, BadRequestError
+from app.utils.pagination import paginate
 from sqlalchemy.orm import selectinload
 from datetime import date
 from sqlalchemy import select, func, extract
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.models.fee import FeeInvoice
+from app.models.fee import FeeInvoice
 
 
 async def get_monthly_collection(db: AsyncSession, tenant_id: str) -> list:

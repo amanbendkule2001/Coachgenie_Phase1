@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.batch import (
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.batch import (
     BatchCreate, BatchUpdate, BatchOut,
     SubjectCreate, SubjectOut,
     ClassCreate, ClassUpdate, ClassOut
 )
-from backend.app.services import batch as batch_service
+from app.services import batch as batch_service
 
 router = APIRouter(prefix="/batches", tags=["Batches"])
 

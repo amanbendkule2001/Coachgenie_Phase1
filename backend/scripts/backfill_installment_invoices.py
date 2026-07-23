@@ -23,10 +23,10 @@ from sqlalchemy.orm import sessionmaker
 
 # ── adjust this import to match your project ──────────────────
 # from app.core.config import settings
-from backend.app.core.config import DATABASE_URL
-from backend.app.models.admission import Admission
-from backend.app.models.student import Student
-from backend.app.models.fee import FeeInvoice
+from app.core.config import DATABASE_URL
+from app.models.admission import Admission
+from app.models.student import Student
+from app.models.fee import FeeInvoice
 # ──────────────────────────────────────────────────────────────
 
 # engine = create_async_engine(settings.DATABASE_URL, echo=False)

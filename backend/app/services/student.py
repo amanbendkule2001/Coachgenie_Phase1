@@ -113,9 +113,9 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from sqlalchemy.orm import selectinload                          # ← ADD THIS
-from backend.app.models.student import Student
-from backend.app.utils.exceptions import NotFoundError, ConflictError
-from backend.app.utils.pagination import paginate
+from app.models.student import Student
+from app.utils.exceptions import NotFoundError, ConflictError
+from app.utils.pagination import paginate
 from datetime import date
 
 

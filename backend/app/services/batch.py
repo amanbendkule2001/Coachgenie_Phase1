@@ -1,10 +1,10 @@
 from datetime import date, datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from backend.app.models.batch import Batch, BatchStudent, Class, Subject
-from backend.app.models.syllabus import SyllabusItem, SyllabusProgress
-from backend.app.utils.exceptions import NotFoundError, ConflictError
-from backend.app.utils.pagination import paginate
+from app.models.batch import Batch, BatchStudent, Class, Subject
+from app.models.syllabus import SyllabusItem, SyllabusProgress
+from app.utils.exceptions import NotFoundError, ConflictError
+from app.utils.pagination import paginate
 import uuid
 
 
@@ -165,7 +165,7 @@ async def remove_student(db: AsyncSession, batch_id: str, student_id: str):
 
 async def get_batch_students(db: AsyncSession, tenant_id: str, batch_id: str) -> list:
     """Return full Student objects enrolled in a batch."""
-    from backend.app.models.student import Student
+    from app.models.student import Student
     from sqlalchemy.orm import selectinload
     result = await db.execute(
         select(Student)

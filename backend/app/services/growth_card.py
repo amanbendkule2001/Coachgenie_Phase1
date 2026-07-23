@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from backend.app.models.growth_card import GrowthCard
-from backend.app.utils.exceptions import NotFoundError
-from backend.app.utils.pagination import paginate
+from app.models.growth_card import GrowthCard
+from app.utils.exceptions import NotFoundError
+from app.utils.pagination import paginate
 
 
 
@@ -182,10 +182,10 @@ async def auto_generate_growth_card(
     student_id: str,
 ) -> GrowthCard:
     from sqlalchemy import select, and_, func
-    from backend.app.models.student import Student
-    from backend.app.models.attendance import AttendanceRecord
-    from backend.app.models.exam import ExamResult, Exam
-    from backend.app.config import settings
+    from app.models.student import Student
+    from app.models.attendance import AttendanceRecord
+    from app.models.exam import ExamResult, Exam
+    from app.config import settings
     import httpx
     import json
 

@@ -471,3 +471,11 @@ class ReportExportError(
     """
 
     pass
+
+class ResponseParsingError(
+    ReportException
+):
+    """
+    Raised when report response parsing fails.
+    """
+    pass

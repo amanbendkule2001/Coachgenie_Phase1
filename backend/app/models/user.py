@@ -58,7 +58,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy import String, Boolean, ForeignKey, text, UniqueConstraint, Index, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
-from backend.app.database import Base
+from app.database import Base
 
 
 class User(Base):

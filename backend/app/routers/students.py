@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.student import StudentUpdate, StudentOut
-from backend.app.services import student as student_service
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.student import StudentUpdate, StudentOut
+from app.services import student as student_service
 
-from backend.app.models.user import User
+from app.models.user import User
 from sqlalchemy import select
 
 router = APIRouter(

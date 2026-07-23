@@ -1,9 +1,9 @@
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from backend.app.models.batch import Batch, BatchStudent, Class, Subject
-from backend.app.utils.exceptions import NotFoundError, ConflictError
-from backend.app.utils.pagination import paginate
+from app.models.batch import Batch, BatchStudent, Class, Subject
+from app.utils.exceptions import NotFoundError, ConflictError
+from app.utils.pagination import paginate
 
 
 async def get_subjects(db: AsyncSession, tenant_id: str) -> list:

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
-from backend.app.dependencies import DB
-from backend.app.models.tenant import Tenant
-from backend.app.schemas.tenant import TenantCreate, TenantOut
-from backend.app.utils.exceptions import NotFoundError
+from app.dependencies import DB
+from app.models.tenant import Tenant
+from app.schemas.tenant import TenantCreate, TenantOut
+from app.utils.exceptions import NotFoundError
 
 router = APIRouter(prefix="/tenants", tags=["Tenants"])
 

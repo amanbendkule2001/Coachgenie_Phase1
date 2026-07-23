@@ -58,11 +58,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from backend.app.dependencies import DB
-from backend.app.models.tenant import Tenant
-from backend.app.models.user import User
-from backend.app.schemas.tenant import TenantCreate, TenantOut
-from backend.app.utils.security import hash_password
+from app.dependencies import DB
+from app.models.tenant import Tenant
+from app.models.user import User
+from app.schemas.tenant import TenantCreate, TenantOut
+from app.utils.security import hash_password
 
 
 

@@ -1,9 +1,9 @@
 from copilot_engine.repositories.student_repository import StudentRepository
-from analytics.performance_metrics import PerformanceMetrics
-from analytics.attendance_metrics import AttendanceMetrics
-from analytics.risk_metrics import RiskMetrics
+from copilot_engine.analytics.performance_metrics import PerformanceMetrics
+from copilot_engine.analytics.attendance_metrics import AttendanceMetrics
+from copilot_engine.analytics.risk_metrics import RiskMetrics
 
-from report_context.base_report_context import BaseReportContext
+from copilot_engine.report_context.base_report_context import BaseReportContext
 
 
 class StudentReportContext(BaseReportContext):

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends,Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.attendance import TakeAttendanceRequest
-from backend.app.services import attendance as att_service
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.attendance import TakeAttendanceRequest
+from app.services import attendance as att_service
 
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
@@ -13,7 +13,7 @@ async def attendance_heatmap(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor")),
 ):
-    from backend.app.services.attendance import get_heatmap
+    from app.services.attendance import get_heatmap
     data = await get_heatmap(db, str(tenant.id))
     return {"success": True, "data": data}
 

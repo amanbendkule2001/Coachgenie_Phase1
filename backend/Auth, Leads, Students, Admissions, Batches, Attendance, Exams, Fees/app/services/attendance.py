@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from backend.app.models.attendance import AttendanceSession, AttendanceRecord
-from backend.app.utils.exceptions import ConflictError
+from app.models.attendance import AttendanceSession, AttendanceRecord
+from app.utils.exceptions import ConflictError
 
 
 async def take_attendance(db: AsyncSession, tenant_id: str, taken_by: str,

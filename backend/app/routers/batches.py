@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.batch import (
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.batch import (
     BatchCreate, BatchUpdate, BatchOut,
     SubjectCreate, SubjectOut,
     ClassCreate, ClassUpdate, ClassOut,
     SyllabusTopicCreate, SyllabusTopicUpdate, SyllabusTopicOut,
     SyllabusProgressUpdate, SyllabusTopicWithProgress,
 )
-from backend.app.services import batch as batch_service
+from app.services import batch as batch_service
 
 router = APIRouter(prefix="/batches", tags=["Batches"])
 
@@ -179,7 +179,7 @@ async def get_batch_students(
     current_user=Depends(require_roles("owner", "counselor", "tutor", "student")),
 ):
     """Returns full student objects enrolled in this batch."""
-    from backend.app.schemas.student import StudentOut
+    from app.schemas.student import StudentOut
     students = await batch_service.get_batch_students(db, str(tenant.id), batch_id)
     return {"success": True, "data": [StudentOut.model_validate(s) for s in students]}
 

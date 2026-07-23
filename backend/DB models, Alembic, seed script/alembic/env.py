@@ -2,11 +2,11 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-from backend.app.models.admission import Admission, AdmissionInstallment, AdmissionDocument
+from app.models.admission import Admission, AdmissionInstallment, AdmissionDocument
 
 # ── Import ALL models so Alembic detects every table ─────────
-from backend.app.database import Base
-import backend.app.models  # noqa: F401 — registers all models
+from app.database import Base
+import app.models  # noqa: F401 — registers all models
 
 config = context.config
 

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import String, Boolean, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
-from backend.app.database import Base
+from app.database import Base
 
 
 class OTPCode(Base):

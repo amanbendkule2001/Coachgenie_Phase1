@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Query
-from backend.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.notification import (
+from dependencies import get_tenant, require_roles, DB
+from app.schemas.notification import (
     TemplateCreate, TemplateOut,
     SendNotificationRequest, NotificationLogOut
 )
-from backend.app.services import notification as notif_service
+from app.services import notification as notif_service
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 

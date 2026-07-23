@@ -1,14 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, distinct
-from backend.app.models.student import Student
-from backend.app.models.batch import Batch, BatchStudent
-from backend.app.models.lead import Lead
-from backend.app.models.admission import Admission
-from backend.app.models.exam import Exam, ExamResult
-from backend.app.models.fee import FeeInvoice
-from backend.app.models.attendance import AttendanceRecord
-from backend.app.models.growth_card import GrowthCard
-from backend.app.models.user import User
+from app.models.student import Student
+from app.models.batch import Batch, BatchStudent
+from app.models.lead import Lead
+from app.models.admission import Admission
+from app.models.exam import Exam, ExamResult
+from app.models.fee import FeeInvoice
+from app.models.attendance import AttendanceRecord
+from app.models.growth_card import GrowthCard
+from app.models.user import User
 
 
 async def get_owner_dashboard(db: AsyncSession, tenant_id: str) -> dict:
@@ -82,7 +82,7 @@ async def get_owner_dashboard(db: AsyncSession, tenant_id: str) -> dict:
 
 
 async def get_tutor_dashboard(db: AsyncSession, tenant_id: str, user_id: str) -> dict:
-    from backend.app.models.batch import Class
+    from app.models.batch import Class
     from datetime import date
 
     # My classes today

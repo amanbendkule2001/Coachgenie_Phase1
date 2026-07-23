@@ -3,22 +3,22 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from backend.app.config import settings
-from backend.app.database import engine
-from backend.app.scheduler import start_scheduler, scheduler
+from app.config import settings
+from app.database import engine
+from app.scheduler import start_scheduler, scheduler
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
-import backend.app.models  # noqa: F401
+import app.models  # noqa: F401
 
-from backend.app.routers import (
+from app.routers import (
     auth, tenants, leads, students, admissions,
     batches, attendance, exams, fees, notifications, ai,
     parents, tutors, admins, growth_cards, auth_extended,
     dashboard, syllabus, inbox_notification,
 )
-from backend.app.routers.ai_reports import router as ai_reports_router
+from app.routers.ai_reports import router as ai_reports_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("coaching_erp")

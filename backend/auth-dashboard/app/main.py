@@ -5,19 +5,19 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.app.config import settings
-from backend.app.database import engine
+from app.config import settings
+from app.database import engine
 
 # Phase 1 & 2 Routers
-from backend.app.routers import (
+from app.routers import (
     auth, tenants, leads, students, admissions,
     batches, attendance, exams, fees, notifications, ai
 )
 # Phase 3 Routers
-from backend.app.routers import growth_cards
+from app.routers import growth_cards
 
 # Phase 4 Routers
-from backend.app.routers import auth_extended, dashboard
+from app.routers import auth_extended, dashboard
 
 # Logging
 logging.basicConfig(

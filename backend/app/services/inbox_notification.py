@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
-from backend.app.models.inbox_notification import InboxNotification
+from app.models.inbox_notification import InboxNotification
 
 
 async def get_inbox(

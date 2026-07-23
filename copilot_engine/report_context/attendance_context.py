@@ -1,9 +1,9 @@
-from repositories.attendance_repository import AttendanceRepository
+from copilot_engine.repositories.attendance_repository import AttendanceRepository
 
-from analytics.attendance_metrics import AttendanceMetrics
-from analytics.risk_metrics import RiskMetrics
+from copilot_engine.analytics.attendance_metrics import AttendanceMetrics
+from copilot_engine.analytics.risk_metrics import RiskMetrics
 
-from report_context.base_report_context import BaseReportContext
+from copilot_engine.report_context.base_report_context import BaseReportContext
 
 
 class AttendanceReportContext(BaseReportContext):

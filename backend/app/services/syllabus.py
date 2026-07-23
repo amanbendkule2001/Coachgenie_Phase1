@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 from sqlalchemy.orm import selectinload
-from backend.app.models.syllabus import SyllabusItem, SyllabusProgress
+from app.models.syllabus import SyllabusItem, SyllabusProgress
 from datetime import datetime, timezone
 
 

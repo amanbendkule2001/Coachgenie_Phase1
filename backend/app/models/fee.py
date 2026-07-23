@@ -75,7 +75,7 @@ import uuid
 from sqlalchemy import String, Boolean, Text, SmallInteger, Numeric, Date, ForeignKey, text, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
-from backend.app.database import Base
+from app.database import Base
 
 
 class FeeStructure(Base):

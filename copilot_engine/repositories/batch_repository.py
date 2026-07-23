@@ -1,7 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.services import batch as batch_service
-from backend.app.services import attendance as attendance_service
+from copilot_engine.services.backend_client import (
+    BackendClient,
+)
+
+from copilot_engine.schemas.request_context import (
+    RequestContext,
+)
+from copilot_engine.services.backend_client import (
+    BackendClient,
+)
+
+from copilot_engine.schemas.request_context import (
+    RequestContext,
+)
 
 
 class BatchRepository:

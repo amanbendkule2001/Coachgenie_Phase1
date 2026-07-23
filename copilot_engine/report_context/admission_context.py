@@ -1,8 +1,8 @@
-from repositories.admission_repository import AdmissionRepository
+from copilot_engine.repositories.admission_repository import AdmissionRepository
 
-from analytics.admission_metrics import AdmissionMetrics
+from copilot_engine.analytics.admission_metrics import AdmissionMetrics
 
-from report_context.base_report_context import BaseReportContext
+from copilot_engine.report_context.base_report_context import BaseReportContext
 
 
 class AdmissionReportContext(BaseReportContext):

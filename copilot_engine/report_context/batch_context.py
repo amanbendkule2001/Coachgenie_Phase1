@@ -1,10 +1,10 @@
-from repositories.batch_repository import BatchRepository
+from copilot_engine.repositories.batch_repository import BatchRepository
 
-from analytics.batch_metrics import BatchMetrics
-from analytics.performance_metrics import PerformanceMetrics
-from analytics.attendance_metrics import AttendanceMetrics
+from copilot_engine.analytics.batch_metrics import BatchMetrics
+from copilot_engine.analytics.performance_metrics import PerformanceMetrics
+from copilot_engine.analytics.attendance_metrics import AttendanceMetrics
 
-from report_context.base_report_context import BaseReportContext
+from copilot_engine.report_context.base_report_context import BaseReportContext
 
 
 class BatchReportContext(BaseReportContext):

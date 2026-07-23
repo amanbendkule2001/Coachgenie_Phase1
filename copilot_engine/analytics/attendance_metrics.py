@@ -16,7 +16,13 @@ class AttendanceMetrics:
     @staticmethod
     def student_metrics(summary: dict) -> dict:
         """
-        Accepts attendance summary returned by backend.
+        Accepts attendance summary returned by from copilot_engine.services.backend_client import (
+    BackendClient,
+)
+
+from copilot_engine.schemas.request_context import (
+    RequestContext,
+)
         """
 
         if not summary:

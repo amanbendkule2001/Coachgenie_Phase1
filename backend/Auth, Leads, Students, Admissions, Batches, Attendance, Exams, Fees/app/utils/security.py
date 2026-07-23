@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import PyJWTError
 from passlib.context import CryptContext
-from backend.app.config import settings
-from backend.app.utils.exceptions import UnauthorizedError
+from app.config import settings
+from app.utils.exceptions import UnauthorizedError
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],

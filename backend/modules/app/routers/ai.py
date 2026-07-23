@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
-from backend.app.dependencies import get_tenant, get_current_user, DB
-from backend.app.schemas.ai import (
+from app.dependencies import get_tenant, get_current_user, DB
+from app.schemas.ai import (
     StartSessionRequest, ChatRequest,
     ChatResponse, SessionOut, MessageOut
 )
-from backend.app.services import ai as ai_service
+from app.services import ai as ai_service
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 

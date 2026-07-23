@@ -2,7 +2,7 @@ import asyncio
 import argparse
 import csv
 
-from backend.app.services.user_management import (
+from app.services.user_management import (
     create_user
 )
 

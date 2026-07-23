@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
-from backend.app.dependencies import get_tenant, require_roles, DB
-from backend.app.schemas.growth_card import GrowthCardCreate, GrowthCardUpdate, GrowthCardOut
-from backend.app.services import growth_card as gc_service
+from app.dependencies import get_tenant, require_roles, DB
+from app.schemas.growth_card import GrowthCardCreate, GrowthCardUpdate, GrowthCardOut
+from app.services import growth_card as gc_service
 
 router = APIRouter(prefix="/growth-cards", tags=["Growth Cards"])
 
