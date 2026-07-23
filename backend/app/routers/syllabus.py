@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
-from app.dependencies import get_tenant, require_roles, DB
-from app.services import syllabus as syllabus_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.services import syllabus as syllabus_service
 
 router = APIRouter(prefix="/syllabus", tags=["Syllabus"])
 

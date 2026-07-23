@@ -5,11 +5,11 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.config import settings
-from app.database import engine
+from backend.app.config import settings
+from backend.app.database import engine
 
 # Routers
-from app.routers import (
+from backend.app.routers import (
     auth, tenants, leads, students, admissions,
     batches, attendance, exams, fees, notifications, ai
 )

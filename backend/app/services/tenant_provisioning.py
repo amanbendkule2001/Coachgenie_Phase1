@@ -3,12 +3,12 @@ import string
 
 from sqlalchemy import select, func
 
-from app.database import AsyncSessionLocal
-from app.models.user import User
+from backend.app.database import AsyncSessionLocal
+from backend.app.models.user import User
 
-from app.core.security import get_password_hash
+from backend.app.core.security import get_password_hash
 
-from app.models.tenant import Tenant
+from backend.app.models.tenant import Tenant
 
 
 async def create_tenant(

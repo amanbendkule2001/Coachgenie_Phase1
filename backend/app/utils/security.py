@@ -104,8 +104,8 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from app.config import settings
-from app.utils.exceptions import UnauthorizedError
+from backend.app.config import settings
+from backend.app.utils.exceptions import UnauthorizedError
 
 
 def hash_password(password: str) -> str:

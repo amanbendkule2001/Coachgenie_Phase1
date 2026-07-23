@@ -6,12 +6,12 @@ from sqlalchemy import select
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 
-from app.database import AsyncSessionLocal
-from app.models.tenant import Tenant
-from app.models.user import User
-from app.models.batch import Subject, Batch, BatchStudent
-from app.services import admission as admission_service
-from app.services import lead as lead_service
+from backend.app.database import AsyncSessionLocal
+from backend.app.models.tenant import Tenant
+from backend.app.models.user import User
+from backend.app.models.batch import Subject, Batch, BatchStudent
+from backend.app.services import admission as admission_service
+from backend.app.services import lead as lead_service
 
 load_dotenv()
 

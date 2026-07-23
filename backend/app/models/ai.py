@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import String, Text, Integer, ForeignKey, text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
-from app.database import Base
+from backend.app.database import Base
 
 
 class AISession(Base):

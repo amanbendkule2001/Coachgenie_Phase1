@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
-from app.dependencies import get_tenant, require_roles, DB
-from app.models.user import User
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.models.user import User
 
 router = APIRouter(prefix="/parents", tags=["Parents"])
 

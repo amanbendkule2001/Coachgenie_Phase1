@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends
-from app.dependencies import (
+from backend.app.dependencies import (
     get_tenant,
     get_current_user,
     require_roles,
     DB,
 )
-from app.schemas.ai import (
+from backend.app.schemas.ai import (
     StartSessionRequest, ChatRequest,
     ChatResponse, SessionOut, MessageOut
 )
-from app.services import ai as ai_service
+from backend.app.services import ai as ai_service
 from fastapi import APIRouter
 from pydantic import BaseModel
 

@@ -4,8 +4,8 @@ from alembic import context
 import os
 from dotenv import load_dotenv
 
-from app.database import Base
-import app.models  # noqa: F401
+from backend.app.database import Base
+import backend.app.models  # noqa: F401
 
 load_dotenv()
 

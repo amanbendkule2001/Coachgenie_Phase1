@@ -5,30 +5,30 @@ from typing import Dict, Any
 
 from fastapi import HTTPException
 
-from app.services.copilot_client import (
+from backend.app.services.copilot_client import (
     CopilotClient,
 )
 
-from app.services.student import (
+from backend.app.services.student import (
     get_students,
     get_student
 )
 
-from app.services.attendance import (
+from backend.app.services.attendance import (
     get_student_summary
 )
 
-from app.services.exam import (
+from backend.app.services.exam import (
     get_exams,
     get_exam,
 )
 
-from app.services.batch import (
+from backend.app.services.batch import (
     get_batches,
     get_batches_for_student
 )
 
-from app.services.fee import (
+from backend.app.services.fee import (
     get_all_invoices,
     get_student_invoices,
 )

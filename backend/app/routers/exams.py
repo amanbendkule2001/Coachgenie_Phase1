@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.exam import ExamCreate, ExamUpdate, ExamOut, BulkResultRequest, ExamResultOut
-from app.services import exam as exam_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.exam import ExamCreate, ExamUpdate, ExamOut, BulkResultRequest, ExamResultOut
+from backend.app.services import exam as exam_service
 
 router = APIRouter(prefix="/exams", tags=["Exams"])
 

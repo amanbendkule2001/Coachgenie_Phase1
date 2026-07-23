@@ -3,7 +3,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select, and_, func
-from app.database import get_db
+from backend.app.database import get_db
 
 logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
@@ -56,11 +56,11 @@ async def create_default_templates():
 
 
 async def notify_overdue_fees():
-    from app.models.fee import FeeInvoice
-    from app.models.student import Student
-    from app.models.user import User
-    from app.models.notification import NotificationTemplate
-    from app.services.notification import send_notifications
+    from backend.app.models.fee import FeeInvoice
+    from backend.app.models.student import Student
+    from backend.app.models.user import User
+    from backend.app.models.notification import NotificationTemplate
+    from backend.app.services.notification import send_notifications
     from sqlalchemy.orm import selectinload
     from datetime import date
 
@@ -125,11 +125,11 @@ async def notify_overdue_fees():
 
 
 async def notify_low_attendance():
-    from app.models.attendance import AttendanceRecord
-    from app.models.student import Student
-    from app.models.user import User
-    from app.models.notification import NotificationTemplate
-    from app.services.notification import send_notifications
+    from backend.app.models.attendance import AttendanceRecord
+    from backend.app.models.student import Student
+    from backend.app.models.user import User
+    from backend.app.models.notification import NotificationTemplate
+    from backend.app.services.notification import send_notifications
 
     async for db in get_db():
         try:

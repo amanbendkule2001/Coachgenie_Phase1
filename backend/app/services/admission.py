@@ -3,12 +3,12 @@ import uuid
 from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.admission import Admission
-from app.models.student import Student
-from app.models.lead import Lead
-from app.utils.exceptions import NotFoundError
-from app.utils.pagination import paginate
-from app.models.fee import FeeInvoice
+from backend.app.models.admission import Admission
+from backend.app.models.student import Student
+from backend.app.models.lead import Lead
+from backend.app.utils.exceptions import NotFoundError
+from backend.app.utils.pagination import paginate
+from backend.app.models.fee import FeeInvoice
 from datetime import date as date_type
 
 # ── Admission number generator ─────────────────────────────────────────────────
@@ -399,7 +399,7 @@ async def generate_student_from_admission(
         await db.flush()
 
         if admission.batch_id:
-            from app.models.batch import Batch, BatchStudent
+            from backend.app.models.batch import Batch, BatchStudent
             batch = await db.get(Batch, admission.batch_id)
             if batch:
                 existing_bs = await db.scalar(
@@ -478,7 +478,7 @@ async def convert_lead(
 ) -> tuple[Admission, Student]:
 
     from sqlalchemy import and_
-    from app.utils.exceptions import ConflictError
+    from backend.app.utils.exceptions import ConflictError
 
     # 1. Fetch lead
     lead_result = await db.execute(

@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 # from sqlalchemy import select, and_
 from sqlalchemy import select, func, and_
-from app.models.attendance import AttendanceSession, AttendanceRecord
-from app.utils.exceptions import ConflictError
+from backend.app.models.attendance import AttendanceSession, AttendanceRecord
+from backend.app.utils.exceptions import ConflictError
 from datetime import date
-from app.models.batch import Class
+from backend.app.models.batch import Class
 
 async def get_heatmap(db: AsyncSession, tenant_id: str) -> dict:
-    from app.models.attendance import AttendanceRecord
+    from backend.app.models.attendance import AttendanceRecord
     from datetime import date, timedelta
     since = date.today() - timedelta(days=180)
     result = await db.execute(

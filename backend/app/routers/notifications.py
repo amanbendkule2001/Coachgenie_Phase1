@@ -145,14 +145,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 import traceback
 
-from app.database import get_db
-from app.models.notification import NotificationLog
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.notification import (
+from backend.app.database import get_db
+from backend.app.models.notification import NotificationLog
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.notification import (
     TemplateCreate, TemplateOut,
     SendNotificationRequest, NotificationLogOut
 )
-from app.services import notification as notif_service
+from backend.app.services import notification as notif_service
 
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -259,7 +259,7 @@ async def trigger_jobs(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner")),
 ):
-    from app.scheduler import notify_overdue_fees, notify_low_attendance
+    from backend.app.scheduler import notify_overdue_fees, notify_low_attendance
     await notify_overdue_fees()
     await notify_low_attendance()
     return {"success": True, "message": "Jobs triggered"}

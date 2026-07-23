@@ -1,3 +1,227 @@
+# New Code
+
+# copilot_engine/reports/services/report_service.py
+
+from __future__ import annotations
+
+import logging
+from typing import Optional
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from copilot_engine.report_context.student_context import (
+    StudentReportContext,
+)
+from copilot_engine.report_context.batch_context import (
+    BatchReportContext,
+)
+from copilot_engine.report_context.attendance_context import (
+    AttendanceReportContext,
+)
+from copilot_engine.report_context.admission_context import (
+    AdmissionReportContext,
+)
+
+from copilot_engine.reports.builders.student_performance_builder import (
+    StudentPerformanceReportBuilder,
+)
+from copilot_engine.reports.builders.batch_performance_builder import (
+    BatchPerformanceReportBuilder,
+)
+from copilot_engine.reports.builders.attendance_report_builder import (
+    AttendanceReportBuilder,
+)
+from copilot_engine.reports.builders.admin_report_builder import (
+    AdminReportBuilder,
+)
+
+from copilot_engine.reports.formatters.response_formatter import (
+    ResponseFormatter,
+)
+from copilot_engine.reports.generators.pdf_generator import (
+    PDFGenerator,
+)
+from copilot_engine.reports.schemas.report_schema import (
+    ReportSchema,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class ReportService:
+    """
+    Production Report Orchestrator.
+
+    Flow
+    ----
+    Repository
+        ↓
+    Analytics
+        ↓
+    Report Context
+        ↓
+    Prompt Builder
+        ↓
+    LLM
+        ↓
+    Response Parser
+        ↓
+    Report Schema
+        ↓
+    Formatter
+        ↓
+    PDF Generator
+    """
+
+    # ==========================================================
+    # INTERNAL
+    # ==========================================================
+
+    @classmethod
+    async def _generate(
+        cls,
+        *,
+        context_builder,
+        builder,
+        context_kwargs: dict,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        logger.info("Building report context...")
+
+        context = await context_builder.build(
+            **context_kwargs,
+        )
+
+        logger.info("Generating AI report...")
+
+        report = await builder.build(
+            context,
+        )
+
+        return cls.generate_pdf(
+            report=report,
+            filename=filename,
+        )
+
+    # ==========================================================
+    # PDF
+    # ==========================================================
+
+    @staticmethod
+    def generate_pdf(
+        *,
+        report: ReportSchema,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        formatted = ResponseFormatter.format_report(
+            report=report,
+        )
+
+        return PDFGenerator.generate(
+            content=formatted,
+            filename=filename,
+        )
+
+    # ==========================================================
+    # STUDENT REPORT
+    # ==========================================================
+
+    @classmethod
+    async def generate_student_report(
+        cls,
+        *,
+        db: AsyncSession,
+        tenant_id: str,
+        student_id: str,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        return await cls._generate(
+            context_builder=StudentReportContext(),
+            builder=StudentPerformanceReportBuilder(),
+            filename=filename,
+            context_kwargs={
+                "db": db,
+                "tenant_id": tenant_id,
+                "student_id": student_id,
+            },
+        )
+
+    # ==========================================================
+    # BATCH REPORT
+    # ==========================================================
+
+    @classmethod
+    async def generate_batch_report(
+        cls,
+        *,
+        db: AsyncSession,
+        tenant_id: str,
+        batch_id: str,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        return await cls._generate(
+            context_builder=BatchReportContext(),
+            builder=BatchPerformanceReportBuilder(),
+            filename=filename,
+            context_kwargs={
+                "db": db,
+                "tenant_id": tenant_id,
+                "batch_id": batch_id,
+            },
+        )
+
+    # ==========================================================
+    # ATTENDANCE REPORT
+    # ==========================================================
+
+    @classmethod
+    async def generate_attendance_report(
+        cls,
+        *,
+        db: AsyncSession,
+        tenant_id: str,
+        batch_id: str,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        return await cls._generate(
+            context_builder=AttendanceReportContext(),
+            builder=AttendanceReportBuilder(),
+            filename=filename,
+            context_kwargs={
+                "db": db,
+                "tenant_id": tenant_id,
+                "batch_id": batch_id,
+            },
+        )
+
+    # ==========================================================
+    # ADMISSION REPORT
+    # ==========================================================
+
+    @classmethod
+    async def generate_admission_report(
+        cls,
+        *,
+        db: AsyncSession,
+        tenant_id: str,
+        filename: Optional[str] = None,
+    ) -> str:
+
+        return await cls._generate(
+            context_builder=AdmissionReportContext(),
+            builder=AdminReportBuilder(),
+            filename=filename,
+            context_kwargs={
+                "db": db,
+                "tenant_id": tenant_id,
+            },
+        )
+
 # # copilot_engine/reports/services/report_service.py
 # import logging
 
@@ -222,266 +446,266 @@
 
 # copilot_engine/reports/services/report_service.py
 
-import logging
+# import logging
 
-from typing import Optional
+# from typing import Optional
 
-from copilot_engine.reports.schemas.report_schema import (
-    ReportSchema,
-)
+# from copilot_engine.reports.schemas.report_schema import (
+#     ReportSchema,
+# )
 
-from copilot_engine.reports.formatters.response_formatter import (
-    ResponseFormatter,
-)
+# from copilot_engine.reports.formatters.response_formatter import (
+#     ResponseFormatter,
+# )
 
-from copilot_engine.reports.generators.pdf_generator import (
-    PDFGenerator,
-)
+# from copilot_engine.reports.generators.pdf_generator import (
+#     PDFGenerator,
+# )
 
-from copilot_engine.reports.builders.student_performance_builder import (
-    StudentPerformanceReportBuilder,
-)
+# from copilot_engine.reports.builders.student_performance_builder import (
+#     StudentPerformanceReportBuilder,
+# )
 
-from copilot_engine.reports.builders.attendance_report_builder import (
-    AttendanceReportBuilder,
-)
+# from copilot_engine.reports.builders.attendance_report_builder import (
+#     AttendanceReportBuilder,
+# )
 
-from copilot_engine.reports.builders.batch_performance_builder import (
-    BatchPerformanceReportBuilder,
-)
+# from copilot_engine.reports.builders.batch_performance_builder import (
+#     BatchPerformanceReportBuilder,
+# )
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
-class ReportService:
+# class ReportService:
 
-    """
-    Production-grade report orchestration service.
+#     """
+#     Production-grade report orchestration service.
 
-    Responsibilities:
-    - Validate report schema
-    - Coordinate formatting
-    - Route generation
-    - Handle observability
-    """
+#     Responsibilities:
+#     - Validate report schema
+#     - Coordinate formatting
+#     - Route generation
+#     - Handle observability
+#     """
 
-    # =====================================================
-    # GENERATE PDF REPORT
-    # =====================================================
+#     # =====================================================
+#     # GENERATE PDF REPORT
+#     # =====================================================
 
-    @classmethod
-    def generate_pdf_report(
-        cls,
-        *,
-        report: ReportSchema,
-        filename: Optional[str] = None,
-    ) -> str:
+#     @classmethod
+#     def generate_pdf_report(
+#         cls,
+#         *,
+#         report: ReportSchema,
+#         filename: Optional[str] = None,
+#     ) -> str:
 
-        """
-        Generate PDF report from structured schema.
+#         """
+#         Generate PDF report from structured schema.
 
-        Returns:
-            Generated PDF file path.
-        """
+#         Returns:
+#             Generated PDF file path.
+#         """
 
-        try:
+#         try:
 
-            logger.info(
-                "Starting PDF report generation",
-                extra={
-                    "report_title": report.title,
-                    "report_type": report.metadata.report_type,
-                    "user_id": report.metadata.user_id,
-                    "trace_id": report.metadata.trace_id,
-                },
-            )
+#             logger.info(
+#                 "Starting PDF report generation",
+#                 extra={
+#                     "report_title": report.title,
+#                     "report_type": report.metadata.report_type,
+#                     "user_id": report.metadata.user_id,
+#                     "trace_id": report.metadata.trace_id,
+#                 },
+#             )
 
-            # =============================================
-            # FORMAT REPORT
-            # =============================================
+#             # =============================================
+#             # FORMAT REPORT
+#             # =============================================
 
-            formatted_content = (
-                ResponseFormatter.format_report(
-                    report=report,
-                )
-            )
+#             formatted_content = (
+#                 ResponseFormatter.format_report(
+#                     report=report,
+#                 )
+#             )
 
-            logger.info(
-                "Report formatting completed",
-                extra={
-                    "report_title": report.title,
-                },
-            )
+#             logger.info(
+#                 "Report formatting completed",
+#                 extra={
+#                     "report_title": report.title,
+#                 },
+#             )
 
-            # =============================================
-            # GENERATE PDF
-            # =============================================
+#             # =============================================
+#             # GENERATE PDF
+#             # =============================================
 
-            pdf_file_path = PDFGenerator.generate(
-                content=formatted_content,
-                filename=filename,
-            )
+#             pdf_file_path = PDFGenerator.generate(
+#                 content=formatted_content,
+#                 filename=filename,
+#             )
 
-            logger.info(
-                "PDF report generated successfully",
-                extra={
-                    "file_path": pdf_file_path,
-                    "report_title": report.title,
-                },
-            )
+#             logger.info(
+#                 "PDF report generated successfully",
+#                 extra={
+#                     "file_path": pdf_file_path,
+#                     "report_title": report.title,
+#                 },
+#             )
 
-            return pdf_file_path
+#             return pdf_file_path
 
-        except Exception as exc:
+#         except Exception as exc:
 
-            logger.exception(
-                "PDF report generation failed",
-                extra={
-                    "report_title": getattr(
-                        report,
-                        "title",
-                        None,
-                    ),
-                    "trace_id": getattr(
-                        getattr(report, "metadata", None),
-                        "trace_id",
-                        None,
-                    ),
-                    "error": str(exc),
-                },
-            )
+#             logger.exception(
+#                 "PDF report generation failed",
+#                 extra={
+#                     "report_title": getattr(
+#                         report,
+#                         "title",
+#                         None,
+#                     ),
+#                     "trace_id": getattr(
+#                         getattr(report, "metadata", None),
+#                         "trace_id",
+#                         None,
+#                     ),
+#                     "error": str(exc),
+#                 },
+#             )
 
-            raise
+#             raise
 
-    # =====================================================
-    # FUTURE GENERATORS
-    # =====================================================
+#     # =====================================================
+#     # FUTURE GENERATORS
+#     # =====================================================
 
-    @classmethod
-    def generate_txt_report(
-        cls,
-        *,
-        report: ReportSchema,
-    ):
+#     @classmethod
+#     def generate_txt_report(
+#         cls,
+#         *,
+#         report: ReportSchema,
+#     ):
 
-        raise NotImplementedError(
-            "TXT report generation "
-            "not implemented yet."
-        )
+#         raise NotImplementedError(
+#             "TXT report generation "
+#             "not implemented yet."
+#         )
 
-    @classmethod
-    def generate_markdown_report(
-        cls,
-        *,
-        report: ReportSchema,
-    ):
+#     @classmethod
+#     def generate_markdown_report(
+#         cls,
+#         *,
+#         report: ReportSchema,
+#     ):
 
-        raise NotImplementedError(
-            "Markdown report generation "
-            "not implemented yet."
-        )
+#         raise NotImplementedError(
+#             "Markdown report generation "
+#             "not implemented yet."
+#         )
 
-    # =====================================================
-    # STUDENT REPORT
-    # =====================================================
+#     # =====================================================
+#     # STUDENT REPORT
+#     # =====================================================
 
-    @staticmethod
-    async def generate_student_report(
-        student_data: dict,
-        filename: Optional[str] = None,
-    ) -> str:
+#     @staticmethod
+#     async def generate_student_report(
+#         student_data: dict,
+#         filename: Optional[str] = None,
+#     ) -> str:
 
-        try:
+#         try:
 
-            builder = (
-                StudentPerformanceReportBuilder()
-            )
+#             builder = (
+#                 StudentPerformanceReportBuilder()
+#             )
 
-            report = await builder.build(
-                student_data=student_data,
-            )
+#             report = await builder.build(
+#                 student_data=student_data,
+#             )
 
-            return (
-                ReportService.generate_pdf_report(
-                    report=report,
-                    filename=filename,
-                )
-            )
+#             return (
+#                 ReportService.generate_pdf_report(
+#                     report=report,
+#                     filename=filename,
+#                 )
+#             )
 
-        except Exception:
+#         except Exception:
 
-            logger.exception(
-                "Student report generation failed",
-            )
+#             logger.exception(
+#                 "Student report generation failed",
+#             )
 
-            raise
+#             raise
 
-    # =====================================================
-    # ATTENDANCE REPORT
-    # =====================================================
+#     # =====================================================
+#     # ATTENDANCE REPORT
+#     # =====================================================
 
-    @staticmethod
-    async def generate_attendance_report(
-        attendance_data: dict,
-        filename: Optional[str] = None,
-    ) -> str:
+#     @staticmethod
+#     async def generate_attendance_report(
+#         attendance_data: dict,
+#         filename: Optional[str] = None,
+#     ) -> str:
 
-        try:
+#         try:
 
-            builder = (
-                AttendanceReportBuilder()
-            )
+#             builder = (
+#                 AttendanceReportBuilder()
+#             )
 
-            report = await builder.build(
-                attendance_data=attendance_data,
-            )
+#             report = await builder.build(
+#                 attendance_data=attendance_data,
+#             )
 
-            return (
-                ReportService.generate_pdf_report(
-                    report=report,
-                    filename=filename,
-                )
-            )
+#             return (
+#                 ReportService.generate_pdf_report(
+#                     report=report,
+#                     filename=filename,
+#                 )
+#             )
 
-        except Exception:
+#         except Exception:
 
-            logger.exception(
-                "Attendance report generation failed",
-            )
+#             logger.exception(
+#                 "Attendance report generation failed",
+#             )
 
-            raise
+#             raise
 
-    # =====================================================
-    # BATCH REPORT
-    # =====================================================
+#     # =====================================================
+#     # BATCH REPORT
+#     # =====================================================
 
-    @staticmethod
-    async def generate_batch_report(
-        batch_data: dict,
-        filename: Optional[str] = None,
-    ) -> str:
+#     @staticmethod
+#     async def generate_batch_report(
+#         batch_data: dict,
+#         filename: Optional[str] = None,
+#     ) -> str:
 
-        try:
+#         try:
 
-            builder = (
-                BatchPerformanceReportBuilder()
-            )
+#             builder = (
+#                 BatchPerformanceReportBuilder()
+#             )
 
-            report = await builder.build(
-                batch_data=batch_data,
-            )
+#             report = await builder.build(
+#                 batch_data=batch_data,
+#             )
 
-            return (
-                ReportService.generate_pdf_report(
-                    report=report,
-                    filename=filename,
-                )
-            )
+#             return (
+#                 ReportService.generate_pdf_report(
+#                     report=report,
+#                     filename=filename,
+#                 )
+#             )
 
-        except Exception:
+#         except Exception:
 
-            logger.exception(
-                "Batch report generation failed",
-            )
+#             logger.exception(
+#                 "Batch report generation failed",
+#             )
 
-            raise
+#             raise

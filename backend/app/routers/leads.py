@@ -233,11 +233,11 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.lead import LeadCreate, LeadUpdate, LeadOut, ActivityCreate, ActivityOut
-from app.services import lead as lead_service
-from app.services import admission as admission_service
-from app.services.inbox_notification import create_notification
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.lead import LeadCreate, LeadUpdate, LeadOut, ActivityCreate, ActivityOut
+from backend.app.services import lead as lead_service
+from backend.app.services import admission as admission_service
+from backend.app.services.inbox_notification import create_notification
 
 
 
@@ -252,7 +252,7 @@ async def lead_funnel(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor")),
 ):
-    from app.services.lead import get_funnel
+    from backend.app.services.lead import get_funnel
     data = await get_funnel(db, str(tenant.id))
     return {"success": True, "data": data}
 

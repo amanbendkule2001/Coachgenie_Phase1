@@ -1,6 +1,6 @@
 from sqlalchemy.future import select
-from app.models.user import User
-from app.core.security import hash_password, verify_password
+from backend.app.models.user import User
+from backend.app.core.security import hash_password, verify_password
 
 async def create_user(db, user_data):
     user = User(

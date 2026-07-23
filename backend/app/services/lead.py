@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, or_
-from app.models.lead import Lead, LeadActivity
-from app.utils.exceptions import NotFoundError
-from app.utils.pagination import paginate
+from backend.app.models.lead import Lead, LeadActivity
+from backend.app.utils.exceptions import NotFoundError
+from backend.app.utils.pagination import paginate
 
 
 
 async def get_funnel(db: AsyncSession, tenant_id: str) -> list:
-    from app.models.lead import Lead
+    from backend.app.models.lead import Lead
     result = await db.execute(
         select(Lead.status, func.count(Lead.id).label("count"))
         .where(Lead.tenant_id == tenant_id)
@@ -28,7 +28,7 @@ async def get_funnel(db: AsyncSession, tenant_id: str) -> list:
 async def _attach_batch_name(db: AsyncSession, lead: Lead) -> Lead:
     """Fetch batch name and attach it as a non-mapped attribute."""
     if lead.batch_id:
-        from app.models.batch import Batch
+        from backend.app.models.batch import Batch
         batch = await db.get(Batch, lead.batch_id)
         lead.__dict__["batch_name"] = batch.name if batch else None
     else:

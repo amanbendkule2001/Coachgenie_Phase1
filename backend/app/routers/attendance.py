@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends,Query
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.attendance import TakeAttendanceRequest
-from app.services import attendance as att_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.attendance import TakeAttendanceRequest
+from backend.app.services import attendance as att_service
 
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])

@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import String, Text, SmallInteger, ForeignKey, text, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
-from app.database import Base
+from backend.app.database import Base
 
 
 class SyllabusItem(Base):

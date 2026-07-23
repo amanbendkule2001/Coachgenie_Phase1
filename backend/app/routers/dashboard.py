@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.dependencies import get_tenant, get_current_user, DB, require_roles
-from app.services import dashboard as dashboard_service
+from backend.app.dependencies import get_tenant, get_current_user, DB, require_roles
+from backend.app.services import dashboard as dashboard_service
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 

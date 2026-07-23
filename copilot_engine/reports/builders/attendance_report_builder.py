@@ -1,58 +1,18 @@
-from datetime import datetime
+# copilot_engine/reports/builders/attendance_report_builder.py 
 
-from copilot_engine.llm.providers.groq_client import (
-    GroqProvider,
-)
-
-from copilot_engine.reports.prompts.attendance_prompts import (
-    ATTENDANCE_REPORT_PROMPT,
-)
-
-from copilot_engine.reports.schemas.report_schema import (
-    ReportSchema,
-    ReportMetadata,
-    ReportSection,
+from copilot_engine.reports.builders.base_report_builder import (
+    BaseReportBuilder,
 )
 
 
-class AttendanceReportBuilder:
+class AttendanceReportBuilder(
+    BaseReportBuilder
+):
 
-    def __init__(self):
+    TITLE = "Attendance & Engagement Intelligence Report"
 
-        self.provider = GroqProvider()
+    REPORT_TYPE = "attendance_report"
 
-    async def build(
-        self,
-        attendance_data: dict,
-    ) -> ReportSchema:
+    PROMPT_FILE = "attendance_report.md"
 
-        prompt = ATTENDANCE_REPORT_PROMPT.format(
-            attendance_data=attendance_data
-        )
-
-        ai_response = await self.provider.generate(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ]
-        )
-
-        return ReportSchema(
-            title="Attendance & Engagement Report",
-
-            summary="AI-generated attendance intelligence report.",
-
-            metadata=ReportMetadata(
-                generated_at=datetime.utcnow(),
-                report_type="attendance_report",
-            ),
-
-            sections=[
-                ReportSection(
-                    title="Attendance Intelligence",
-                    content=ai_response,
-                )
-            ],
-        )
+    INPUT_KEY = "attendance_data"

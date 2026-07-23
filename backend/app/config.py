@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=True, description="Enable debug mode for detailed error messages")
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://coachgenie-phase1.onrender.com,https://coachgenie-frontend.onrender.com,https://thecoachgenie.in,https://www.thecoachgenie.in,https://app.thecoachgenie.in"
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
+    # DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
+    DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 
     SECRET_KEY: str

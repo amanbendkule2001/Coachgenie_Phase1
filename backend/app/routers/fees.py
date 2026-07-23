@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
-from app.dependencies import get_tenant, require_roles, DB
-from app.schemas.fee import FeeStructureCreate, FeeInvoiceCreate, FeeInvoiceOut, PaymentCreate, PaymentOut
-from app.services import fee as fee_service
+from backend.app.dependencies import get_tenant, require_roles, DB
+from backend.app.schemas.fee import FeeStructureCreate, FeeInvoiceCreate, FeeInvoiceOut, PaymentCreate, PaymentOut
+from backend.app.services import fee as fee_service
 from sqlalchemy import select
 from fastapi import HTTPException
-from app.models.student import Student
+from backend.app.models.student import Student
 
 router = APIRouter(prefix="/fees", tags=["Fees"])
 
