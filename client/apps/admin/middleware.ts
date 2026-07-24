@@ -26,15 +26,36 @@ interface CgTokenPayload extends JWTPayload {
   role:      string;
 }
 
-async function verifyToken(token: string): Promise<CgTokenPayload | null> {
-  try {
-    const secret = getSecret();
-    if (secret.length === 0) return null;
-    const { payload } = await jwtVerify(token, secret);
-    return payload as CgTokenPayload;
-  } catch {
-    return null;
-  }
+// async function verifyToken(token: string): Promise<CgTokenPayload | null> {
+//   try {
+//     const secret = getSecret();
+//     if (secret.length === 0) return null;
+//     const { payload } = await jwtVerify(token, secret);
+//     return payload as CgTokenPayload;
+//   } catch {
+//     return null;
+//   }
+// }
+
+async function verifyToken(
+    token: string
+): Promise<CgTokenPayload | null> {
+    try {
+        const secret = getSecret();
+
+        if (!secret.length) {
+            return null;
+        }
+
+        const { payload } = await jwtVerify(token, secret);
+
+        console.log("[middleware] JWT verified:", payload);
+
+        return payload as CgTokenPayload;
+    } catch (err) {
+        console.error("[middleware] JWT verification failed:", err);
+        return null;
+    }
 }
 
 export async function middleware(request: NextRequest) {
@@ -86,11 +107,6 @@ export async function middleware(request: NextRequest) {
 
     // requestHeaders.set("x-tenant-id", payload.tenant_id);
     requestHeaders.set("x-tenant-id", payload.tenant_id ?? (payload as any).tenantId);
-
-    requestHeaders.set("x-tenant-id", payload.tenant_id);
-
-
-    requestHeaders.set("x-tenant-id", payload.tenant_id);
 
     requestHeaders.set("x-user-role", payload.role);
     return NextResponse.next({ request: { headers: requestHeaders } });

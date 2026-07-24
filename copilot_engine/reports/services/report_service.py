@@ -42,6 +42,10 @@ from copilot_engine.reports.schemas.report_schema import (
     ReportSchema,
 )
 
+print("=" * 80)
+print("LOADED:", __file__)
+print("=" * 80)
+
 logger = logging.getLogger(__name__)
 
 
@@ -135,6 +139,7 @@ class ReportService:
         filename: Optional[str] = None,
     ) -> str:
 
+        print(">>> NEW ROUTE EXECUTED <<<")
         return await cls._generate(
             context_builder=StudentReportContext(),
             builder=StudentPerformanceReportBuilder(),
