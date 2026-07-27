@@ -4,7 +4,7 @@ export function authHeaders(): HeadersInit {
   let token: string | null = null;
   let tenantId: string | null = null;
   try {
-    const raw   = localStorage.getItem("coachgenie-auth");
+    const raw   = localStorage.getItem("coachgenie-ui");
     const state = raw ? JSON.parse(raw)?.state : null;
     token    = state?.accessToken ?? null;
     tenantId = state?.tenantId    ?? null;

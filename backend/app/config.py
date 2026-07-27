@@ -13,9 +13,9 @@ class Settings(BaseSettings):
         "https://coachgenie-frontend.onrender.com,"
         "https://thecoachgenie.in,"
         "https://www.thecoachgenie.in,"
-        "https://app.thecoachgenie.in",
-        "https://coachgenie-backend-51uq.onrender.com",
-        "https://coachgenie-copilotai.onrender.com"
+        "https://app.thecoachgenie.in,"
+        "https://coachgenie-backend-51uq.onrender.com,"
+        "https://coachgenie-copilotai.onrender.com,"
     )
 
     @property
@@ -79,7 +79,6 @@ class Settings(BaseSettings):
 
 
 
-settings = Settings()
 settings = Settings()
 # Module-level aliases for direct imports
 SECRET_KEY = settings.SECRET_KEY
