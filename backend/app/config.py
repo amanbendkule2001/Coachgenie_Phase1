@@ -13,7 +13,9 @@ class Settings(BaseSettings):
         "https://coachgenie-frontend.onrender.com,"
         "https://thecoachgenie.in,"
         "https://www.thecoachgenie.in,"
-        "https://app.thecoachgenie.in"
+        "https://app.thecoachgenie.in",
+        "https://coachgenie-backend-51uq.onrender.com",
+        "https://coachgenie-copilotai.onrender.com",
     )
 
     @property
