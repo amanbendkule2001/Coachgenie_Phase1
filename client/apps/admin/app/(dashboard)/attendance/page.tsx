@@ -10,6 +10,7 @@ import { useAcademicStore }     from "@/lib/stores/academic.store";
 import { AttendanceGrid }       from "@/components/attendance/AttendanceGrid";
 import { useAttendanceSession } from "@/hooks/useAttendanceSession";
 import { authHeaders } from "@/lib/auth-headers";
+import { copilotApi } from "@/lib/copilot-api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -235,103 +236,70 @@ export default function AttendancePage() {
 
   async function handleGenerateAttendanceReport() {
 
-    if (!selectedBatch) {
-
-      toast.error("Please select a batch first");
-
-      return;
-    }
-
-    try {
-
-      toast.loading(
-        "Generating attendance report...",
-        {
-          id: "attendance-report",
-        }
-      );
-
-      const response = await fetch(
-        "https://coachgenie-phase1-s227.onrender.com/reports/attendance-report",
-        {
-          method: "POST",
-
-          headers: {
-            ...authHeaders(),
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            attendance_data: {
-              batch_id: selectedBatch,
-              date,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-
-        let errorMessage =
-          "Failed to generate attendance report";
-
-        try {
-
-          const err = await response.json();
-
-          errorMessage =
-            err.detail ||
-            err.message ||
-            errorMessage;
-
-        } catch {}
-
-        throw new Error(errorMessage);
-      }
-
-      // ✅ GET PDF BLOB
-      const blob = await response.blob();
-
-      // ✅ CREATE TEMP URL
-      const url =
-        window.URL.createObjectURL(blob);
-
-      // ✅ CREATE DOWNLOAD LINK
-      const a =
-        document.createElement("a");
-
-      a.href = url;
-
-      a.download =
-        `attendance_report_${Date.now()}.pdf`;
-
-      document.body.appendChild(a);
-
-      a.click();
-
-      a.remove();
-
-      // ✅ CLEANUP
-      window.URL.revokeObjectURL(url);
-
-      toast.success(
-        "Attendance report downloaded!",
-        {
-          id: "attendance-report",
-        }
-      );
-
-    } catch (err: any) {
-
-      toast.error(
-        err.message ??
-        "Failed to generate attendance report",
-        {
-          id: "attendance-report",
-        }
-      );
-    }
+  if (!selectedBatch) {
+    toast.error("Please select a batch first");
+    return;
   }
+
+  try {
+
+    toast.loading(
+      "Generating attendance report...",
+      {
+        id: "attendance-report",
+      }
+    );
+
+    const response =
+      await copilotApi.post(
+        "/reports/attendance-report",
+        {
+          batch_id: selectedBatch,
+        }
+      );
+
+    const blob =
+      await response.blob();
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      `attendance_report_${Date.now()}.pdf`;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    toast.success(
+      "Attendance report downloaded!",
+      {
+        id: "attendance-report",
+      }
+    );
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    toast.error(
+      err?.message ??
+      "Failed to generate attendance report",
+      {
+        id: "attendance-report",
+      }
+    );
+  }
+}
 
   return (
     <div className="space-y-5">

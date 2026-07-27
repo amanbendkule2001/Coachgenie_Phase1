@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
 import type { Batch } from "@/lib/types/academic";
+import { copilotApi } from "@/lib/copilot-api";
 
 async function parseErrorDetail(res: Response): Promise<string> {
   const text = await res.text();
@@ -331,91 +332,46 @@ export default function BatchesPage() {
   }
 
   async function handleGenerateReport(batch: Batch) {
+  try {
+    setGeneratingReport(batch.id);
 
-    try {
-
-      setGeneratingReport(batch.id);
-
-      const response = await fetch(
-        "https://coachgenie-phase1-s227.onrender.com/reports/batch-performance",
-        {
-          method: "POST",
-
-          headers: {
-            ...authHeaders(),
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            batch_data: {
-              batch_id: batch.id,
-              batch_name: batch.name,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-
-        let errorMessage =
-          "Failed to generate batch report";
-
-        try {
-
-          const err = await response.json();
-
-          errorMessage =
-            err.detail ||
-            err.message ||
-            errorMessage;
-
-        } catch {}
-
-        throw new Error(errorMessage);
+    const response = await copilotApi.post(
+      "/reports/batch-performance",
+      {
+        batch_id: batch.id,
       }
+    );
 
-      // ✅ PDF BLOB
-      const blob =
-        await response.blob();
+    const blob = await response.blob();
 
-      // ✅ TEMP URL
-      const url =
-        window.URL.createObjectURL(blob);
+    const url = window.URL.createObjectURL(blob);
 
-      // ✅ DOWNLOAD LINK
-      const a =
-        document.createElement("a");
+    const a = document.createElement("a");
 
-      a.href = url;
+    a.href = url;
 
-      a.download =
-        `batch_report_${batch.name}_${Date.now()}.pdf`;
+    a.download = `batch-report-${batch.name}.pdf`;
 
-      document.body.appendChild(a);
+    document.body.appendChild(a);
 
-      a.click();
+    a.click();
 
-      a.remove();
+    a.remove();
 
-      // ✅ CLEANUP
-      window.URL.revokeObjectURL(url);
+    window.URL.revokeObjectURL(url);
 
-      toast.success(
-        "Batch report downloaded!"
-      );
+    toast.success("Batch report downloaded!");
+  } catch (err: any) {
+    console.error(err);
 
-    } catch (err: any) {
-
-      toast.error(
-        err.message ??
-        "Failed to generate report"
-      );
-
-    } finally {
-
-      setGeneratingReport(null);
-    }
+    toast.error(
+      err?.message ??
+      "Failed to generate batch report"
+    );
+  } finally {
+    setGeneratingReport(null);
   }
+}
 
   // ── Filtered list ─────────────────────────────────────────
   const subjects = ["ALL", ...Array.from(new Set(batches.map(b => b.subject).filter(Boolean)))];

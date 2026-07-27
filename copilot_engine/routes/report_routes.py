@@ -73,14 +73,14 @@ async def generate_student_report(
 
             db=db,
 
-            tenant_id=str(tenant.id),
+            tenant_id=str(tenant),
 
             student_id=payload.student_id,
 
         )
 
         print(">>> NEW REPORT SERVICE <<<")
-        print(f"student_id={student_id}")
+        print(f"student_id={payload.student_id}")
         return FileResponse(
 
             path=pdf_path,
@@ -120,7 +120,7 @@ async def generate_batch_report(
 
             db=db,
 
-            tenant_id=str(tenant.id),
+            tenant_id=str(tenant),
 
             batch_id=payload.batch_id,
 
@@ -165,7 +165,7 @@ async def generate_attendance_report(
 
             db=db,
 
-            tenant_id=str(tenant.id),
+            tenant_id=str(tenant),
 
             batch_id=payload.batch_id,
 
@@ -210,7 +210,7 @@ async def generate_admission_report(
 
             db=db,
 
-            tenant_id=str(tenant.id),
+            tenant_id=str(tenant),
 
         )
 

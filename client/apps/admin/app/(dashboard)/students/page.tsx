@@ -4,42 +4,40 @@ import { Plus, X, RefreshCw, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
-import { StudentTable }     from "@/components/students/StudentTable";
+import { StudentTable } from "@/components/students/StudentTable";
 import { StudentForm, type StudentFormValues } from "@/components/students/StudentForm";
 import type { Student } from "@/lib/types/academic";
+import { copilotApi } from "@/lib/copilot-api";
+import { authHeaders } from "@/lib/auth-headers";
 
 // -- API helpers ----------------------------------------------------------------
-const API = "/api/proxy"
-
-function authHeaders(): HeadersInit {
-  return { "Content-Type": "application/json" };
-}
+const API = "/api/proxy";
 
 
 /** Compute fee summary from invoices array */
 function computeFees(invoices: any[]) {
-  const total = invoices.reduce((s, i) => s + parseFloat(i.amount_due  ?? 0), 0);
-  const paid  = invoices.reduce((s, i) => s + parseFloat(i.amount_paid ?? 0), 0);
+  const total = invoices.reduce((s, i) => s + parseFloat(i.amount_due ?? 0), 0);
+  const paid = invoices.reduce((s, i) => s + parseFloat(i.amount_paid ?? 0), 0);
   return { total, paid, due: total - paid };
 }
 
 /** Map raw API StudentOut ? frontend Student shape */
 function mapStudent(raw: any, fees?: { total: number; paid: number; due: number }): Student {
   return {
-    id:          String(raw.id),
-    name:        `${raw.first_name ?? ""} ${raw.last_name ?? ""}`.trim(),
-    email:       raw.email         ?? "",
-    phone:       raw.phone         ?? "",
-    parentName:  raw.parent_name   ?? "",
-    parentPhone: raw.parent_phone  ?? "",
+    id: String(raw.id),
+    name: `${raw.first_name ?? ""} ${raw.last_name ?? ""}`.trim(),
+    email: raw.email ?? "",
+    phone: raw.phone ?? "",
+    parentName: raw.parent_name ?? "",
+    parentPhone: raw.parent_phone ?? "",
     grade: (raw.current_class ?? "").replace(/th|st|nd|rd$/i, ""),
     subjects: raw.subjects ?? [],
-    batchIds:    raw.batch_ids     ?? [],
-    status:      raw.is_active === false ? "INACTIVE" : "ACTIVE",
-    address:     raw.address       ?? "",
-    dob:         raw.date_of_birth ?? "",
-    joinedAt:    raw.joined_at     ?? raw.created_at ?? new Date().toISOString(),
-    ...({admissionId: raw.admission_id  ?? null} as any),
+    batchIds: raw.batch_ids ?? [],
+    status: raw.is_active === false ? "INACTIVE" : "ACTIVE",
+    address: raw.address ?? "",
+    dob: raw.date_of_birth ?? "",
+    joinedAt: raw.joined_at ?? raw.created_at ?? new Date().toISOString(),
+    ...({ admissionId: raw.admission_id ?? null } as any),
     fees: fees ?? { total: 0, paid: 0, due: 0 },
     targetExam: raw.target_exam ?? "",
   };
@@ -49,9 +47,9 @@ function mapStudent(raw: any, fees?: { total: number; paid: number; due: number 
 export default function StudentsPage() {
   const { students, setStudents, addStudent, updateStudent } = useAcademicStore();
 
-  const [showForm,    setShowForm]    = useState(false);
-  const [loading,     setLoading]     = useState(true);
-  const [fetchError,  setFetchError]  = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
 
   // -- Fetch students + their fee summaries ----------------------------------
@@ -67,33 +65,33 @@ export default function StudentsPage() {
       const admissionStudents = raw;
 
       const enriched = await Promise.all(
-  admissionStudents.map(async (s) => {
-    let fees = { total: 0, paid: 0, due: 0 };
-    try {
-      const fRes = await fetch(`${API}/fees/student/${s.id}`, { headers: authHeaders() });
-      const fJson = fRes.ok ? await fRes.json() : {};
-      const invoices: any[] = Array.isArray(fJson)
-        ? fJson
-        : (fJson.data ?? fJson.items ?? []);
+        admissionStudents.map(async (s) => {
+          let fees = { total: 0, paid: 0, due: 0 };
+          try {
+            const fRes = await fetch(`${API}/fees/student/${s.id}`, { headers: authHeaders() });
+            const fJson = fRes.ok ? await fRes.json() : {};
+            const invoices: any[] = Array.isArray(fJson)
+              ? fJson
+              : (fJson.data ?? fJson.items ?? []);
 
-      if (invoices.length > 0) {
-        fees = computeFees(invoices);
-      } else if (s.admission_id) {
-        // No invoice yet � fallback to fee fields on the linked admission
-        const aRes = await fetch(`${API}/admissions/${s.admission_id}`, { headers: authHeaders() });
-        if (aRes.ok) {
-          const aJson = await aRes.json();
-          const adm   = aJson.data ?? aJson;
-          const total = parseFloat(adm.fee_amount ?? 0);
-          const paid  = parseFloat(adm.fee_paid  ?? 0);
-          fees = { total, paid, due: total - paid };
-        }
-      }
-    } catch {}
+            if (invoices.length > 0) {
+              fees = computeFees(invoices);
+            } else if (s.admission_id) {
+              // No invoice yet � fallback to fee fields on the linked admission
+              const aRes = await fetch(`${API}/admissions/${s.admission_id}`, { headers: authHeaders() });
+              if (aRes.ok) {
+                const aJson = await aRes.json();
+                const adm = aJson.data ?? aJson;
+                const total = parseFloat(adm.fee_amount ?? 0);
+                const paid = parseFloat(adm.fee_paid ?? 0);
+                fees = { total, paid, due: total - paid };
+              }
+            }
+          } catch { }
 
-    return { ...s, _fees: fees };
-  })
-);
+          return { ...s, _fees: fees };
+        })
+      );
 
       setStudents(enriched.map((s) => mapStudent(s, s._fees)));
     } catch (err: any) {
@@ -110,40 +108,40 @@ export default function StudentsPage() {
   // -- Create -----------------------------------------------------------------
   async function handleCreate(data: StudentFormValues) {
     try {
-      const nameParts  = (data.name ?? "").trim().split(" ");
+      const nameParts = (data.name ?? "").trim().split(" ");
       const first_name = nameParts[0] ?? "";
-      const last_name  = nameParts.slice(1).join(" ") || "";
+      const last_name = nameParts.slice(1).join(" ") || "";
 
       const res = await fetch(`${API}/students/`, {
-        method:  "POST",
+        method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
           enrollment_no: `STU-${Date.now()}`,
           first_name,
           last_name,
-          email:         data.email       || undefined,
-          phone:         data.phone       || undefined,
-          parent_name:   data.parentName  || undefined,
-          parent_phone:  data.parentPhone || undefined,
-          current_class: data.grade       || undefined,
-          address:       data.address     || undefined,
-          date_of_birth: data.dob         || undefined,
-          target_exam:   data.targetExam  || undefined,
-          school_name:   data.schoolName  || undefined,
-          gender:        data.gender      || undefined,
-          subjects:      [],
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+          parent_name: data.parentName || undefined,
+          parent_phone: data.parentPhone || undefined,
+          current_class: data.grade || undefined,
+          address: data.address || undefined,
+          date_of_birth: data.dob || undefined,
+          target_exam: data.targetExam || undefined,
+          school_name: data.schoolName || undefined,
+          gender: data.gender || undefined,
+          subjects: [],
         }),
       });
 
       if (!res.ok) {
-        const err    = await res.json().catch(() => ({}));
+        const err = await res.json().catch(() => ({}));
         const detail = Array.isArray(err.detail)
           ? err.detail.map((e: any) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join(", ")
           : (err.detail ?? "Failed to create student");
         throw new Error(detail);
       }
 
-      const json    = await res.json();
+      const json = await res.json();
       const created = json.data ?? json;
       addStudent(mapStudent(created));
       toast.success("Student created!");
@@ -157,39 +155,39 @@ export default function StudentsPage() {
   async function handleUpdate(data: StudentFormValues) {
     if (!editStudent) return;
     try {
-      const nameParts  = (data.name ?? "").trim().split(" ");
+      const nameParts = (data.name ?? "").trim().split(" ");
       const first_name = nameParts[0] ?? "";
-      const last_name  = nameParts.slice(1).join(" ") || "";
+      const last_name = nameParts.slice(1).join(" ") || "";
 
       const res = await fetch(`${API}/students/${editStudent.id}`, {
-        method:  "PATCH",
+        method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({
           first_name,
           last_name,
-          email:         data.email       || undefined,
-          phone:         data.phone       || undefined,
-          parent_name:   data.parentName  || undefined,
-          parent_phone:  data.parentPhone || undefined,
-          current_class: data.grade       || undefined,
-          address:       data.address     || undefined,
-          date_of_birth: data.dob         || undefined,
-          target_exam:   data.targetExam  || undefined,
-          school_name:   data.schoolName  || undefined,
-          gender:        data.gender      || undefined,
-          subjects:      [],
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+          parent_name: data.parentName || undefined,
+          parent_phone: data.parentPhone || undefined,
+          current_class: data.grade || undefined,
+          address: data.address || undefined,
+          date_of_birth: data.dob || undefined,
+          target_exam: data.targetExam || undefined,
+          school_name: data.schoolName || undefined,
+          gender: data.gender || undefined,
+          subjects: [],
         }),
       });
 
       if (!res.ok) {
-        const err    = await res.json().catch(() => ({}));
+        const err = await res.json().catch(() => ({}));
         const detail = Array.isArray(err.detail)
           ? err.detail.map((e: any) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join(", ")
           : (err.detail ?? "Failed to update student");
         throw new Error(detail);
       }
 
-      const json    = await res.json();
+      const json = await res.json();
       const updated = json.data ?? json;
       updateStudent(editStudent.id, mapStudent(updated, editStudent.fees));
       toast.success("Student updated!");
@@ -203,7 +201,7 @@ export default function StudentsPage() {
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`${API}/students/${id}`, {
-        method:  "DELETE",
+        method: "DELETE",
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error("Failed to deactivate student");
@@ -215,10 +213,125 @@ export default function StudentsPage() {
   }
 
   // -- Generate Student Report -----------------------------------------------
-async function handleGenerateStudentReport() {
+  // async function handleGenerateStudentReport() {
 
+  //   try {
+
+  //     toast.loading("Generating student report...", {
+  //       id: "student-report",
+  //     });
+
+  //     // =====================================================
+  //     // FETCH STUDENTS
+  //     // =====================================================
+
+  //     const studentsRes = await fetch(`${API}/students/`, {
+  //       headers: authHeaders(),
+  //     });
+
+  //     if (!studentsRes.ok) {
+
+  //       throw new Error(
+  //         "Failed to fetch students"
+  //       );
+  //     }
+
+  //     const studentsJson = await studentsRes.json();
+
+  //     const studentsData = Array.isArray(studentsJson)
+  //       ? studentsJson
+  //       : (
+  //         studentsJson.data ??
+  //         studentsJson.items ??
+  //         []
+  //       );
+
+  //     // =====================================================
+  //     // GENERATE REPORT
+  //     // =====================================================
+
+  //     const res = await copilotApi.post(
+  //       "/reports/student-performance",
+  //       {
+  //         method: "POST",
+
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           student_id: studentsData[0].id,
+  //         }),
+  //       }
+  //     );
+
+  //     // =====================================================
+  //     // HANDLE BACKEND ERRORS
+  //     // =====================================================
+
+  //     if (!res.ok) {
+
+  //       const errorText =
+  //         await res.text();
+
+  //       throw new Error(
+  //         errorText ||
+  //         "Failed to generate student report"
+  //       );
+  //     }
+
+  //     // =====================================================
+  //     // DOWNLOAD PDF
+  //     // =====================================================
+
+  //     const blob = await res.blob();
+
+  //     const downloadUrl =
+  //       window.URL.createObjectURL(blob);
+
+  //     const link =
+  //       document.createElement("a");
+
+  //     link.href = downloadUrl;
+
+  //     link.download =
+  //       `student-report-${Date.now()}.pdf`;
+
+  //     document.body.appendChild(link);
+
+  //     link.click();
+
+  //     link.remove();
+
+  //     window.URL.revokeObjectURL(
+  //       downloadUrl
+  //     );
+
+  //     toast.success(
+  //       "Student report downloaded!",
+  //       {
+  //         id: "student-report",
+  //       }
+  //     );
+
+  //   } catch (err: any) {
+
+  //     console.error(
+  //       "Student report error:",
+  //       err
+  //     );
+
+  //     toast.error(
+  //       err?.message ??
+  //       "Failed to generate student report",
+  //       {
+  //         id: "student-report",
+  //       }
+  //     );
+  //   }
+  // }
+
+  async function handleGenerateStudentReport() {
   try {
-
     toast.loading("Generating student report...", {
       id: "student-report",
     });
@@ -232,75 +345,54 @@ async function handleGenerateStudentReport() {
     });
 
     if (!studentsRes.ok) {
-
-      throw new Error(
-        "Failed to fetch students"
-      );
+      throw new Error("Failed to fetch students");
     }
 
     const studentsJson = await studentsRes.json();
 
-    const studentsData = Array.isArray(studentsJson)
+    const students = Array.isArray(studentsJson)
       ? studentsJson
-      : (
-          studentsJson.data ??
-          studentsJson.items ??
-          []
-        );
+      : studentsJson.data ??
+        studentsJson.items ??
+        [];
+
+    if (!students.length) {
+      throw new Error("No students found");
+    }
+
+    // =====================================================
+    // SELECT STUDENT
+    // =====================================================
+
+    // Current implementation:
+    // Generates report for the first student.
+    // Later this can come from a selected row.
+
+    const studentId = students[0].id;
 
     // =====================================================
     // GENERATE REPORT
     // =====================================================
 
     const res = await fetch(
-      "https://coachgenie-phase1-s227.onrender.com/reports/student-performance",
+      `${process.env.NEXT_PUBLIC_COPILOT_URL}/reports/student-performance`,
       {
         method: "POST",
 
         headers: {
+          ...authHeaders(),
           "Content-Type": "application/json",
         },
 
         body: JSON.stringify({
-          student_data: {
-            generated_at: new Date().toISOString(),
-
-            total_students:
-              studentsData.length,
-
-            students: studentsData.map(
-              (s: any) => ({
-                id: s.id,
-                first_name: s.first_name,
-                last_name: s.last_name,
-                email: s.email,
-                phone: s.phone,
-                current_class: s.current_class,
-                target_exam: s.target_exam,
-                parent_name: s.parent_name,
-                parent_phone: s.parent_phone,
-                is_active: s.is_active,
-                joined_at: s.joined_at,
-              })
-            ),
-          },
+          student_id: studentId,
         }),
       }
     );
 
-    // =====================================================
-    // HANDLE BACKEND ERRORS
-    // =====================================================
-
     if (!res.ok) {
-
-      const errorText =
-        await res.text();
-
-      throw new Error(
-        errorText ||
-        "Failed to generate student report"
-      );
+      const error = await res.text();
+      throw new Error(error || "Failed to generate report");
     }
 
     // =====================================================
@@ -309,44 +401,32 @@ async function handleGenerateStudentReport() {
 
     const blob = await res.blob();
 
-    const downloadUrl =
-      window.URL.createObjectURL(blob);
+    const url = window.URL.createObjectURL(blob);
 
-    const link =
-      document.createElement("a");
+    const a = document.createElement("a");
 
-    link.href = downloadUrl;
+    a.href = url;
 
-    link.download =
-      `student-report-${Date.now()}.pdf`;
+    a.download = `student-report-${studentId}.pdf`;
 
-    document.body.appendChild(link);
+    document.body.appendChild(a);
 
-    link.click();
+    a.click();
 
-    link.remove();
+    a.remove();
 
-    window.URL.revokeObjectURL(
-      downloadUrl
-    );
+    window.URL.revokeObjectURL(url);
 
-    toast.success(
-      "Student report downloaded!",
-      {
-        id: "student-report",
-      }
-    );
+    toast.success("Student report downloaded!", {
+      id: "student-report",
+    });
 
   } catch (err: any) {
 
-    console.error(
-      "Student report error:",
-      err
-    );
+    console.error("Student report error:", err);
 
     toast.error(
-      err?.message ??
-      "Failed to generate student report",
+      err?.message ?? "Failed to generate student report",
       {
         id: "student-report",
       }
@@ -460,15 +540,15 @@ async function handleGenerateStudentReport() {
                 onSubmit={handleUpdate}
                 onCancel={() => setEditStudent(null)}
                 defaultValues={{
-                  name:        editStudent.name,
-                  email:       editStudent.email,
-                  phone:       editStudent.phone,
-                  parentName:  editStudent.parentName,
+                  name: editStudent.name,
+                  email: editStudent.email,
+                  phone: editStudent.phone,
+                  parentName: editStudent.parentName,
                   parentPhone: editStudent.parentPhone,
-                  grade:       editStudent.grade,
-                  address:     editStudent.address,
-                  dob:         editStudent.dob,
-                  subjects:    [],
+                  grade: editStudent.grade,
+                  address: editStudent.address,
+                  dob: editStudent.dob,
+                  subjects: [],
                 }}
               />
             </div>
@@ -478,4 +558,3 @@ async function handleGenerateStudentReport() {
     </div>
   );
 }
-
