@@ -141,7 +141,7 @@ class ReportService:
 
         print(">>> NEW ROUTE EXECUTED <<<")
         return await cls._generate(
-            context_builder=StudentReportContext(),
+            context_builder=StudentReportContext(db = db),
             builder=StudentPerformanceReportBuilder(),
             filename=filename,
             context_kwargs={
@@ -166,7 +166,7 @@ class ReportService:
     ) -> str:
 
         return await cls._generate(
-            context_builder=BatchReportContext(),
+            context_builder=BatchReportContext(db=db),
             builder=BatchPerformanceReportBuilder(),
             filename=filename,
             context_kwargs={
@@ -191,7 +191,7 @@ class ReportService:
     ) -> str:
 
         return await cls._generate(
-            context_builder=AttendanceReportContext(),
+            context_builder=AttendanceReportContext(db=db),
             builder=AttendanceReportBuilder(),
             filename=filename,
             context_kwargs={
@@ -215,7 +215,7 @@ class ReportService:
     ) -> str:
 
         return await cls._generate(
-            context_builder=AdmissionReportContext(),
+            context_builder=AdmissionReportContext(db=db),
             builder=AdminReportBuilder(),
             filename=filename,
             context_kwargs={
