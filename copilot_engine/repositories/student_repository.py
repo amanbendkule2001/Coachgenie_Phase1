@@ -8,6 +8,13 @@ from copilot_engine.schemas.request_context import (
     RequestContext,
 )
 
+from copilot_engine.services import (
+    student_service,
+    exam_service,
+    fee_service,
+    growth_service,
+)
+
 
 class StudentRepository:
     """
