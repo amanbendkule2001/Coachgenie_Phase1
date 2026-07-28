@@ -145,7 +145,6 @@ class ReportService:
             builder=StudentPerformanceReportBuilder(),
             filename=filename,
             context_kwargs={
-                "db": db,
                 "tenant_id": tenant_id,
                 "student_id": student_id,
             },
@@ -170,7 +169,6 @@ class ReportService:
             builder=BatchPerformanceReportBuilder(),
             filename=filename,
             context_kwargs={
-                "db": db,
                 "tenant_id": tenant_id,
                 "batch_id": batch_id,
             },
@@ -195,7 +193,6 @@ class ReportService:
             builder=AttendanceReportBuilder(),
             filename=filename,
             context_kwargs={
-                "db": db,
                 "tenant_id": tenant_id,
                 "batch_id": batch_id,
             },
@@ -219,7 +216,6 @@ class ReportService:
             builder=AdminReportBuilder(),
             filename=filename,
             context_kwargs={
-                "db": db,
                 "tenant_id": tenant_id,
             },
         )
