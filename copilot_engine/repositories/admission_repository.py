@@ -10,9 +10,9 @@ from copilot_engine.schemas.request_context import (
     RequestContext,
 )
 
-from copilot_engine.services import (
-    admission_service,
-)
+# from copilot_engine.services import (
+#     admission_service,
+# )
 
 
 class AdmissionRepository:
