@@ -1,3 +1,5 @@
+# copilot_engine/reports/builders/base_report_builder.py
+
 from __future__ import annotations
 
 import json
@@ -6,7 +8,7 @@ from datetime import datetime
 
 from copilot_engine.core.logging_config import logging
 
-from copilot_engine.llm.model_router import (
+from copilot_engine.core.model_router import (
     ModelRouter,
 )
 
@@ -77,12 +79,12 @@ class BaseReportBuilder(ABC):
         )
 
         response = await self.provider.generate(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
+            prompt=prompt,
+            system_prompt=(
+                "You are Coach Genie AI, an expert at generating clear, "
+                "actionable educational reports for coaching institutes. "
+                "Write in a professional, parent- and student-friendly tone."
+            ),
             temperature=self.DEFAULT_TEMPERATURE,
             max_tokens=self.DEFAULT_MAX_TOKENS,
         )
