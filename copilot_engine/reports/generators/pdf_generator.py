@@ -369,6 +369,10 @@ from reportlab.platypus import (
     Paragraph,
     SimpleDocTemplate,
     Spacer,
+    ListFlowable,
+    ListItem,
+    Table,
+    TableStyle,
 )
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -779,6 +783,21 @@ class PDFGenerator:
         )
 
         return styles
+    
+    # ------------------------------------------------------
+    # Quote
+    # ------------------------------------------------------
+
+    styles.add(
+        ParagraphStyle(
+            name="Quote",
+            parent=styles["Body"],
+            fontName="Helvetica-Oblique",
+            textColor=colors.HexColor("#4B5563"),
+            leftIndent=20,
+            spaceAfter=10,
+        )
+    )
     
     @classmethod
     def _render_html(
