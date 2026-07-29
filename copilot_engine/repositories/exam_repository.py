@@ -1,12 +1,16 @@
+# copilot_engine/repositories/exam_repository.py
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from from copilot_engine.services.backend_client import (
+from copilot_engine.services.backend_client import (
     BackendClient,
 )
 
 from copilot_engine.schemas.request_context import (
     RequestContext,
-)app.services import exam as exam_service
+)
+
+from app.services import exam as exam_service
 
 
 class ExamRepository:

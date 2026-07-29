@@ -3,7 +3,7 @@
 # copilot_engine/repositories/student_repository.py
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, inspect
 
 from copilot_engine.models.report_models import (
     StudentRead,
@@ -13,6 +13,16 @@ from copilot_engine.models.report_models import (
     FeeInvoiceRead,
     GrowthCardRead,
 )
+
+
+def _to_dict(obj) -> dict:
+    """Convert a SQLAlchemy model instance into a plain JSON-safe dict."""
+    if obj is None:
+        return {}
+    return {
+        col.key: getattr(obj, col.key)
+        for col in inspect(obj).mapper.column_attrs
+    }
 
 
 class StudentRepository:
@@ -25,7 +35,7 @@ class StudentRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_student(self, tenant_id: str, student_id: str):
+    async def get_student(self, tenant_id: str, student_id: str) -> dict:
         result = await self.db.execute(
             select(StudentRead).where(
                 and_(
@@ -34,7 +44,8 @@ class StudentRepository:
                 )
             )
         )
-        return result.scalar_one_or_none()
+        student = result.scalar_one_or_none()
+        return _to_dict(student)
 
     async def get_attendance_summary(self, tenant_id: str, student_id: str) -> dict:
         result = await self.db.execute(
@@ -66,7 +77,7 @@ class StudentRepository:
                 )
             )
         )
-        return result.scalars().all()
+        return [_to_dict(r) for r in result.scalars().all()]
 
     async def get_fee_summary(self, tenant_id: str, student_id: str) -> dict:
         result = await self.db.execute(
@@ -84,7 +95,7 @@ class StudentRepository:
             "total_due": total_due,
             "total_paid": total_paid,
             "outstanding": total_due - total_paid,
-            "invoices": invoices,
+            "invoices": [_to_dict(i) for i in invoices],
         }
 
     async def get_growth_cards(self, tenant_id: str, student_id: str) -> list:
@@ -98,7 +109,7 @@ class StudentRepository:
             )
             .order_by(GrowthCardRead.created_at.desc())
         )
-        return result.scalars().all()
+        return [_to_dict(c) for c in result.scalars().all()]
 
 # from sqlalchemy.ext.asyncio import AsyncSession
 

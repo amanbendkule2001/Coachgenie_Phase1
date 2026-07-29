@@ -1,12 +1,16 @@
+# copilot_engine/repositories/fee_repository.py
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from from copilot_engine.services.backend_client import (
+from copilot_engine.services.backend_client import (
     BackendClient,
 )
 
 from copilot_engine.schemas.request_context import (
     RequestContext,
-)app.services import fee as fee_service
+)
+
+from app.services import fee as fee_service
 
 
 class FeeRepository:

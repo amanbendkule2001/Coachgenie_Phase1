@@ -1,3 +1,5 @@
+# copilot_engine/repositories/batch_repository.py
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from copilot_engine.services.backend_client import (
