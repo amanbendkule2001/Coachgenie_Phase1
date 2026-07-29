@@ -1,3 +1,5 @@
+# copilot_engine/schemas/report_requests.py
+
 from pydantic import BaseModel
 
 
@@ -12,8 +14,10 @@ class BatchReportRequest(BaseModel):
 
 
 class AttendanceReportRequest(BaseModel):
-
+    
     batch_id: str
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
 
 
 class AdmissionReportRequest(BaseModel):

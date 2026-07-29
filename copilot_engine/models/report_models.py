@@ -18,6 +18,9 @@ from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
 
 from copilot_engine.database.database import Base
 
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Date, SmallInteger
+
 
 class StudentRead(Base):
     __tablename__ = "students"
@@ -100,3 +103,36 @@ class GrowthCardRead(Base):
     improvement_areas: Mapped[str] = mapped_column(Text, nullable=True)
     tutor_remarks: Mapped[str] = mapped_column(Text, nullable=True)
     created_at = mapped_column(TIMESTAMP(timezone=True))
+    
+class BatchRead(Base):
+    __tablename__ = "batches"
+    __table_args__ = {"extend_existing": True}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    name: Mapped[str] = mapped_column(String(150))
+    code: Mapped[str] = mapped_column(String(50), nullable=True)
+    target_exam: Mapped[str] = mapped_column(String(150), nullable=True)
+    academic_year: Mapped[str] = mapped_column(String(20))
+    capacity: Mapped[int] = mapped_column(SmallInteger)
+    is_active: Mapped[bool] = mapped_column(Boolean)
+    schedule = mapped_column(JSONB, nullable=True)
+    subjects = mapped_column(JSONB, nullable=True)
+
+
+class BatchStudentRead(Base):
+    __tablename__ = "batch_students"
+    __table_args__ = {"extend_existing": True}
+
+    batch_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+
+
+class ClassRead(Base):
+    __tablename__ = "classes"
+    __table_args__ = {"extend_existing": True}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    batch_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    title: Mapped[str] = mapped_column(String(200))

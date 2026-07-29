@@ -148,50 +148,57 @@ async def generate_batch_report(
 
         )
         
+
 @router.post("/attendance-report")
 async def generate_attendance_report(
-
     payload: AttendanceReportRequest,
-
     db: AsyncSession = Depends(get_db),
-
     tenant = Depends(get_tenant_id),
-
 ):
-
     try:
+        to_date = payload.to_date or date.today().isoformat()
+        from_date = payload.from_date or (date.today() - timedelta(days=30)).isoformat()
 
         pdf_path = await ReportService.generate_attendance_report(
-
             db=db,
-
             tenant_id=str(tenant),
-
             batch_id=payload.batch_id,
-
+            from_date=from_date,
+            to_date=to_date,
         )
 
         return FileResponse(
-
             path=pdf_path,
-
             media_type="application/pdf",
-
             filename=os.path.basename(pdf_path),
-
         )
 
     except Exception as exc:
-
         logger.exception("Attendance report generation failed")
-
-        raise HTTPException(
-
-            status_code=500,
-
-            detail=str(exc),
-
-        )
+        raise HTTPException(status_code=500, detail=str(exc))
+    
+@classmethod
+async def generate_attendance_report(
+    cls,
+    *,
+    db: AsyncSession,
+    tenant_id: str,
+    batch_id: str,
+    from_date: str,
+    to_date: str,
+    filename: Optional[str] = None,
+) -> str:
+    return await cls._generate(
+        context_builder=AttendanceReportContext(db=db),
+        builder=AttendanceReportBuilder(),
+        filename=filename,
+        context_kwargs={
+            "tenant_id": tenant_id,
+            "batch_id": batch_id,
+            "from_date": from_date,
+            "to_date": to_date,
+        },
+    )    
         
 @router.post("/admission-report")
 async def generate_admission_report(
