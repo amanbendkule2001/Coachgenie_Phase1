@@ -784,20 +784,20 @@ class PDFGenerator:
 
         return styles
     
-    # ------------------------------------------------------
-    # Quote
-    # ------------------------------------------------------
+        # ------------------------------------------------------
+        # Quote
+        # ------------------------------------------------------
 
-    styles.add(
-        ParagraphStyle(
-            name="Quote",
-            parent=styles["Body"],
-            fontName="Helvetica-Oblique",
-            textColor=colors.HexColor("#4B5563"),
-            leftIndent=20,
-            spaceAfter=10,
+        styles.add(
+            ParagraphStyle(
+                name="Quote",
+                parent=styles["Body"],
+                fontName="Helvetica-Oblique",
+                textColor=colors.HexColor("#4B5563"),
+                leftIndent=20,
+                spaceAfter=10,
+            )
         )
-    )
     
     @classmethod
     def _render_html(
