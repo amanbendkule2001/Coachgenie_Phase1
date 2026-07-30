@@ -185,6 +185,8 @@ class ReportService:
         db: AsyncSession,
         tenant_id: str,
         batch_id: str,
+        from_date: str,
+        to_date: str,
         filename: Optional[str] = None,
     ) -> str:
 
@@ -195,6 +197,8 @@ class ReportService:
             context_kwargs={
                 "tenant_id": tenant_id,
                 "batch_id": batch_id,
+                "from_date": from_date,
+                "to_date": to_date,
             },
         )
 
