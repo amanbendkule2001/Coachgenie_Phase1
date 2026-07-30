@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     BACKEND_API_TIMEOUT: int = 30
 
     INTERNAL_API_KEY: Optional[str] = None
+    
+    PUBLIC_BASE_URL: str = os.getenv("PUBLIC_BASE_URL", "https://coachgenie-copilotai.onrender.com")
 
     # =====================================================
     # DATABASE

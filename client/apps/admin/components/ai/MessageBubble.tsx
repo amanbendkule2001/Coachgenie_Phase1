@@ -1,4 +1,4 @@
-
+// client/apps/admin/components/ai/MessageBubble.tsx
 
 "use client";
 import { Sparkles, User } from "lucide-react";
