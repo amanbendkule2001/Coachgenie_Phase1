@@ -1,6 +1,7 @@
 # copilot_engine/schemas/report_requests.py
 
 from pydantic import BaseModel
+from typing import Optional
 
 
 class StudentReportRequest(BaseModel):
