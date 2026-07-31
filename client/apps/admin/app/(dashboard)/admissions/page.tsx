@@ -452,8 +452,14 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function AdmissionsPage() {
-  const admissions   = useLeadStore((s) => s.admissions) as AdmissionWithPayment[];
-  const addAdmission = useLeadStore((s) => s.addAdmission);
+  // const admissions   = useLeadStore((s) => s.admissions) as AdmissionWithPayment[];
+  // const addAdmission = useLeadStore((s) => s.addAdmission);
+  const admissions = useLeadStore(
+  (s) => s.admissions
+) as AdmissionWithPayment[];
+
+const addAdmission = useLeadStore((s) => s.addAdmission);
+const setAdmissions = useLeadStore((s) => s.setAdmissions);
 
   const [filter,    setFilter]    = useState<Admission["status"] | "ALL">("ALL");
   const [showForm,  setShowForm]  = useState(false);
@@ -461,7 +467,7 @@ export default function AdmissionsPage() {
   const [batches, setBatches] = useState<{ id: string; name: string; subjects: string[] }[]>([]);
 
   // ── fetch batches for dropdown ─────────────────────────────────────────────
-useEffect(() => {
+useEffect (() => {
     async function load() {
       try {
         console.log("Fetching batches from:", `${API}/batches/`);
@@ -573,8 +579,26 @@ try {
       : "Failed to create admission";
     throw new Error(message);
   }
+  // const created: AdmissionWithPayment = json.data ?? json;
+  // addAdmission?.(created);
   const created: AdmissionWithPayment = json.data ?? json;
-  addAdmission?.(created);
+
+addAdmission(created);
+
+// Reload from backend so UI stays in sync
+const listRes = await fetch(`${API}/admissions`, {
+  headers: authHeaders(),
+});
+
+if (listRes.ok) {
+  const listJson = await listRes.json();
+
+  const list = Array.isArray(listJson)
+    ? listJson
+    : (listJson.data ?? listJson.items ?? []);
+
+  setAdmissions(list);
+}
   toast.success("Admission created!");
   setShowForm(false);
 } catch (err: unknown) {
@@ -583,6 +607,46 @@ try {
   setSaving(false);
 }
   }
+
+useEffect(() => {
+  async function loadAdmissions() {
+    try {
+      const res = await fetch(`${API}/admissions`, {
+        headers: authHeaders(),
+      });
+
+      if (!res.ok) {
+        console.error(
+          "Admissions fetch failed:",
+          res.status,
+          res.statusText
+        );
+        return;
+      }
+
+      const json = await res.json();
+
+      const data = Array.isArray(json)
+        ? json
+        : (json.data ?? json.items ?? []);
+
+      setAdmissions(data);
+
+      console.log(
+        "Admissions loaded:",
+        data.length
+      );
+    } catch (err) {
+      console.error(
+        "Admissions fetch error:",
+        err
+      );
+    }
+  }
+
+  loadAdmissions();
+}, [setAdmissions]);  
+
 
   return (
     <div className="space-y-5">
@@ -628,7 +692,8 @@ try {
           const docsTotal  = adm.documents.filter(d => d.required).length;
           const docsOk     = adm.documents.filter(d => d.required && d.submitted).length;
           return (
-            <Link href={`/admissions/${adm.id}`} key={adm.id}
+            <Link data-testid={`admission-card-${adm.id}`}
+ href={`/admissions/${adm.id}`} key={adm.id}
               className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
               <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", cfg.bg)}>
                 <StatusIcon className={cn("h-5 w-5", cfg.color)} />

@@ -1,77 +1,13 @@
-import { useAuthStore } from "@/lib/stores/auth.store";
 
-// const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-// function getHeaders(): HeadersInit {
-//   const token = useAuthStore.getState().accessToken;
-//   return {
-//     "Content-Type":       "application/json",
-//     "X-Tenant-Subdomain": process.env.NEXT_PUBLIC_TENANT_SUBDOMAIN ?? "demo",
-//     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//   };
-// }
-
-// async function handleResponse<T>(res: Response): Promise<T> {
-//   if (res.status === 401) {
-//     useAuthStore.getState().clear();
-//     document.cookie = "cg_access_token=; path=/; max-age=0";
-//     window.location.href = "/login";
-//     throw new Error("Unauthorized");
-//   }
-//   if (!res.ok) {
-//     // const err = await res.json().catch(() => ({})) as { message?: string; detail?: string };
-//     // throw new Error(err.message ?? err.detail ?? `HTTP ${res.status}`);
-//     const err = await res.json().catch(() => ({})) as { message?: string; detail?: string | any[] };
-
-// const detail = Array.isArray(err.detail)
-//   ? err.detail.map((e: any) => e?.msg ?? e?.message ?? JSON.stringify(e)).join(", ")
-//   : err.detail;
-
-// throw new Error(err.message ?? detail ?? `HTTP ${res.status}`);
-//   }
-//   if (res.status === 204) return undefined as T;
-//   return res.json() as Promise<T>;
-// }
-
-// export const api = {
-//   get:    <T>(path: string) =>
-//     fetch(`${BASE}${path}`, { headers: getHeaders() }).then(r => handleResponse<T>(r)),
-
-//   post:   <T>(path: string, body?: unknown) =>
-//     fetch(`${BASE}${path}`, { method: "POST", headers: getHeaders(), body: body !== undefined ? JSON.stringify(body) : undefined }).then(r => handleResponse<T>(r)),
-
-//   patch:  <T>(path: string, body?: unknown) =>
-//     fetch(`${BASE}${path}`, { method: "PATCH", headers: getHeaders(), body: body !== undefined ? JSON.stringify(body) : undefined }).then(r => handleResponse<T>(r)),
-
-//   delete: <T>(path: string) =>
-//     fetch(`${BASE}${path}`, { method: "DELETE", headers: getHeaders() }).then(r => handleResponse<T>(r)),
-// };
 
 // lib/api.ts
 
-// ✅ All calls go to /api/proxy/... (Next.js server reads cookie → forwards Bearer token to FastAPI)
 const BASE = "/api/proxy";
 
 function getHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
   };
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (res.status === 401) {
-    window.location.href = "/login";
-    throw new Error("Unauthorized");
-  }
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { message?: string; detail?: string | any[] };
-    const detail = Array.isArray(err.detail)
-      ? err.detail.map((e: any) => e?.msg ?? e?.message ?? JSON.stringify(e)).join(", ")
-      : err.detail;
-    throw new Error(err.message ?? detail ?? `HTTP ${res.status}`);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
 }
 
 const fetchOpts = (method: string, body?: unknown): RequestInit => ({
@@ -81,13 +17,110 @@ const fetchOpts = (method: string, body?: unknown): RequestInit => ({
   ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
 });
 
+// Ensures concurrent 401s trigger exactly one refresh call, not one per request.
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch("${BASE}/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((res) => res.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+// async function handleResponse<T>(
+//   res: Response,
+//   retryFn: () => Promise<Response>,
+//   isRetry = false
+// ): Promise<T> {
+//   if (res.status === 401) {
+//     if (!isRetry) {
+//       const refreshed = await refreshAccessToken();
+//       if (refreshed) {
+//         const retried = await retryFn();
+//         return handleResponse<T>(retried, retryFn, true);
+//       }
+//     }
+//     window.location.href = "/login";
+//     throw new Error("Unauthorized");
+//   }
+//   if (!res.ok) {
+//     const err = (await res.json().catch(() => ({}))) as { message?: string; detail?: string | any[] };
+//     const detail = Array.isArray(err.detail)
+//       ? err.detail.map((e: any) => e?.msg ?? e?.message ?? JSON.stringify(e)).join(", ")
+//       : err.detail;
+//     throw new Error(err.message ?? detail ?? `HTTP ${res.status}`);
+//   }
+//   if (res.status === 204) return undefined as T;
+//   return res.json() as Promise<T>;
+// }
+async function handleResponse<T>(
+  res: Response,
+  retryFn: () => Promise<Response>,
+  isRetry = false
+): Promise<T> {
+  if (res.status === 401) {
+    if (!isRetry) {
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        const retried = await retryFn();
+        return handleResponse<T>(retried, retryFn, true);
+      }
+    }
+
+    const next = encodeURIComponent(window.location.pathname);
+
+    window.location.replace(
+      `/login?next=${next}&reason=session_expired`
+    );
+
+    throw new Error("Session expired. Redirecting to login.");
+  }
+
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      detail?: string | any[];
+    };
+
+    const detail = Array.isArray(err.detail)
+      ? err.detail
+          .map((e: any) => e?.msg ?? e?.message ?? JSON.stringify(e))
+          .join(", ")
+      : err.detail;
+
+    throw new Error(err.message ?? detail ?? `HTTP ${res.status}`);
+  }
+
+  if (res.status === 204) return undefined as T;
+
+  return res.json() as Promise<T>;
+}
+
+
 export const api = {
-  get:    <T>(path: string) =>
-    fetch(`${BASE}${path}`, fetchOpts("GET")).then(r => handleResponse<T>(r)),
-  post:   <T>(path: string, body?: unknown) =>
-    fetch(`${BASE}${path}`, fetchOpts("POST", body)).then(r => handleResponse<T>(r)),
-  patch:  <T>(path: string, body?: unknown) =>
-    fetch(`${BASE}${path}`, fetchOpts("PATCH", body)).then(r => handleResponse<T>(r)),
-  delete: <T>(path: string) =>
-    fetch(`${BASE}${path}`, fetchOpts("DELETE")).then(r => handleResponse<T>(r)),
+  get: <T>(path: string) => {
+    const doFetch = () => fetch(`${BASE}${path}`, fetchOpts("GET"));
+    return doFetch().then((r) => handleResponse<T>(r, doFetch));
+  },
+  post: <T>(path: string, body?: unknown) => {
+    const doFetch = () => fetch(`${BASE}${path}`, fetchOpts("POST", body));
+    return doFetch().then((r) => handleResponse<T>(r, doFetch));
+  },
+  patch: <T>(path: string, body?: unknown) => {
+    const doFetch = () => fetch(`${BASE}${path}`, fetchOpts("PATCH", body));
+    return doFetch().then((r) => handleResponse<T>(r, doFetch));
+  },
+  delete: <T>(path: string) => {
+    const doFetch = () => fetch(`${BASE}${path}`, fetchOpts("DELETE"));
+    return doFetch().then((r) => handleResponse<T>(r, doFetch));
+  },
 };

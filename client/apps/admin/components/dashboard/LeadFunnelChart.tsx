@@ -13,17 +13,22 @@ export function LeadFunnelChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/leads/funnel")
-      .then((res: any) => {
-        const result = res.data?.data ?? res.data ?? [];
-        setData(Array.isArray(result) ? result : []);
-      })
-      .catch((err: unknown) => {
-        console.error("funnel error:", err);
-        setData([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  api.get("/leads/funnel")
+    .then((res: any) => {
+      console.log("Lead Funnel API:", res.data);
+
+      const result = res.data?.data ?? res.data ?? [];
+
+      console.log("Parsed Funnel:", result);
+
+      setData(Array.isArray(result) ? result : []);
+    })
+    .catch((err) => {
+      console.error(err);
+      setData([]);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   return (
     <div className="rounded-xl border bg-card p-5 shadow-sm fade-in" style={{ animationDelay: "180ms" }}>

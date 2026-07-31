@@ -193,12 +193,23 @@ async def get_classes(db: AsyncSession, tenant_id: str, batch_id: str) -> list:
     return result.scalars().all()
 
 
+# async def create_class(db: AsyncSession, tenant_id: str, data: dict) -> Class:
+#     cls = Class(tenant_id=tenant_id, **data)
+#     db.add(cls)
+#     await db.flush()
+#     return cls
 async def create_class(db: AsyncSession, tenant_id: str, data: dict) -> Class:
+    batch_result = await db.execute(
+        select(Batch).where(
+            and_(Batch.id == data["batch_id"], Batch.tenant_id == tenant_id)
+        )
+    )
+    if not batch_result.scalar_one_or_none():
+        raise NotFoundError("Batch")
     cls = Class(tenant_id=tenant_id, **data)
     db.add(cls)
     await db.flush()
     return cls
-
 
 async def update_class(db: AsyncSession, tenant_id: str,
                        class_id: str, data: dict) -> Class:
@@ -217,25 +228,61 @@ async def update_class(db: AsyncSession, tenant_id: str,
 
 # ── Syllabus Topics (belong to Subject) ───────────────────────
 
-async def get_syllabus_topics(db: AsyncSession, subject_id: str) -> list:
+# async def get_syllabus_topics(db: AsyncSession, subject_id: str) -> list:
+#     result = await db.execute(
+#         select(SyllabusItem)
+#         .where(SyllabusItem.subject_id == subject_id)
+#         .order_by(SyllabusItem.sort_order.asc(), SyllabusItem.created_at.asc())
+#     )
+#     return result.scalars().all()
+async def get_syllabus_topics(db: AsyncSession, tenant_id: str, subject_id: str) -> list:
     result = await db.execute(
         select(SyllabusItem)
-        .where(SyllabusItem.subject_id == subject_id)
+        .where(
+            and_(
+                SyllabusItem.subject_id == subject_id,
+                SyllabusItem.tenant_id == tenant_id,
+            )
+        )
         .order_by(SyllabusItem.sort_order.asc(), SyllabusItem.created_at.asc())
     )
     return result.scalars().all()
 
-
+# async def create_syllabus_topic(db: AsyncSession, tenant_id: str, data: dict) -> SyllabusItem:
+#     topic = SyllabusItem(tenant_id=tenant_id, **data)
+#     db.add(topic)
+#     await db.flush()
+#     return topic
 async def create_syllabus_topic(db: AsyncSession, tenant_id: str, data: dict) -> SyllabusItem:
+    subject_result = await db.execute(
+        select(Subject).where(
+            and_(Subject.id == data["subject_id"], Subject.tenant_id == tenant_id)
+        )
+    )
+    if not subject_result.scalar_one_or_none():
+        raise NotFoundError("Subject")
     topic = SyllabusItem(tenant_id=tenant_id, **data)
     db.add(topic)
     await db.flush()
     return topic
 
-
-async def update_syllabus_topic(db: AsyncSession, topic_id: str, data: dict) -> SyllabusItem:
+# async def update_syllabus_topic(db: AsyncSession, topic_id: str, data: dict) -> SyllabusItem:
+#     result = await db.execute(
+#         select(SyllabusItem).where(SyllabusItem.id == topic_id)
+#     )
+#     topic = result.scalar_one_or_none()
+#     if not topic:
+#         raise NotFoundError("Syllabus topic")
+#     for key, value in data.items():
+#         if value is not None:
+#             setattr(topic, key, value)
+#     await db.flush()
+#     return topic
+async def update_syllabus_topic(db: AsyncSession, tenant_id: str, topic_id: str, data: dict) -> SyllabusItem:
     result = await db.execute(
-        select(SyllabusItem).where(SyllabusItem.id == topic_id)
+        select(SyllabusItem).where(
+            and_(SyllabusItem.id == topic_id, SyllabusItem.tenant_id == tenant_id)
+        )
     )
     topic = result.scalar_one_or_none()
     if not topic:
@@ -247,16 +294,26 @@ async def update_syllabus_topic(db: AsyncSession, topic_id: str, data: dict) -> 
     return topic
 
 
-async def delete_syllabus_topic(db: AsyncSession, topic_id: str):
+# async def delete_syllabus_topic(db: AsyncSession, topic_id: str):
+#     result = await db.execute(
+#         select(SyllabusItem).where(SyllabusItem.id == topic_id)
+#     )
+#     topic = result.scalar_one_or_none()
+#     if not topic:
+#         raise NotFoundError("Syllabus topic")
+#     await db.delete(topic)
+#     await db.flush()
+async def delete_syllabus_topic(db: AsyncSession, tenant_id: str, topic_id: str):
     result = await db.execute(
-        select(SyllabusItem).where(SyllabusItem.id == topic_id)
+        select(SyllabusItem).where(
+            and_(SyllabusItem.id == topic_id, SyllabusItem.tenant_id == tenant_id)
+        )
     )
     topic = result.scalar_one_or_none()
     if not topic:
         raise NotFoundError("Syllabus topic")
     await db.delete(topic)
     await db.flush()
-
 
 # ── Syllabus Progress (completion per topic per batch) ─────────
 

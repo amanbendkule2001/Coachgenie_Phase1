@@ -35,6 +35,74 @@ async def register_user(db: AsyncSession, tenant_id: str, data: dict) -> User:
     return user
 
 
+# async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str) -> dict:
+#     result = await db.execute(
+#         select(User).where(
+#             and_(User.tenant_id == uuid.UUID(tenant_id), User.email == email)
+#         )
+#     )
+#     user = result.scalar_one_or_none()
+
+#     print("EMAIL:", user.email if user else None)
+#     print("PASSWORD HASH:", repr(user.password_hash) if user else None)
+#     print("HASH LENGTH:", len(user.password_hash) if user and user.password_hash else None)
+    
+#     # if not user or not user.is_active or not verify_password(password, user.password_hash):
+#     #     raise UnauthorizedError("Invalid credentials.")
+#     print("=" * 50)
+#     print("Tenant ID:", tenant_id)
+#     print("Email:", email)
+#     print("User Found:", user is not None)
+    
+#     if user:
+#         print("DB Email:", user.email)
+#         print("DB Tenant:", user.tenant_id)
+#         print("Active:", user.is_active)
+#         print("Stored Hash:", user.password_hash)
+    
+#         password_ok = verify_password(password, user.password_hash)
+#         print("Password Match:", password_ok)
+    
+#         if not user.is_active:
+#             print("FAILED: User inactive")
+    
+#         if not password_ok:
+#             print("FAILED: Password mismatch")
+#     else:
+#         print("FAILED: User not found")
+    
+#     if not user or not user.is_active or not password_ok:
+#         raise UnauthorizedError("Invalid credentials.")
+
+#     payload = {
+#         "sub": str(user.id),
+
+#         "tenantId": str(user.tenant_id),
+
+
+#         "tenant_id": str(user.tenant_id),
+#         "role": user.role,
+#         "email": user.email
+#     }
+#     access_token = create_access_token(payload)
+#     raw_refresh, hashed_refresh = create_refresh_token()
+
+#     token = RefreshToken(
+#         user_id=user.id,
+#         tenant_id=user.tenant_id,
+#         token_hash=hashed_refresh,
+#         expires_at=refresh_token_expiry(),
+#     )
+#     db.add(token)
+#     user.last_login_at = datetime.now(timezone.utc)
+#     await db.flush()
+
+#     return {
+#         "access_token": access_token,
+#         "refresh_token": raw_refresh,
+#         "user": user,
+#     }
+
 async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str) -> dict:
     result = await db.execute(
         select(User).where(
@@ -43,46 +111,17 @@ async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str
     )
     user = result.scalar_one_or_none()
 
-    print("EMAIL:", user.email if user else None)
-    print("PASSWORD HASH:", repr(user.password_hash) if user else None)
-    print("HASH LENGTH:", len(user.password_hash) if user and user.password_hash else None)
-    
-    # if not user or not user.is_active or not verify_password(password, user.password_hash):
-    #     raise UnauthorizedError("Invalid credentials.")
-    print("=" * 50)
-    print("Tenant ID:", tenant_id)
-    print("Email:", email)
-    print("User Found:", user is not None)
-    
-    if user:
-        print("DB Email:", user.email)
-        print("DB Tenant:", user.tenant_id)
-        print("Active:", user.is_active)
-        print("Stored Hash:", user.password_hash)
-    
-        password_ok = verify_password(password, user.password_hash)
-        print("Password Match:", password_ok)
-    
-        if not user.is_active:
-            print("FAILED: User inactive")
-    
-        if not password_ok:
-            print("FAILED: Password mismatch")
-    else:
-        print("FAILED: User not found")
-    
+    password_ok = verify_password(password, user.password_hash) if user else False
+
     if not user or not user.is_active or not password_ok:
         raise UnauthorizedError("Invalid credentials.")
 
     payload = {
         "sub": str(user.id),
-
         "tenantId": str(user.tenant_id),
-
-
         "tenant_id": str(user.tenant_id),
         "role": user.role,
-        "email": user.email
+        "email": user.email,
     }
     access_token = create_access_token(payload)
     raw_refresh, hashed_refresh = create_refresh_token()
@@ -102,7 +141,6 @@ async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str
         "refresh_token": raw_refresh,
         "user": user,
     }
-
 
 async def refresh_tokens(db: AsyncSession, raw_refresh: str) -> dict:
     token_hash = hash_token(raw_refresh)

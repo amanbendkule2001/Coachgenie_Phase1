@@ -5,24 +5,47 @@ from app.utils.exceptions import NotFoundError
 from app.utils.pagination import paginate
 
 
-
 async def get_funnel(db: AsyncSession, tenant_id: str) -> list:
-    from app.models.lead import Lead
     result = await db.execute(
-        select(Lead.status, func.count(Lead.id).label("count"))
+        select(
+            Lead.status,
+            func.count(Lead.id).label("count")
+        )
         .where(Lead.tenant_id == tenant_id)
         .group_by(Lead.status)
     )
+
     rows = result.all()
-    # Fixed funnel order
-    order = ["new", "contacted", "interested", "converted", "lost"]
-    labels = {"new": "Enquiries", "contacted": "Demo", "interested": "Trial",
-              "converted": "Enrolled", "lost": "Lost"}
-    counts = {r.status: r.count for r in rows}
+
+    counts = {
+        row.status.lower(): row.count
+        for row in rows
+    }
+
+    order = [
+        "new",
+        "contacted",
+        "interested",
+        "converted",
+        "lost",
+    ]
+
+    labels = {
+        "new": "Enquiries",
+        "contacted": "Demo",
+        "interested": "Trial",
+        "converted": "Enrolled",
+        "lost": "Lost",
+    }
+
     return [
-        {"stage": labels.get(s, s), "count": counts.get(s, 0)}
+        {
+            "stage": labels[s],
+            "count": counts.get(s, 0),
+        }
         for s in order
     ]
+
 
 # ── helper: attach batch_name to a lead object ────────────────────────────────
 async def _attach_batch_name(db: AsyncSession, lead: Lead) -> Lead:

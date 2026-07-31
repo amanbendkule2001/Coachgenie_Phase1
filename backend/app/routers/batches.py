@@ -43,7 +43,8 @@ async def get_syllabus_topics(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor", "student")),
 ):
-    topics = await batch_service.get_syllabus_topics(db, subject_id)
+    # topics = await batch_service.get_syllabus_topics(db, subject_id)
+    topics = await batch_service.get_syllabus_topics(db, str(tenant.id), subject_id)
     return {"success": True, "data": [SyllabusTopicOut.model_validate(t) for t in topics]}
 
 
@@ -70,7 +71,8 @@ async def update_syllabus_topic(
     current_user=Depends(require_roles("owner", "tutor")),
 ):
     data = {k: v for k, v in body.model_dump().items() if v is not None}
-    topic = await batch_service.update_syllabus_topic(db, topic_id, data)
+    # topic = await batch_service.update_syllabus_topic(db, topic_id, data)
+    topic = await batch_service.update_syllabus_topic(db, str(tenant.id), topic_id, data)
     return {"success": True, "data": SyllabusTopicOut.model_validate(topic)}
 
 
@@ -81,7 +83,8 @@ async def delete_syllabus_topic(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor")),
 ):
-    await batch_service.delete_syllabus_topic(db, topic_id)
+    # await batch_service.delete_syllabus_topic(db, topic_id)
+    await batch_service.delete_syllabus_topic(db, str(tenant.id), topic_id)
     return {"success": True, "message": "Topic deleted."}
 
 

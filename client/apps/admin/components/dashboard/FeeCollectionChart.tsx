@@ -1,7 +1,4 @@
-
-
 "use client";
-console.log("🔥 REAL FeeCollectionChart Loaded");
 import { useEffect, useState } from "react";
 import {
   AreaChart,
@@ -48,13 +45,6 @@ export function FeeCollectionChart() {
         const response = await api.get<MonthlyTrendResponse>(
           "/fees/monthly-trend"
         );
-
-        console.log("========== MONTHLY TREND ==========");
-        console.log("Full Response:", response);
-        console.log("Success:", response.success);
-        console.log("Chart Data:", JSON.stringify(response.data, null, 2));
-        console.table(response.data);
-        console.log("===================================");
 
         if (response.success && Array.isArray(response.data)) {
           setData(response.data);

@@ -99,8 +99,7 @@ async def get_admission(
 async def create_admission(
     db: AsyncSession, tenant_id: str, data: dict
 ) -> Admission:
-    print("FULL INCOMING DATA:", data)
-    print("DEBUG create_admission subjects:", data.get("subjects"))  # ← add this
+    
    
     admission_number = await next_admission_no(db, tenant_id)
 
@@ -116,14 +115,20 @@ async def create_admission(
         )
 
     # Parse batch_id UUID
+    # batch_id_raw = data.get("batch_id")
+    # batch_id_val = None
+    # if batch_id_raw:
+    #     try:
+    #         batch_id_val = uuid.UUID(str(batch_id_raw))
+    #     except Exception:
+    #         print("INVALID batch_id:", batch_id_raw)
     batch_id_raw = data.get("batch_id")
     batch_id_val = None
     if batch_id_raw:
         try:
             batch_id_val = uuid.UUID(str(batch_id_raw))
-        except Exception:
-            print("INVALID batch_id:", batch_id_raw)
-
+        except (ValueError, AttributeError, TypeError):
+            raise ValueError(f"Invalid batch_id: {batch_id_raw!r}")
 
     admission = Admission(
         id               = uuid.uuid4(),
@@ -156,7 +161,8 @@ async def create_admission(
 
     # Always create the linked student record immediately on admission creation
     await generate_student_from_admission(db, admission)
-
+    
+        
     return admission
 
 
@@ -426,9 +432,17 @@ async def generate_student_from_admission(
     fee_paid   = float(getattr(admission, "fee_paid",   0) or 0)
 
     if fee_amount > 0:
+        # existing_inv = await db.scalar(
+        #     select(FeeInvoice).where(
+        #         FeeInvoice.invoice_no == f"INV-{admission.admission_number}"
+        #     )
+        # )
         existing_inv = await db.scalar(
             select(FeeInvoice).where(
-                FeeInvoice.invoice_no == f"INV-{admission.admission_number}"
+                and_(
+                    FeeInvoice.invoice_no == f"INV-{admission.admission_number}",
+                    FeeInvoice.tenant_id  == str(admission.tenant_id),
+                )
             )
         )
         if not existing_inv:

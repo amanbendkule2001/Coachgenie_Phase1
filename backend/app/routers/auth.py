@@ -41,9 +41,49 @@ async def login(
     }
 
 
+# @router.post("/refresh")
+# async def refresh(body: RefreshRequest, db: DB):
+#     tokens = await auth_service.refresh_tokens(db, body.refresh_token)
+#     return tokens
+from fastapi import APIRouter, Depends, Request, HTTPException
+
+# @router.post("/refresh")
+# async def refresh(
+#     body: RefreshRequest,
+#     db: DB,
+#     request: Request,
+# ):
+#     # Only used by Playwright tests
+#     if request.headers.get("x-playwright-fail-refresh") == "1":
+#         raise HTTPException(
+#             status_code=401,
+#             detail="Refresh failed (Playwright)"
+#         )
+
+#     tokens = await auth_service.refresh_tokens(db, body.refresh_token)
+#     return tokens
 @router.post("/refresh")
-async def refresh(body: RefreshRequest, db: DB):
-    tokens = await auth_service.refresh_tokens(db, body.refresh_token)
+async def refresh(
+    body: RefreshRequest,
+    db: DB,
+    request: Request,
+):
+    print(
+        "PLAYWRIGHT HEADER:",
+        request.headers.get("x-playwright-fail-refresh")
+    )
+
+    if request.headers.get("x-playwright-fail-refresh") == "1":
+        raise HTTPException(
+            status_code=401,
+            detail="Refresh failed (Playwright)"
+        )
+
+    tokens = await auth_service.refresh_tokens(
+        db,
+        body.refresh_token,
+    )
+
     return tokens
 
 

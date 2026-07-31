@@ -195,19 +195,19 @@ export function LeadForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Full Name" required error={errors.name?.message}>
-          <input {...register("name")} placeholder="Student's full name" className={inputCls(!!errors.name)} />
+          <input data-testid="lead-name" {...register("name")} data-testid="lead-name" placeholder="Student's full name" className={inputCls(!!errors.name)} />
         </Field>
 
         <Field label="Email" error={errors.email?.message}>
-          <input {...register("email")} type="email" placeholder="student@example.com" className={inputCls(!!errors.email)} />
+          <input data-testid="lead-email" {...register("email")}  type="email"  placeholder="student@example.com" className={inputCls(!!errors.email)} />
         </Field>
 
         <Field label="Phone" required error={errors.phone?.message}>
-          <input {...register("phone")} placeholder="+91 98765 43210" className={inputCls(!!errors.phone)} />
+          <input data-testid="lead-phone" {...register("phone")} placeholder="+91 98765 43210" className={inputCls(!!errors.phone)} />
         </Field>
 
         <Field label="Grade" error={errors.grade?.message}>
-          <input {...register("grade")} placeholder="e.g. 10, 11, 12" className={inputCls(!!errors.grade)} />
+          <input data-testid="lead-grade" {...register("grade")} placeholder="e.g. 10, 11, 12" className={inputCls(!!errors.grade)} />
         </Field>
 
         <Field label="Board Name" error={errors.boardName?.message}>
@@ -353,6 +353,7 @@ export function LeadForm({
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
+          data-testid="lead-form-cancel"
           className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
         >
           Cancel
@@ -360,6 +361,7 @@ export function LeadForm({
         <button
           type="submit"
           disabled={isSubmitting}
+          data-testid="lead-form-submit"
           className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
         >
           {isSubmitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
