@@ -195,7 +195,7 @@ export function LeadForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Full Name" required error={errors.name?.message}>
-          <input data-testid="lead-name" {...register("name")} data-testid="lead-name" placeholder="Student's full name" className={inputCls(!!errors.name)} />
+          <input data-testid="lead-name" {...register("name")} placeholder="Student's full name" className={inputCls(!!errors.name)} />
         </Field>
 
         <Field label="Email" error={errors.email?.message}>
