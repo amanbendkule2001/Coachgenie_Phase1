@@ -1,3 +1,5 @@
+// client/apps/admin/app/api/chat/route.ts
+
 // import { createAnthropic } from "@ai-sdk/anthropic";
 // import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";

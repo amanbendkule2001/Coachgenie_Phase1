@@ -6,9 +6,28 @@ from pydantic import Field
 class Settings(BaseSettings):
     APP_NAME: str = "CoachingERP"
     DEBUG: bool = Field(default=True, description="Enable debug mode for detailed error messages")
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://coachgenie-phase1.onrender.com,https://coachgenie-frontend.onrender.com,https://thecoachgenie.in,https://www.thecoachgenie.in,https://app.thecoachgenie.in"
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,"
+        "http://127.0.0.1:3000,"
+        "https://coachgenie-phase1.onrender.com,"
+        "https://coachgenie-frontend.onrender.com,"
+        "https://thecoachgenie.in,"
+        "https://www.thecoachgenie.in,"
+        "https://app.thecoachgenie.in,"
+        "https://coachgenie-backend-51uq.onrender.com,"
+        "https://coachgenie-copilotai.onrender.com,"
+    )
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
+    @property
+    def origins_list(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
+
+    # DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
+    DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
 
 
     SECRET_KEY: str
@@ -60,7 +79,6 @@ class Settings(BaseSettings):
 
 
 
-settings = Settings()
 settings = Settings()
 # Module-level aliases for direct imports
 SECRET_KEY = settings.SECRET_KEY

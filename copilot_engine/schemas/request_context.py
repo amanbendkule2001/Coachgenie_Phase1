@@ -6,7 +6,17 @@ from typing import Optional
 
 
 class RequestContext(BaseModel):
+
     request_id: str
-    user_id: UUID
+
     tenant_id: UUID
-    session_id: Optional[str] = None
+
+    user_id: UUID
+
+    session_id: str | None = None
+
+    trace_id: str | None = None
+
+    correlation_id: str | None = None
+
+    access_token: str | None = None

@@ -8,7 +8,7 @@ from app.utils.security import (
     hash_token, refresh_token_expiry
 )
 from app.utils.exceptions import UnauthorizedError, ConflictError
-from backend.app.schemas import user
+from app.schemas import user
 
 
 async def register_user(db: AsyncSession, tenant_id: str, data: dict) -> User:

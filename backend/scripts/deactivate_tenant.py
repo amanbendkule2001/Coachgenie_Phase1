@@ -1,7 +1,7 @@
 import asyncio
 import argparse
 
-from backend.app.services.tenant_provisioning import (
+from app.services.tenant_provisioning import (
     deactivate_tenant
 )
 

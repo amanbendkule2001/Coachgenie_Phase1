@@ -36,12 +36,15 @@ class ModelRouter:
     Future: swap / add providers here without touching agents.
     """
 
+    # def __init__(self) -> None:
+    #     self.primary_provider = GroqProvider(
+    #         api_key=settings.GROQ_API_KEY,
+    #         model=settings.GROQ_DEFAULT_MODEL,          # e.g. "llama-3.3-70b-versatile"
+    #         timeout=settings.GROQ_TIMEOUT_SECONDS,      # seconds, e.g. 30
+    #     )
+    
     def __init__(self) -> None:
-        self.primary_provider = GroqProvider(
-            api_key=settings.GROQ_API_KEY,
-            model=settings.GROQ_DEFAULT_MODEL,          # e.g. "llama-3.3-70b-versatile"
-            timeout=settings.GROQ_TIMEOUT_SECONDS,      # seconds, e.g. 30
-        )
+        self.primary_provider = GroqProvider()
         self.output_validator = OutputValidator()
         self._log = logger.bind(component="ModelRouter")
 
@@ -76,8 +79,10 @@ class ModelRouter:
         for attempt in range(1, retries + 2):
             try:
                 response = await self.primary_provider.generate(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
@@ -154,8 +159,10 @@ class ModelRouter:
         for attempt in range(1, retries + 2):
             try:
                 raw = await self.primary_provider.generate(
-                    prompt=prompt,
-                    system_prompt=json_system_prompt,
+                    messages=[
+                        {"role": "system", "content": json_system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )

@@ -9,6 +9,8 @@ from copilot_engine.llm.providers.base_provider import (
     LLMMessage,
 )
 
+from copilot_engine.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,9 +99,7 @@ class ChatOrchestrator:
             
             filename = os.path.basename(pdf_path)
             
-            report_url = (
-                f"postgresql://coachgenie_db_asry_user:2oWHXXd7HFfrTzLBZZiuUAD3EvqSyFRO@dpg-d8km3nd8nd3s73bcpnq0-a.oregon-postgres.render.com/coachgenie_db_asry/generated_reports/{filename}"
-            )
+            report_url = f"{settings.PUBLIC_BASE_URL}/generated_reports/{filename}"
 
             return {
                 "message": "Your PDF report has been generated successfully.",

@@ -13,7 +13,7 @@
     plan: starter
     region: singapore
     envVars:
-      - key: internal_url
+      - key: DATABASE_URL
         fromService:
           type: pserv
           name: pgbouncer

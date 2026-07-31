@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from app.dependencies import get_tenant, require_roles, DB
+from dependencies import get_tenant, require_roles, DB
 from app.schemas.notification import (
     TemplateCreate, TemplateOut,
     SendNotificationRequest, NotificationLogOut

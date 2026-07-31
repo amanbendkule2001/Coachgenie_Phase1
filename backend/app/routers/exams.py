@@ -63,3 +63,13 @@ async def get_results(
 ):
     results = await exam_service.get_results(db, str(tenant.id), exam_id)
     return {"success": True, "data": [ExamResultOut.model_validate(r) for r in results]}
+
+@router.get("/student/{student_id}/results")
+async def get_student_exam_results(
+    student_id: str,
+    db: DB,
+    tenant=Depends(get_tenant),
+    current_user=Depends(require_roles("owner", "tutor", "counselor", "student", "parent")),
+):
+    results = await exam_service.get_results_for_student(db, str(tenant.id), student_id)
+    return {"success": True, "data": [ExamResultOut.model_validate(r) for r in results]}

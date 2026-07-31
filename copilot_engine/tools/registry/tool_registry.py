@@ -10,19 +10,19 @@ from typing import (
     Optional,
 )
 
-from tools.registry.base_tool import (
+from copilot_engine.tools.registry.base_tool import (
     BaseTool,
 )
 
-from tools.registry.tool_metadata import (
+from copilot_engine.tools.registry.tool_metadata import (
     ToolMetadata,
 )
 
-from observability.observability_service import (
+from copilot_engine.observability.observability_service import (
     ObservabilityService,
 )
 
-from core.exception import (
+from copilot_engine.core.exception import (
     ToolNotFoundError,
     ToolExecutionError,
 )

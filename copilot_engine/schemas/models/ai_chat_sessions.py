@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.sql import func
 
-from database.database import Base
+from copilot_engine.database.database import Base
 
 
 class AIChatSession(Base):

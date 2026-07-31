@@ -18,6 +18,10 @@ from copilot_engine.routes.copilot import (
 from copilot_engine.routes.report_routes import (
     router as report_router,
 )
+
+from fastapi.staticfiles import StaticFiles
+
+
 from copilot_engine.core.config import settings
 
 setup_logging()
@@ -37,6 +41,7 @@ app.add_middleware(
         "https://coachgenie-frontend.onrender.com",
         "https://thecoachgenie.in",
         "https://www.thecoachgenie.in",
+        "https://app.thecoachgenie.in"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -60,6 +65,12 @@ app.mount(
     StaticFiles(directory="generated_reports"),
     name="generated_reports",
 )
+
+# app.mount(
+#     "/reports-static",
+#     StaticFiles(directory="generated_reports"),
+#     name="reports-static",
+# )
 
 @app.get("/health")
 async def health():

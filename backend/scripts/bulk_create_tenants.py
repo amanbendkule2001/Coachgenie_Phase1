@@ -2,7 +2,7 @@ import asyncio
 import argparse
 import csv
 
-from backend.app.services.tenant_provisioning import (
+from app.services.tenant_provisioning import (
     create_tenant
 )
 

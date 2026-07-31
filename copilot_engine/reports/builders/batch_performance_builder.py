@@ -1,58 +1,18 @@
-from datetime import datetime
+# copilot_engine/reports/builders/batch_performance_builder.py
 
-from copilot_engine.llm.providers.groq_client import (
-    GroqProvider,
-)
-
-from copilot_engine.reports.prompts.batch_prompts import (
-    BATCH_PERFORMANCE_PROMPT,
-)
-
-from copilot_engine.reports.schemas.report_schema import (
-    ReportSchema,
-    ReportMetadata,
-    ReportSection,
+from copilot_engine.reports.builders.base_report_builder import (
+    BaseReportBuilder,
 )
 
 
-class BatchPerformanceReportBuilder:
+class BatchPerformanceReportBuilder(
+    BaseReportBuilder
+):
 
-    def __init__(self):
+    TITLE = "Batch Performance Intelligence Report"
 
-        self.provider = GroqProvider()
+    REPORT_TYPE = "batch_performance"
 
-    async def build(
-        self,
-        batch_data: dict,
-    ) -> ReportSchema:
+    PROMPT_FILE = "batch_report.md"
 
-        prompt = BATCH_PERFORMANCE_PROMPT.format(
-            batch_data=batch_data
-        )
-
-        ai_response = await self.provider.generate(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ]
-        )
-
-        return ReportSchema(
-            title="Batch Performance Intelligence Report",
-
-            summary="AI-generated batch analysis report.",
-
-            metadata=ReportMetadata(
-                generated_at=datetime.utcnow(),
-                report_type="batch_performance",
-            ),
-
-            sections=[
-                ReportSection(
-                    title="Batch Intelligence",
-                    content=ai_response,
-                )
-            ],
-        )
+    INPUT_KEY = "batch_data"

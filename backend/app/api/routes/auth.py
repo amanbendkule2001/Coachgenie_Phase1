@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.user import UserCreate, UserLogin
 from app.services.auth_service import create_user, authenticate_user
-from app.core.database import get_db
+from app.database import get_db
 from app.core.security import create_access_token
 from app.core.rate_limit import limiter
 

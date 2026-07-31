@@ -1,3 +1,4 @@
+// client/apps/admin/components/ChatInput.tsx
 "use client";
 import { useRef, type FormEvent, type KeyboardEvent, type SyntheticEvent } from "react";
 import { Send, Square } from "lucide-react";

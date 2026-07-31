@@ -9,6 +9,7 @@ generated_reports/
 generated_reports/
 *.pdf
 coach-ai-5/
+coach-ai-6/
 
 backend/node_modules/
 backend/package.json

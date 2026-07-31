@@ -1,6 +1,6 @@
 import asyncio
 
-from backend.app.services.tenant_provisioning import (
+from app.services.tenant_provisioning import (
     list_tenants
 )
 

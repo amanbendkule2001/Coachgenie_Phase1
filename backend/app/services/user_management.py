@@ -1,10 +1,10 @@
 from sqlalchemy import select
 
-from backend.app.database import AsyncSessionLocal
-from backend.app.models.user import User
-from backend.app.models.tenant import Tenant
+from app.database import AsyncSessionLocal
+from app.models.user import User
+from app.models.tenant import Tenant
 
-from backend.app.core.security import (
+from app.core.security import (
     get_password_hash
 )
 
