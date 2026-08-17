@@ -108,6 +108,7 @@ interface AcademicStore {
 
   markAttendance:   (records: Omit<AttendanceRecord, "id">[]) => void;
 
+  setExams:         (exams: Exam[]) => void;
   addExam:          (exam: Omit<Exam, "id" | "results">) => Exam;
   saveResults:      (examId: string, results: ExamResult[]) => void;
 
@@ -182,6 +183,7 @@ export const useAcademicStore = create<AcademicStore>()(
       }),
 
       // Exams
+      setExams: (exams) => set((s) => { s.exams = exams; }),
       addExam: (data) => {
         const exam: Exam = { ...data, id: `e-${Date.now()}`, results: [] };
         set((s) => { s.exams.unshift(exam); });

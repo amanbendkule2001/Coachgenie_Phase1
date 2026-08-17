@@ -114,8 +114,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   async function handleDelete() {
+    if (!lead) return;
     try {
-      await fetch(`${API}/leads/${lead!.id}`, { method: "DELETE", headers: authHeaders() }).catch(() => null);
+      await fetch(`${API}/leads/${lead.id}`, { method: "DELETE", headers: authHeaders() }).catch(() => null);
     } catch {
       // quiet fallback
     }

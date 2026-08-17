@@ -64,11 +64,16 @@ type AdmissionDetail = Admission & {
   applied_course?: string;
   admission_number?: string;
   payment?: AdmissionPayment;
+  boardName?: string;
   board_name?: string;
+  batchName?: string;
   batch_name?: string;
   phone?: string;
+  parentName?: string;
   parent_name?: string;
+  parentPhone?: string;
   parent_phone?: string;
+  schoolName?: string;
   school_name?: string;
 };
 

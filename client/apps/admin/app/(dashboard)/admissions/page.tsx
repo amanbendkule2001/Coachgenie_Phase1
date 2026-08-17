@@ -51,6 +51,16 @@ interface AdmissionPayment {
 
 type AdmissionWithPayment = Admission & {
   payment?: AdmissionPayment;
+  boardName?: string;
+  board_name?: string;
+  batchName?: string;
+  batch_name?: string;
+  parentName?: string;
+  parent_name?: string;
+  parentPhone?: string;
+  parent_phone?: string;
+  schoolName?: string;
+  school_name?: string;
 };
 
 const STATUS_CONFIG: Record<

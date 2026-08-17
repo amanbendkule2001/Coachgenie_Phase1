@@ -33,13 +33,13 @@ export interface Batch {
   teacher:   string;
   grade:     string;
   status:    BatchStatus;
-  schedule:  { day: string; time: string }[];
+  schedule:  ({ day: string; time: string } | string)[];
   studentIds:string[];
   startDate: string;
   endDate:   string;
   room:      string;
   maxSize:   number;
-  syllabus:  SyllabusTopic[];
+  syllabus?: SyllabusTopic[];
   subjects?: string[];
 }
 
