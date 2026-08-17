@@ -4,9 +4,9 @@ import pytest
 @pytest.mark.asyncio
 async def test_monthly_trend_requires_tenant_header(client):
     res = await client.get("/api/v1/fees/monthly-trend")
-    # missing X-Tenant-Subdomain -> get_tenant raises TenantNotFoundError,
-    # which this app maps to 403
-    assert res.status_code == 403
+    # FIX: missing X-Tenant-Subdomain → TenantNotFoundError → 400 Bad Request
+    # (was 403 before BUG-006 fix; missing header is a client input error, not auth failure)
+    assert res.status_code == 400
 
 
 @pytest.mark.asyncio

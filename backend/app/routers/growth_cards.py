@@ -16,7 +16,7 @@ async def generate_growth_card(
     card = await gc_service.auto_generate_growth_card(
         db, str(tenant.id), str(current_user.id), student_id
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": GrowthCardOut.model_validate(card)}
 
 @router.get("/")

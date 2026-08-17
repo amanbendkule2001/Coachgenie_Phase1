@@ -1,7 +1,17 @@
-from fastapi import APIRouter, Depends
-from app.dependencies import get_tenant, get_current_user, DB
-from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, UserOut
+import logging
+
+from fastapi import APIRouter, Depends, Request, HTTPException
+
+from app.dependencies import get_tenant, get_current_user, require_roles, DB
+from app.schemas.auth import (
+    RegisterRequest,
+    LoginRequest,
+    RefreshRequest,
+    UserOut,
+)
 from app.services import auth as auth_service
+
+logger = logging.getLogger("coaching_erp")
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -12,10 +22,55 @@ async def register(
     db: DB,
     tenant=Depends(get_tenant),
 ):
-    user = await auth_service.register_user(db, str(tenant.id), body.model_dump())
+    """Public registration — always creates a student account."""
+    user = await auth_service.register_user(
+        db,
+        str(tenant.id),
+        body.model_dump(),
+    )
     return {
         "success": True,
-        "data": {"id": str(user.id), "email": user.email, "role": user.role}
+        "data": {
+            "id": str(user.id),
+            "email": user.email,
+            "role": user.role,
+        },
+    }
+
+
+@router.post("/register-staff", status_code=201)
+async def register_staff(
+    body: RegisterRequest,
+    db: DB,
+    tenant=Depends(get_tenant),
+    current_user=Depends(require_roles("owner")),
+):
+    """
+    Owner-only endpoint to create staff accounts (counselor, tutor, admin).
+    FIX BUG-012: previously there was no API way to create non-student users.
+    """
+    data = body.model_dump()
+    # Owner may optionally include 'role' in the request body; defaults to 'counselor'
+    allowed_staff_roles = {"counselor", "tutor", "admin"}
+    role = data.pop("role", "counselor")
+    if role not in allowed_staff_roles:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid role. Must be one of: {sorted(allowed_staff_roles)}",
+        )
+    user = await auth_service.register_staff_user(
+        db,
+        str(tenant.id),
+        role,
+        data,
+    )
+    return {
+        "success": True,
+        "data": {
+            "id": str(user.id),
+            "email": user.email,
+            "role": user.role,
+        },
     }
 
 
@@ -25,7 +80,15 @@ async def login(
     db: DB,
     tenant=Depends(get_tenant),
 ):
-    result = await auth_service.login_user(db, str(tenant.id), body.email, body.password)
+    # FIX BUG-013: removed print() that leaked tenant subdomain to stdout
+    logger.debug("Login attempt for tenant: %s", tenant.subdomain)
+
+    result = await auth_service.login_user(
+        db,
+        str(tenant.id),
+        body.email,
+        body.password,
+    )
     return {
         "access_token": result["access_token"],
         "refresh_token": result["refresh_token"],
@@ -41,54 +104,30 @@ async def login(
     }
 
 
-# @router.post("/refresh")
-# async def refresh(body: RefreshRequest, db: DB):
-#     tokens = await auth_service.refresh_tokens(db, body.refresh_token)
-#     return tokens
-from fastapi import APIRouter, Depends, Request, HTTPException
-
-# @router.post("/refresh")
-# async def refresh(
-#     body: RefreshRequest,
-#     db: DB,
-#     request: Request,
-# ):
-#     # Only used by Playwright tests
-#     if request.headers.get("x-playwright-fail-refresh") == "1":
-#         raise HTTPException(
-#             status_code=401,
-#             detail="Refresh failed (Playwright)"
-#         )
-
-#     tokens = await auth_service.refresh_tokens(db, body.refresh_token)
-#     return tokens
 @router.post("/refresh")
 async def refresh(
     body: RefreshRequest,
     db: DB,
     request: Request,
 ):
-    print(
-        "PLAYWRIGHT HEADER:",
-        request.headers.get("x-playwright-fail-refresh")
-    )
-
+    # FIX BUG-013: removed print() that logged full request headers to stdout
     if request.headers.get("x-playwright-fail-refresh") == "1":
         raise HTTPException(
             status_code=401,
-            detail="Refresh failed (Playwright)"
+            detail="Refresh failed (Playwright)",
         )
 
-    tokens = await auth_service.refresh_tokens(
+    return await auth_service.refresh_tokens(
         db,
         body.refresh_token,
     )
 
-    return tokens
-
 
 @router.post("/logout")
-async def logout(body: RefreshRequest, db: DB):
+async def logout(
+    body: RefreshRequest,
+    db: DB,
+):
     await auth_service.logout_user(db, body.refresh_token)
     return {"success": True, "message": "Logged out successfully."}
 
@@ -103,5 +142,5 @@ async def me(current_user=Depends(get_current_user)):
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
             "role": current_user.role,
-        }
+        },
     }

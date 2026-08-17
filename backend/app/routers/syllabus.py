@@ -39,7 +39,7 @@ async def add_topic(
     current_user=Depends(require_roles("owner", "tutor")),
 ):
     data = await syllabus_service.add_topic(db, str(tenant.id), batch_id, body.model_dump())
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": data}
 
 
@@ -55,7 +55,7 @@ async def toggle_topic(
     data = await syllabus_service.toggle_topic(
         db, str(tenant.id), batch_id, item_id, body.completed, body.notes
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": data}
 
 
@@ -68,5 +68,5 @@ async def delete_topic(
     current_user=Depends(require_roles("owner", "tutor")),
 ):
     await syllabus_service.delete_topic(db, str(tenant.id), batch_id, item_id)
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "message": "Topic deleted"}

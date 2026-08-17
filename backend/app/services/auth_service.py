@@ -1,4 +1,5 @@
 from sqlalchemy.future import select
+from sqlalchemy import and_
 from app.models.user import User
 from app.core.security import hash_password, verify_password
 
@@ -9,12 +10,20 @@ async def create_user(db, user_data):
         tenant_id=user_data.tenant_id
     )
     db.add(user)
-    await db.commit()
+    await db.flush()  # get_db() commits on clean exit.
     await db.refresh(user)
     return user
 
-async def authenticate_user(db, email, password):
-    result = await db.execute(select(User).where(User.email == email))
+async def authenticate_user(db, email: str, password: str, tenant_id: str | None = None):
+    """
+    FIX: Scope user lookup to tenant_id to prevent cross-tenant authentication.
+    Pass tenant_id whenever it is available (e.g., from the X-Tenant-Id header).
+    """
+    conditions = [User.email == email]
+    if tenant_id:
+        conditions.append(User.tenant_id == tenant_id)
+
+    result = await db.execute(select(User).where(and_(*conditions)))
     user = result.scalar_one_or_none()
 
     if not user:

@@ -57,3 +57,4 @@ class Student(Base):
     fee_invoices = relationship("FeeInvoice", back_populates="student", cascade="all, delete-orphan")
     growth_cards = relationship("GrowthCard", back_populates="student", cascade="all, delete-orphan")
     ai_sessions = relationship("AISession", back_populates="student", cascade="all, delete-orphan")
+    admission = relationship("Admission", foreign_keys="Student.admission_id", primaryjoin="Student.admission_id == Admission.id", lazy="select")

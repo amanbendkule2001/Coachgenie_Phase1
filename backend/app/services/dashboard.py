@@ -75,6 +75,7 @@ async def get_owner_dashboard(db: AsyncSession, tenant_id: str) -> dict:
         "total_leads": total_leads,
         "converted_leads": converted_leads,
         "total_revenue": float(revenue.total),
+        "total_collected": float(revenue.paid),
         "pending_revenue": float(revenue.total) - float(revenue.paid),
         "total_exams": total_exams,
         "avg_attendance_percent": avg_attendance,

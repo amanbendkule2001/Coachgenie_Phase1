@@ -5,7 +5,7 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     APP_NAME: str = "CoachingERP"
-    DEBUG: bool = Field(default=True, description="Enable debug mode for detailed error messages")
+    DEBUG: bool = Field(default=False, description="Enable debug mode for detailed error messages. Must be set to True explicitly in .env for local development.")
     ALLOWED_ORIGINS: str = (
         "http://localhost:3000,"
         "http://127.0.0.1:3000,"
@@ -18,17 +18,11 @@ class Settings(BaseSettings):
         "https://coachgenie-copilotai.onrender.com,"
     )
 
-    @property
-    def origins_list(self) -> list[str]:
-        return [
-            origin.strip()
-            for origin in self.ALLOWED_ORIGINS.split(",")
-            if origin.strip()
-        ]
+    # origins_list (first definition removed) — the canonical one is below at the class level.
 
     # DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
-    DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
-
+    # DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
+    DATABASE_URL: str
 
     SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"

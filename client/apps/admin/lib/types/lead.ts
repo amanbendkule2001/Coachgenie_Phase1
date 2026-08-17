@@ -2,7 +2,7 @@ export type ActivityType = "CALL" | "MESSAGE" | "NOTE" | "EMAIL" | "STAGE_CHANGE
 
 export type LeadSource = "WEBSITE" | "REFERRAL" | "SOCIAL_MEDIA" | "WALK_IN" | "PHONE" | "OTHER";
 
-export type LeadStage = "NEW" | "CONTACTED" | "DEMO_SCHEDULED" | "DEMO_DONE" | "NEGOTIATION" | "ENROLLED" | "LOST";
+export type LeadStage = "NEW" | "CONTACTED" | "INTERESTED" | "DEMO_SCHEDULED" | "DEMO_DONE" | "NEGOTIATION" | "ENROLLED" | "LOST";
 
 export interface LeadActivity {
   id:         string;

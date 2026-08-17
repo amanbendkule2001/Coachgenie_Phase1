@@ -110,8 +110,7 @@ async def create_lead(
     )
     # ────────────────────────────────────────────────────────────────────
 
-    await db.commit()
-
+    # db.commit() removed — get_db() context manager handles the commit.
     return {
         "success": True,
         "data": LeadOut.model_validate(lead),
@@ -157,7 +156,7 @@ async def update_lead(
         )
     # ───────────────────────────────────────────────────────────────────────
 
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": LeadOut.model_validate(lead)}
 
 
@@ -169,11 +168,7 @@ async def delete_lead(
     current_user=Depends(require_roles("owner")),
 ):
     await lead_service.delete_lead(db, str(tenant.id), lead_id)
-
-
-
-
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "message": "Lead deleted."}
 
 
@@ -207,16 +202,12 @@ async def assign_counselor(
         link=f"/leads/{lead.id}",
         user_id=body.counselor_id,   # notify only the assigned counselor
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "message": "Counselor assigned.", "data": LeadOut.model_validate(lead)}
 
 
 class ChangeStageBody(BaseModel):
-
     stage: str  # new / contacted / interested / converted / lost
-
-
-    stage: str
 
 @router.post("/{lead_id}/change-stage")
 async def change_stage(
@@ -226,7 +217,7 @@ async def change_stage(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor")),
 ):
-    valid_stages = {"new", "contacted", "interested", "enrolled", "lost"}
+    valid_stages = {"new", "contacted", "interested", "demo_scheduled", "demo_done", "negotiation", "enrolled", "lost"}
     if body.stage not in valid_stages:
         raise HTTPException(status_code=422, detail=f"Invalid stage. Must be one of: {valid_stages}")
     lead = await lead_service.update_lead(
@@ -240,7 +231,7 @@ async def change_stage(
         icon="lead",
         link=f"/leads/{lead.id}",
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "message": f"Stage updated to '{body.stage}'.", "data": LeadOut.model_validate(lead)}
 
 
@@ -281,7 +272,7 @@ async def schedule_followup(
 
 
 
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "message": "Follow-up scheduled.", "data": LeadOut.model_validate(lead)}
 
 
@@ -338,18 +329,11 @@ async def convert_lead(
 
 
 
-        await db.commit()
+        # db.commit() removed — get_db() handles commit.
         return {
             "success": True,
             "message": "Lead converted successfully.",
             "data": {
-
-                "admission_id":   str(admission.id),
-                "admission_number": admission.admission_number,
-                "student_id":     str(student.id),
-                "enrollment_no":  student.enrollment_no,
-
-
                 "admission_id":     str(admission.id),
                 "admission_number": admission.admission_number,
                 "student_id":       str(student.id),
@@ -358,7 +342,7 @@ async def convert_lead(
         }
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Conversion failed. Please try again.")
 
 
 # ── Activities ─────────────────────────────────────────────────────────────────
@@ -373,7 +357,7 @@ async def add_activity(
     activity = await lead_service.add_activity(
         db, str(tenant.id), lead_id, str(current_user.id), body.model_dump()
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": ActivityOut.model_validate(activity)}
 
 

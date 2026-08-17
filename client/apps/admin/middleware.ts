@@ -170,7 +170,6 @@ async function verifyToken(
 
     const { payload } = await jwtVerify(token, secret);
 
-    console.log("[middleware] JWT verified:", payload);
 
     return payload as CgTokenPayload;
   } catch (err) {

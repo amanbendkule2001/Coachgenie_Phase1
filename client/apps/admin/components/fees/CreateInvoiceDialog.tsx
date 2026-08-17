@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, RefreshCw, Plus } from "lucide-react";
+import { X, RefreshCw, Plus, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -131,6 +131,20 @@ export function CreateInvoiceDialog({ onClose, onCreated }: CreateInvoiceDialogP
     }
   }
 
+  const handleDevAutoFill = () => {
+    if (students.length > 0 && !studentId) setStudentId(students[0].id);
+    if (structures.length > 0 && !feeStructureId) {
+      setFeeStructureId(structures[0].id);
+      setAmountDue(String(structures[0].total_amount));
+    } else if (!amountDue) {
+      setAmountDue("15000");
+    }
+    setDiscount("1000");
+    setDueDate(new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0]);
+    setDescription("Automated test invoice generated for verification.");
+    setInvoiceNo(`INV-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+  };
+
   const netAmount = (parseFloat(amountDue) || 0) - (parseFloat(discount) || 0);
 
   return (
@@ -141,9 +155,22 @@ export function CreateInvoiceDialog({ onClose, onCreated }: CreateInvoiceDialogP
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <h2 className="font-semibold">Create Invoice</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {(process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ENABLE_DEV_AUTOFILL === "true") && (
+              <button
+                type="button"
+                onClick={handleDevAutoFill}
+                title="Fill dummy invoice data"
+                className="flex items-center gap-1 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md transition-colors"
+              >
+                <Zap className="h-3 w-3 fill-current" />
+                <span>Auto-Fill</span>
+              </button>
+            )}
+            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {loadingData ? (

@@ -6,6 +6,8 @@ from app.utils.pagination import paginate
 
 
 async def get_funnel(db: AsyncSession, tenant_id: str) -> list:
+    from app.models.student import Student
+
     result = await db.execute(
         select(
             Lead.status,
@@ -17,33 +19,33 @@ async def get_funnel(db: AsyncSession, tenant_id: str) -> list:
 
     rows = result.all()
 
-    counts = {
-        row.status.lower(): row.count
+    raw_counts = {
+        (row.status or "").lower(): row.count
         for row in rows
     }
 
-    order = [
-        "new",
-        "contacted",
-        "interested",
-        "converted",
-        "lost",
-    ]
+    # Total active enrolled students in institute
+    active_students_count = (await db.execute(
+        select(func.count(Student.id))
+        .where(and_(Student.tenant_id == tenant_id, Student.is_active == True))
+    )).scalar() or 0
 
-    labels = {
-        "new": "Enquiries",
-        "contacted": "Demo",
-        "interested": "Trial",
-        "converted": "Enrolled",
-        "lost": "Lost",
-    }
+    enrolled_count = max(
+        raw_counts.get("enrolled", 0) + raw_counts.get("converted", 0),
+        active_students_count
+    )
+
+    enquiries_count = raw_counts.get("new", 0) + raw_counts.get("enquiry", 0) + raw_counts.get("enquiries", 0)
+    contacted_count = raw_counts.get("contacted", 0) + raw_counts.get("demo_scheduled", 0)
+    trial_count = raw_counts.get("interested", 0) + raw_counts.get("demo_done", 0) + raw_counts.get("negotiation", 0)
+    lost_count = raw_counts.get("lost", 0)
 
     return [
-        {
-            "stage": labels[s],
-            "count": counts.get(s, 0),
-        }
-        for s in order
+        {"stage": "Enquiries", "count": enquiries_count},
+        {"stage": "Contacted", "count": contacted_count},
+        {"stage": "Trial", "count": trial_count},
+        {"stage": "Enrolled", "count": enrolled_count},
+        {"stage": "Lost", "count": lost_count},
     ]
 
 
@@ -103,8 +105,14 @@ async def get_leads(
 
 
 async def get_lead(db: AsyncSession, tenant_id: str, lead_id: str) -> Lead:
+    import uuid
+    try:
+        uuid_obj = uuid.UUID(str(lead_id))
+    except (ValueError, TypeError):
+        raise NotFoundError("Lead")
+
     result = await db.execute(
-        select(Lead).where(and_(Lead.id == lead_id, Lead.tenant_id == tenant_id))
+        select(Lead).where(and_(Lead.id == uuid_obj, Lead.tenant_id == tenant_id))
     )
     lead = result.scalar_one_or_none()
     if not lead:

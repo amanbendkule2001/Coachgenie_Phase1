@@ -1,16 +1,14 @@
+import logging
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-import os
-from dotenv import load_dotenv
-from pathlib import Path
+from app.config import settings
 
-load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
+logger = logging.getLogger("coaching_erp")
 
-
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+DATABASE_URL = settings.DATABASE_URL
+# FIX BUG-013: never log the DATABASE_URL — it contains the DB password
+logger.info("Database engine initialising (URL redacted for security)")
 
 engine = create_async_engine(
     DATABASE_URL,

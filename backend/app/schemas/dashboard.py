@@ -8,6 +8,7 @@ class OwnerDashboard(BaseModel):
     total_leads: int
     converted_leads: int
     total_revenue: float
+    total_collected: Optional[float] = 0.0
     pending_revenue: float
     total_exams: int
     avg_attendance_percent: float

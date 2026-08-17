@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuthStore, type UserRole } from "@/lib/stores/auth.store";
+import { DevAutoFill } from "@/components/dev/DevAutoFill";
 
 const MODULE_ROLES: Record<string, UserRole[]> = {
   "/dashboard": ["owner", "counselor", "tutor"],
@@ -106,5 +107,10 @@ export default function DashboardLayout({
     );
   }
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell>
+      {children}
+      <DevAutoFill />
+    </AppShell>
+  );
 }

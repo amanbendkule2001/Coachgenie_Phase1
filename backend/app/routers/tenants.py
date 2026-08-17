@@ -89,12 +89,13 @@ async def create_tenant(body: TenantCreate, db: DB):
 
     try:
         # ✅ 3. Create admin user
+        # FIX BUG-002: was password= (wrong field), now correctly password_hash=
         user = User(
             tenant_id=tenant.id,
             email=body.owner_email,
-            password=hash_password(body.owner_password),
+            password_hash=hash_password(body.owner_password),
             first_name=body.owner_first_name,
-            role="admin"
+            role="owner"
         )
 
         db.add(user)

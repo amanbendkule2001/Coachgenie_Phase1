@@ -19,12 +19,12 @@ async def attendance_heatmap(
 
 @router.get("/")
 async def get_attendance_by_batch(
-    batch_id: str = Query(...),
-    from_date: str = Query(..., alias="from"),
-    to_date: str   = Query(..., alias="to"),
-    db: DB = None,
+    batch_id: str,
+    db: DB,  # FIX BUG-009: removed = None; moved before defaulted Query params
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor")),
+    from_date: str = Query(..., alias="from"),
+    to_date: str   = Query(..., alias="to"),
 ):
     records = await att_service.get_attendance_by_batch(
         db, str(tenant.id), batch_id, from_date, to_date
@@ -61,5 +61,36 @@ async def student_summary(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor", "parent", "student")),
 ):
+    """
+    FIX: Added ownership check — students can only see their own attendance;
+    parents can only see their linked child's attendance.
+    Staff roles (owner, tutor, counselor) retain unrestricted access.
+    """
+    from fastapi import HTTPException
+    from sqlalchemy import select, and_
+    from app.models.student import Student
+
+    if current_user.role == "student":
+        result = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = result.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+    elif current_user.role == "parent":
+        result = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = result.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+    # Staff roles (owner, tutor, counselor) — unrestricted access, fall through.
+
     summary = await att_service.get_student_summary(db, str(tenant.id), student_id)
     return {"success": True, "data": summary}

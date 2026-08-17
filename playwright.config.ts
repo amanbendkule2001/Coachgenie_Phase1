@@ -1,4 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+const result = dotenv.config({ path: ".env.test" });
+
 
 /**
  * Place this file at the repo root (same level as `client/` and `backend/`).
@@ -13,7 +16,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 const FRONTEND_URL = "http://localhost:3000";
-const BACKEND_URL = "http://localhost:8002";
+const BACKEND_URL = "http://localhost:8000";
 // const BACKEND_URL = "http://localhost:8002";
 
 export default defineConfig({
@@ -50,7 +53,7 @@ export default defineConfig({
     },
     {
       // command: "uvicorn app.main:app --reload --port 8002",
-      command: "uvicorn app.main:app --reload --port 8002",
+      command: "uvicorn app.main:app --reload --port 8000",
       cwd: "./backend",
       url: `${BACKEND_URL}/docs`,
       timeout: 60_000,

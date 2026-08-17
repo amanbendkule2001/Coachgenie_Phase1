@@ -125,11 +125,19 @@ async def notify_overdue_fees():
 
 
 async def notify_low_attendance():
+    """
+    FIX: Replaced N+1 query loop (3 DB queries per student) with a single
+    grouped SQL query that computes all attendance percentages at once.
+    FIX: Added retry logic so failed notifications are retried instead of silently dropped.
+    """
     from app.models.attendance import AttendanceRecord
     from app.models.student import Student
     from app.models.user import User
     from app.models.notification import NotificationTemplate
     from app.services.notification import send_notifications
+
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5  # seconds
 
     async for db in get_db():
         try:
@@ -144,38 +152,49 @@ async def notify_low_attendance():
 
             for tpl in templates:
                 tenant_id = str(tpl.tenant_id)
+
+                # FIX: Single grouped SQL query replaces 3 queries per student in a Python loop.
+                attendance_stats = (await db.execute(
+                    select(
+                        AttendanceRecord.student_id,
+                        func.count(AttendanceRecord.id).label("total"),
+                        func.count(AttendanceRecord.id).filter(
+                            AttendanceRecord.status == "present"
+                        ).label("present_count"),
+                    )
+                    .where(AttendanceRecord.tenant_id == tenant_id)
+                    .group_by(AttendanceRecord.student_id)
+                )).all()
+
+                # Build a map: student_id -> (total, present)
+                stats_map = {
+                    str(row.student_id): (row.total, row.present_count)
+                    for row in attendance_stats
+                    if row.total >= 5  # skip students with too few records
+                }
+
+                # Fetch only students with low attendance
+                low_student_ids = [
+                    sid for sid, (total, present) in stats_map.items()
+                    if round((present / total) * 100, 1) < 75
+                ]
+
+                if not low_student_ids:
+                    continue
+
                 students = (await db.execute(
                     select(Student).where(
-                        and_(Student.tenant_id == tenant_id, Student.is_active == True)
+                        and_(
+                            Student.tenant_id == tenant_id,
+                            Student.id.in_(low_student_ids),
+                            Student.is_active == True,
+                        )
                     )
                 )).scalars().all()
 
                 for student in students:
-                    total = (await db.execute(
-                        select(func.count()).select_from(AttendanceRecord).where(
-                            and_(
-                                AttendanceRecord.tenant_id == tenant_id,
-                                AttendanceRecord.student_id == student.id,
-                            )
-                        )
-                    )).scalar() or 0
-
-                    if total < 5:
-                        continue
-
-                    present = (await db.execute(
-                        select(func.count()).select_from(AttendanceRecord).where(
-                            and_(
-                                AttendanceRecord.tenant_id == tenant_id,
-                                AttendanceRecord.student_id == student.id,
-                                AttendanceRecord.status == "present",
-                            )
-                        )
-                    )).scalar() or 0
-
+                    total, present = stats_map[str(student.id)]
                     pct = round((present / total) * 100, 1)
-                    if pct >= 75:
-                        continue
 
                     user = (await db.execute(
                         select(User).where(
@@ -188,13 +207,24 @@ async def notify_low_attendance():
                     if not user:
                         continue
 
-                    await send_notifications(
-                        db, tenant_id, str(tpl.id), [str(user.id)],
-                        {
-                            "studentName":       f"{student.first_name} {student.last_name}".strip(),
-                            "attendancePercent": str(pct),
-                        }
-                    )
+                    # FIX: Retry on notification failure
+                    for attempt in range(1, MAX_RETRIES + 1):
+                        try:
+                            await send_notifications(
+                                db, tenant_id, str(tpl.id), [str(user.id)],
+                                {
+                                    "studentName":       f"{student.first_name} {student.last_name}".strip(),
+                                    "attendancePercent": str(pct),
+                                }
+                            )
+                            break  # success — stop retrying
+                        except Exception as e:
+                            logger.warning(
+                                f"[SCHEDULER] Low-attendance notify attempt {attempt}/{MAX_RETRIES} failed: {e}"
+                            )
+                            if attempt < MAX_RETRIES:
+                                import asyncio
+                                await asyncio.sleep(RETRY_DELAY)
 
             await db.commit()
             logger.info("[SCHEDULER] Low attendance check complete")

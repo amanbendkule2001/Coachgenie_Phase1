@@ -87,6 +87,9 @@ class FeeInvoiceOut(BaseModel):
     student_name:  Optional[str] = None
     grade:         Optional[str] = None
 
+    # Installment schedule inherited from linked admission
+    payment_installment_schedule: Optional[str] = None
+
     model_config = {"from_attributes": True}
 
     @classmethod
@@ -99,6 +102,10 @@ class FeeInvoiceOut(BaseModel):
             last  = getattr(s, "last_name",  "") or ""
             instance.student_name = f"{first} {last}".strip() or None
             instance.grade        = getattr(s, "current_class", None)
+            # Pull installment schedule from student's linked admission
+            admission = getattr(s, "admission", None)
+            if admission and getattr(admission, "payment_installment_schedule", None):
+                instance.payment_installment_schedule = admission.payment_installment_schedule
         return instance
 
 

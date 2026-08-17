@@ -104,8 +104,9 @@ async def update_batch(db: AsyncSession, tenant_id: str,
         # Allow empty lists (e.g. clearing subjects) but skip None
         if value is not None and hasattr(batch, key):
             setattr(batch, key, value)
-    await db.commit()
-    await db.refresh(batch)
+    # FIX BUG-007: was db.commit() — must use flush() to preserve
+    # atomicity; the get_db() context manager handles the final commit.
+    await db.flush()
     return await _attach_student_ids(db, batch)
 
 # ── Enrollment ─────────────────────────────────────────────────
@@ -123,7 +124,34 @@ async def update_batch(db: AsyncSession, tenant_id: str,
 #         raise ConflictError("Student already enrolled in this batch.")
 #     db.add(BatchStudent(batch_id=batch_id, student_id=student_id, enrolled_at=date.today()))
 #     await db.flush()
-async def enroll_student(db: AsyncSession, batch_id: str, student_id: str):
+async def enroll_student(
+    db: AsyncSession, tenant_id: str, batch_id: str, student_id: str
+):
+    """
+    FIX BUG-003: validate that both batch_id and student_id belong to
+    the requesting tenant before enrolling — prevents cross-tenant enrollment.
+    FIX BUG-007: use db.flush() instead of db.commit() to keep atomicity.
+    """
+    from app.models.student import Student
+
+    # Verify batch belongs to this tenant
+    batch_result = await db.execute(
+        select(Batch).where(
+            and_(Batch.id == batch_id, Batch.tenant_id == tenant_id)
+        )
+    )
+    if not batch_result.scalar_one_or_none():
+        raise NotFoundError("Batch")
+
+    # Verify student belongs to this tenant
+    student_result = await db.execute(
+        select(Student).where(
+            and_(Student.id == student_id, Student.tenant_id == tenant_id)
+        )
+    )
+    if not student_result.scalar_one_or_none():
+        raise NotFoundError("Student")
+
     existing = await db.execute(
         select(BatchStudent).where(
             and_(
@@ -132,7 +160,6 @@ async def enroll_student(db: AsyncSession, batch_id: str, student_id: str):
             )
         )
     )
-
     if existing.scalar_one_or_none():
         raise ConflictError("Student already enrolled in this batch.")
 
@@ -141,13 +168,26 @@ async def enroll_student(db: AsyncSession, batch_id: str, student_id: str):
         student_id=student_id,
         enrolled_at=date.today(),
     )
-
     db.add(enrollment)
+    await db.flush()  # FIX BUG-007: was db.commit()
 
-    await db.commit()
-    await db.refresh(enrollment)
 
-async def remove_student(db: AsyncSession, batch_id: str, student_id: str):
+async def remove_student(
+    db: AsyncSession, tenant_id: str, batch_id: str, student_id: str
+):
+    """
+    FIX BUG-003: validate batch belongs to this tenant before removing.
+    FIX BUG-007: use db.flush() instead of db.commit().
+    """
+    # Verify batch belongs to this tenant
+    batch_result = await db.execute(
+        select(Batch).where(
+            and_(Batch.id == batch_id, Batch.tenant_id == tenant_id)
+        )
+    )
+    if not batch_result.scalar_one_or_none():
+        raise NotFoundError("Batch")
+
     result = await db.execute(
         select(BatchStudent).where(
             and_(
@@ -160,8 +200,7 @@ async def remove_student(db: AsyncSession, batch_id: str, student_id: str):
     if not enrollment:
         raise NotFoundError("Enrollment")
     await db.delete(enrollment)
-    # await db.flush()
-    await db.commit()
+    await db.flush()  # FIX BUG-007: was db.commit()
 
 async def get_batch_students(db: AsyncSession, tenant_id: str, batch_id: str) -> list:
     """Return full Student objects enrolled in a batch."""
@@ -324,10 +363,16 @@ async def get_syllabus_with_progress(
     Returns all topics for a subject, merged with their progress
     for the given batch. Result is a list of dicts.
     """
-    # Get all topics for subject
+    # FIX BUG-008: added tenant_id filter — previously queried by subject_id
+    # only, which could expose another tenant's syllabus topics via ID guessing.
     topics_result = await db.execute(
         select(SyllabusItem)
-        .where(SyllabusItem.subject_id == subject_id)
+        .where(
+            and_(
+                SyllabusItem.subject_id == subject_id,
+                SyllabusItem.tenant_id  == tenant_id,
+            )
+        )
         .order_by(SyllabusItem.sort_order.asc())
     )
     topics = topics_result.scalars().all()

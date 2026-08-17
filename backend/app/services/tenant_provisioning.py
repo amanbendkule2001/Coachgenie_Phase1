@@ -429,3 +429,39 @@ async def get_tenant_details(
             "total_users": total_users,
             "admins": admins,
         }
+
+
+async def ensure_demo_tenant():
+    """
+    Guarantees the default 'demo' tenant and 'owner@demo.com' user exist in the database.
+    Prevents 400 Bad Request TenantNotFoundError on fresh or reset databases.
+    """
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(Tenant).where(Tenant.subdomain == "demo"))
+        tenant = res.scalar_one_or_none()
+        if not tenant:
+            tenant = Tenant(
+                name="Demo Coaching Institute",
+                subdomain="demo",
+                plan="pro",
+                is_active=True,
+                settings={"theme": "blue", "locale": "en-IN"},
+            )
+            db.add(tenant)
+            await db.flush()
+
+        res_user = await db.execute(select(User).where(User.email == "owner@demo.com"))
+        user = res_user.scalar_one_or_none()
+        if not user:
+            from app.utils.security import hash_password
+            user = User(
+                tenant_id=tenant.id,
+                email="owner@demo.com",
+                password_hash=hash_password("Admin@1234"),
+                first_name="Demo",
+                last_name="Owner",
+                role="owner",
+                is_active=True,
+            )
+            db.add(user)
+        await db.commit()

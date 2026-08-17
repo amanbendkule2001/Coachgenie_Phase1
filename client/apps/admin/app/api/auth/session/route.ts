@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { access_token, refresh_token, user } = body;
 
-    if (!access_token || !refresh_token || !user) {
+    if (!access_token || !user) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: access_token and user" },
         { status: 400 }
       );
     }

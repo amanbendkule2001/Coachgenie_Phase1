@@ -158,7 +158,8 @@ async def enroll_student(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor")),
 ):
-    await batch_service.enroll_student(db, batch_id, student_id)
+    # FIX BUG-003: pass tenant.id so service can validate batch/student ownership
+    await batch_service.enroll_student(db, str(tenant.id), batch_id, student_id)
     return {"success": True, "message": "Student enrolled."}
 
 
@@ -170,7 +171,8 @@ async def remove_student(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor")),
 ):
-    await batch_service.remove_student(db, batch_id, student_id)
+    # FIX BUG-003: pass tenant.id so service can validate batch ownership
+    await batch_service.remove_student(db, str(tenant.id), batch_id, student_id)
     return {"success": True, "message": "Student removed from batch."}
 
 
@@ -192,10 +194,10 @@ async def get_batch_students(
 @router.get("/{batch_id}/syllabus")
 async def get_batch_syllabus(
     batch_id: str,
-    subject_id: str = Query(..., description="Subject ID to get syllabus for"),
-    db: DB = None,
+    db: DB,  # FIX BUG-009: moved before defaulted params; removed erroneous = None
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor", "student")),
+    subject_id: str = Query(..., description="Subject ID to get syllabus for"),
 ):
     """Get all syllabus topics for a subject with their completion status for this batch."""
     merged = await batch_service.get_syllabus_with_progress(
@@ -208,10 +210,10 @@ async def get_batch_syllabus(
 async def update_topic_progress(
     batch_id: str,
     topic_id: str,
-    body: SyllabusProgressUpdate,
-    db: DB = None,
+    db: DB,  # FIX BUG-009: moved before defaulted params; removed erroneous = None
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor")),
+    body: SyllabusProgressUpdate = ...,
 ):
     """Mark a syllabus topic as not_started / in_progress / completed for a batch."""
     prog = await batch_service.upsert_syllabus_progress(

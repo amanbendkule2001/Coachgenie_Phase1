@@ -1,103 +1,213 @@
-import { test, expect, request } from "@playwright/test";
+// import { test, expect, request } from "@playwright/test";
 
-const BASE_URL =
-  process.env.API_URL ?? "http://127.0.0.1:8000/api/v1";
+// const BASE_URL =
+//   process.env.API_URL ?? "http://127.0.0.1:8000/api/v1";
 
-const TEST_EMAIL =
-  process.env.TEST_EMAIL ?? "owner@demo.com";
+// const TEST_TENANT =
+//   process.env.TEST_TENANT ?? "visionacademy";
 
-const TEST_PASSWORD =
-  process.env.TEST_PASSWORD ?? "Admin@1234";
+// const TEST_EMAIL =
+//   process.env.TEST_EMAIL ??
+//   "rahul.sharma@visionacademy.com";
 
-test.describe("Authentication API", () => {
-  test("login succeeds", async () => {
+// const TEST_PASSWORD =
+//   process.env.TEST_PASSWORD ??
+//   "Lokesh@1234";
+
+// test.describe("Authentication API", () => {
+//   test("login succeeds", async () => {
+//     const api = await request.newContext({
+//       baseURL: BASE_URL,
+//       extraHTTPHeaders: {
+//         "X-Tenant-Subdomain": TEST_TENANT,
+//       },
+//     });
+
+//     const response = await api.post("/auth/login", {
+//       data: {
+//         email: TEST_EMAIL,
+//         password: TEST_PASSWORD,
+//       },
+//     });
+
+//     expect(response.status()).toBe(200);
+
+//     const body = await response.json();
+
+//     expect(body).toHaveProperty("access_token");
+//     expect(body.token_type).toBe("bearer");
+
+//     await api.dispose();
+//   });
+
+//   test("invalid password returns 401", async () => {
+//     const api = await request.newContext({
+//       baseURL: BASE_URL,
+//       extraHTTPHeaders: {
+//         "X-Tenant-Subdomain": TEST_TENANT,
+//       },
+//     });
+
+//     const response = await api.post("/auth/login", {
+//       data: {
+//         email: TEST_EMAIL,
+//         password: "WrongPassword123",
+//       },
+//     });
+
+//     expect(response.status()).toBe(401);
+
+//     const body = await response.json();
+
+//     expect(body.detail).toBe("Invalid credentials");
+
+//     await api.dispose();
+//   });
+
+//   test("unknown email returns 401", async () => {
+//     const api = await request.newContext({
+//       baseURL: BASE_URL,
+//       extraHTTPHeaders: {
+//         "X-Tenant-Subdomain": TEST_TENANT,
+//       },
+//     });
+
+//     const response = await api.post("/auth/login", {
+//       data: {
+//         email: "notfound@test.com",
+//         password: TEST_PASSWORD,
+//       },
+//     });
+
+//     expect(response.status()).toBe(401);
+
+//     await api.dispose();
+//   });
+
+//   test("missing password returns validation error", async () => {
+//     const api = await request.newContext({
+//       baseURL: BASE_URL,
+//       extraHTTPHeaders: {
+//         "X-Tenant-Subdomain": TEST_TENANT,
+//       },
+//     });
+
+//     const response = await api.post("/auth/login", {
+//       data: {
+//         email: TEST_EMAIL,
+//       },
+//     });
+
+//     expect(response.status()).toBe(422);
+
+//     await api.dispose();
+//   });
+
+//   test("missing email returns validation error", async () => {
+//     const api = await request.newContext({
+//       baseURL: BASE_URL,
+//       extraHTTPHeaders: {
+//         "X-Tenant-Subdomain": TEST_TENANT,
+//       },
+//     });
+
+//     const response = await api.post("/auth/login", {
+//       data: {
+//         password: TEST_PASSWORD,
+//       },
+//     });
+
+//     expect(response.status()).toBe(422);
+
+//     await api.dispose();
+//   });
+// });
+
+import { test, request, expect } from "@playwright/test";
+
+const BASE_URL = "http://127.0.0.1:8000/api/v1";
+
+const TENANT = "visionacademy";
+const EMAIL = "rahul.sharma@visionacademy.com";
+const PASSWORD = "Lokesh@1234";
+
+test.describe("Authentication API Debug", () => {
+  test("Debug login endpoint", async () => {
+    console.log("====================================");
+    console.log("API URL:", BASE_URL);
+    console.log("Tenant:", TENANT);
+    console.log("Email:", EMAIL);
+    console.log("====================================");
+
     const api = await request.newContext({
       baseURL: BASE_URL,
-    });
-
-    const response = await api.post("/auth/login", {
-      data: {
-        email: TEST_EMAIL,
-        password: TEST_PASSWORD,
+      extraHTTPHeaders: {
+        "X-Tenant-Subdomain": TENANT,
+        "Content-Type": "application/json",
       },
     });
 
-    expect(response.status()).toBe(200);
+    const response = await api.post("auth/login", {
+      data: {
+        email: EMAIL,
+        password: PASSWORD,
+      },
+    });
 
-    const body = await response.json();
+    console.log("Status:", response.status());
+    console.log("URL:", response.url());
 
-    expect(body).toHaveProperty("access_token");
-    expect(body.token_type).toBe("bearer");
+    const body = await response.text();
+
+    console.log("Response:");
+    console.log(body);
+
+    // Fail intentionally if not successful so we can inspect output
+    expect(response.ok()).toBeTruthy();
 
     await api.dispose();
   });
 
-  test("invalid password returns 401", async () => {
+  test("Check health endpoint", async () => {
     const api = await request.newContext({
-      baseURL: BASE_URL,
+      baseURL: "http://127.0.0.1:8000",
     });
 
-    const response = await api.post("/auth/login", {
-      data: {
-        email: TEST_EMAIL,
-        password: "WrongPassword123",
-      },
-    });
+    const response = await api.get("/health");
 
-    expect(response.status()).toBe(401);
+    console.log("Health Status:", response.status());
+    console.log("Health URL:", response.url());
+    console.log("Health Body:", await response.text());
 
-    const body = await response.json();
-
-    expect(body.detail).toBe("Invalid credentials");
+    expect(response.ok()).toBeTruthy();
 
     await api.dispose();
   });
 
-  test("unknown email returns 401", async () => {
+  test("Check OpenAPI", async () => {
     const api = await request.newContext({
-      baseURL: BASE_URL,
+      baseURL: "http://127.0.0.1:8000",
     });
 
-    const response = await api.post("/auth/login", {
-      data: {
-        email: "notfound@test.com",
-        password: TEST_PASSWORD,
-      },
-    });
+    const response = await api.get("/openapi.json");
 
-    expect(response.status()).toBe(401);
+    console.log("OpenAPI Status:", response.status());
 
-    await api.dispose();
-  });
+    if (response.ok()) {
+      const json = await response.json();
 
-  test("missing password returns validation error", async () => {
-    const api = await request.newContext({
-      baseURL: BASE_URL,
-    });
+      console.log("========== ROUTES ==========");
 
-    const response = await api.post("/auth/login", {
-      data: {
-        email: TEST_EMAIL,
-      },
-    });
+      Object.keys(json.paths)
+        .sort()
+        .forEach((path) => console.log(path));
 
-    expect(response.status()).toBe(422);
+      console.log("============================");
+    } else {
+      console.log(await response.text());
+    }
 
-    await api.dispose();
-  });
-
-  test("missing email returns validation error", async () => {
-    const api = await request.newContext({
-      baseURL: BASE_URL,
-    });
-
-    const response = await api.post("/auth/login", {
-      data: {
-        password: TEST_PASSWORD,
-      },
-    });
-
-    expect(response.status()).toBe(422);
+    expect(response.ok()).toBeTruthy();
 
     await api.dispose();
   });

@@ -40,9 +40,7 @@ async def get_dashboard(
             db, str(tenant.id), str(student.id)
         )
     elif role == "parent":
-        # Get student linked to parent email
-        from sqlalchemy import select, and_
-        from app.models.student import Student
+        # FIX: Use .all() not .scalar_one_or_none() — a parent can have multiple children.
         result = await db.execute(
             select(Student).where(
                 and_(
@@ -51,12 +49,21 @@ async def get_dashboard(
                 )
             )
         )
-        student = result.scalar_one_or_none()
-        if not student:
+        students = result.scalars().all()
+        if not students:
             return {"success": True, "data": {"message": "No student linked to this parent account."}}
-        data = await dashboard_service.get_student_dashboard(
-            db, str(tenant.id), str(student.id)
-        )
+        # Aggregate dashboard data for all linked children
+        all_data = []
+        for student in students:
+            child_data = await dashboard_service.get_student_dashboard(
+                db, str(tenant.id), str(student.id)
+            )
+            all_data.append({
+                "student_id": str(student.id),
+                "student_name": f"{student.first_name} {student.last_name}".strip(),
+                "dashboard": child_data,
+            })
+        data = {"children": all_data}
     else:
         data = {"message": "No dashboard available for this role."}
 
@@ -102,6 +109,46 @@ async def student_dashboard(
     tenant=Depends(get_tenant),
     current_user=Depends(get_current_user),
 ):
+    """
+    FIX BUG-010: Added role-based ownership check.
+    - Owners / counselors / tutors → can access any student's dashboard.
+    - Students → can only access their own dashboard.
+    - Parents → can only access their linked student's dashboard.
+    """
+    from fastapi import HTTPException
+    from sqlalchemy import select, and_
+    from app.models.student import Student
+
+    if current_user.role in ("owner", "counselor", "tutor"):
+        # Staff roles: unrestricted access
+        pass
+    elif current_user.role == "student":
+        result = await db.execute(
+            select(Student).where(
+                and_(
+                    Student.tenant_id == tenant.id,
+                    Student.user_id == current_user.id,
+                )
+            )
+        )
+        linked = result.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role == "parent":
+        result = await db.execute(
+            select(Student).where(
+                and_(
+                    Student.tenant_id == tenant.id,
+                    Student.parent_email == current_user.email,
+                )
+            )
+        )
+        linked = result.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     data = await dashboard_service.get_student_dashboard(
         db, str(tenant.id), student_id
     )

@@ -1,7 +1,8 @@
+import logging
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from app.models.user import User, RefreshToken
 from app.utils.security import (
     hash_password, verify_password,
@@ -10,6 +11,8 @@ from app.utils.security import (
 )
 from app.utils.exceptions import UnauthorizedError, ConflictError
 from app.schemas import user
+
+logger = logging.getLogger("coaching_erp")
 
 
 async def register_user(db: AsyncSession, tenant_id: str, data: dict) -> User:
@@ -103,10 +106,37 @@ async def register_user(db: AsyncSession, tenant_id: str, data: dict) -> User:
 #         "user": user,
 #     }
 
-async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str) -> dict:
+async def register_staff_user(
+    db: AsyncSession, tenant_id: str, role: str, data: dict
+) -> User:
+    """Create a staff user (counselor/tutor/admin) — owner-only action."""
     result = await db.execute(
         select(User).where(
-            and_(User.tenant_id == uuid.UUID(tenant_id), User.email == email)
+            and_(User.tenant_id == uuid.UUID(tenant_id), User.email == data["email"])
+        )
+    )
+    if result.scalar_one_or_none():
+        raise ConflictError("Email already registered.")
+
+    staff = User(
+        tenant_id=tenant_id,
+        email=data["email"],
+        password_hash=hash_password(data["password"]),
+        first_name=data["first_name"],
+        last_name=data.get("last_name", ""),
+        phone=data.get("phone"),
+        role=role,
+    )
+    db.add(staff)
+    await db.flush()
+    return staff
+
+
+async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str) -> dict:
+    email_clean = (email or "").strip().lower()
+    result = await db.execute(
+        select(User).where(
+            and_(User.tenant_id == uuid.UUID(tenant_id), func.lower(User.email) == email_clean)
         )
     )
     user = result.scalar_one_or_none()
@@ -114,7 +144,11 @@ async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str
     password_ok = verify_password(password, user.password_hash) if user else False
 
     if not user or not user.is_active or not password_ok:
-        raise UnauthorizedError("Invalid credentials.")
+        logger.warning(
+            f"Login failed for email='{email}' on tenant_id='{tenant_id}'. "
+            f"(User found: {user is not None}, Active: {getattr(user, 'is_active', False)}, Password match: {password_ok})"
+        )
+        raise UnauthorizedError("Invalid email or password.")
 
     payload = {
         "sub": str(user.id),

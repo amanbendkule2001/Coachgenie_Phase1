@@ -1,0 +1,451 @@
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+
+const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CoachGenie ERP - Complete User Guide & Operational Manual</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 12mm 12mm 12mm 12mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      line-height: 1.5;
+      font-size: 11.5px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Cover Header */
+    .header-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%);
+      color: #ffffff;
+      padding: 28px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px 0;
+      color: #ffffff;
+    }
+
+    .header-subtitle {
+      font-size: 13px;
+      color: #c7d2fe;
+      font-weight: 400;
+      margin: 0 0 14px 0;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 14px;
+      margin-top: 14px;
+    }
+
+    .meta-item {
+      font-size: 10px;
+    }
+
+    .meta-label {
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .meta-value {
+      color: #f8fafc;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* Section Styling */
+    .section {
+      margin-bottom: 22px;
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .badge {
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+    }
+
+    .role-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .role-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3730a3;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .role-badge {
+      background: #e0e7ff;
+      color: #3730a3;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    ul.step-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    ul.step-list li {
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      font-size: 11px;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td {
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .callout {
+      background: #eef2ff;
+      border-left: 4px solid #4f46e5;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #312e81;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: #1e1b4b;
+      margin-bottom: 2px;
+    }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 9px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header Banner -->
+    <div class="header-banner">
+      <div class="header-title">📖 COACHGENIE USER GUIDE & OPERATIONAL MANUAL</div>
+      <div class="header-subtitle">Step-by-Step User Instructions for Owners, Counselors, Tutors, Students & Parents</div>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">System</span>
+          <span class="meta-value">CoachGenie Coaching ERP</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Document Version</span>
+          <span class="meta-value">v1.0 (Phase 1 Complete)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Target Audience</span>
+          <span class="meta-value">All User Roles</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Default Subdomain</span>
+          <span class="meta-value">demo (Demo Institute)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Credentials Summary -->
+    <div class="callout">
+      <div class="callout-title">🔑 Quick Demo Login Credentials:</div>
+      <strong>Subdomain</strong>: <code>demo</code> &bull; 
+      <strong>Owner Email</strong>: <code>owner@demo.com</code> &bull; 
+      <strong>Counselor Email</strong>: <code>counselor@demo.com</code> &bull; 
+      <strong>Password</strong>: <code>Admin@1234</code>
+    </div>
+
+    <!-- Section 1: Introduction & Multi-Tenant Login -->
+    <div class="section">
+      <div class="section-title">1. Getting Started & Logging In <span class="badge">Authentication</span></div>
+      <p>CoachGenie is a multi-tenant platform where each coaching institute has its own isolated subdomain environment.</p>
+      <ul class="step-list">
+        <li><strong>Step 1</strong>: Open your web browser and navigate to <code>http://localhost:3000/login</code>.</li>
+        <li><strong>Step 2</strong>: Enter your institute's <strong>Institute Subdomain</strong> (e.g. <code>demo</code>).</li>
+        <li><strong>Step 3</strong>: Enter your assigned email address and password, then click <strong>Sign In</strong>.</li>
+        <li><strong>Step 4</strong>: Upon authentication, you will be redirected to your role-specific dashboard.</li>
+      </ul>
+    </div>
+
+    <!-- Section 2: Role 1 - Institute Owner / Administrator -->
+    <div class="section">
+      <div class="section-title">2. Institute Owner / Admin Guide <span class="badge">Full Control</span></div>
+      
+      <div class="role-card">
+        <div class="role-header">🏢 Managing Institute Dashboard & Finances <span class="role-badge">Owner Role</span></div>
+        <ul class="step-list">
+          <li><strong>Executive Dashboard (<code>/dashboard</code>)</strong>: View real-time revenue collection, total active students, pending fee dues, and lead conversion rates.</li>
+          <li><strong>Staff Management (<code>/settings/users</code>)</strong>: Create and manage accounts for Sales Counselors, Tutors, Students, and Parents. Assign role permissions.</li>
+          <li><strong>Fee Structure & Invoicing (<code>/fees</code>)</strong>:
+            <ul>
+              <li>Create fee templates for courses/batches (e.g. <em>Class 10 Physics Annual Fee: ₹25,000</em>).</li>
+              <li>Generate invoices for admitted students with due dates and custom discounts.</li>
+              <li>Record offline Cash/UPI payments and view monthly revenue trends.</li>
+            </ul>
+          </li>
+          <li><strong>Admissions Approval (<code>/admissions</code>)</strong>: Review incoming student admission requests, verify submitted documents, approve admissions, and automatically generate student enrollment records.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 3: Role 2 - Sales Counselor -->
+    <div class="section">
+      <div class="section-title">3. Sales Counselor Guide (Leads & Admissions) <span class="badge">Sales Pipeline</span></div>
+      
+      <div class="role-card">
+        <div class="role-header">🎯 Managing Sales Leads & Conversions <span class="role-badge">Counselor Role</span></div>
+        <ul class="step-list">
+          <li><strong>Leads Kanban Board (<code>/leads</code>)</strong>: Track prospective students across all 8 pipeline stages:
+            <br><code>New</code> &rarr; <code>Contacted</code> &rarr; <code>Interested</code> &rarr; <code>Demo Scheduled</code> &rarr; <code>Demo Done</code> &rarr; <code>Negotiation</code> &rarr; <code>Enrolled</code> &rarr; <code>Lost</code>.
+          </li>
+          <li><strong>Creating a New Lead</strong>: Click <strong>+ Add Lead</strong>, enter student name, phone number, target exam, course interest, and lead source (e.g. <em>Website, Instagram, Referral</em>).</li>
+          <li><strong>Scheduling Follow-ups</strong>: Click on any lead card to record activity notes, set follow-up reminder dates, and log call outcomes.</li>
+          <li><strong>Converting Lead to Admission</strong>: When a lead agrees to join, click <strong>Convert Lead</strong> to auto-fill their information directly into the Admission Form.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 4: Role 3 - Tutor / Educator -->
+    <div class="section">
+      <div class="section-title">4. Tutor & Educator Guide (Classes, Attendance & Exams) <span class="badge">Academic Management</span></div>
+      
+      <div class="role-card">
+        <div class="role-header">📚 Managing Batches, Classes & Marks <span class="role-badge">Tutor Role</span></div>
+        <ul class="step-list">
+          <li><strong>Daily Class Scheduling (<code>/batches</code>)</strong>: Schedule live or offline classes for your assigned batches, select subject topics, and set start/end times.</li>
+          <li><strong>Syllabus Progress Tracking (<code>/syllabus</code>)</strong>: Mark syllabus topics as <code>Not Started</code>, <code>In Progress</code>, or <code>Completed</code>. CoachGenie automatically calculates overall batch syllabus completion %.</li>
+          <li><strong>Daily Student Attendance (<code>/attendance</code>)</strong>: Select batch date and mark students as <code>Present</code>, <code>Absent</code>, or <code>Late</code>. Low attendance warnings trigger automatically.</li>
+          <li><strong>Exams & Student Marks (<code>/exams</code>)</strong>: Create unit tests/mock exams, specify maximum marks, enter student scores, and generate class performance rankings.</li>
+          <li><strong>Student Growth Cards (<code>/growth-cards</code>)</strong>: Evaluate student soft skills, discipline, class participation ratings, and provide teacher remarks.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 5: Role 4 & 5 - Student & Parent Portal -->
+    <div class="section">
+      <div class="section-title">5. Student & Parent Portal Guide <span class="badge">Learning & Transparency</span></div>
+      
+      <div class="role-card">
+        <div class="role-header">🎓 Student & Parent Self-Service Features <span class="role-badge">Student / Parent Role</span></div>
+        <ul class="step-list">
+          <li><strong>My Classes & Schedule</strong>: View upcoming batch classes, assigned subjects, and tutor details.</li>
+          <li><strong>Syllabus Tracker</strong>: View real-time subject syllabus completion progress.</li>
+          <li><strong>Attendance & Exam Report Cards</strong>: Check personal monthly attendance percentage and exam score breakdowns.</li>
+          <li><strong>Fee Receipts & Statements</strong>: Parents can view total fees, paid amounts, remaining balance, and historical payment receipts.</li>
+          <li><strong>AI Copilot Assistant (<code>/ai</code>)</strong>: Students can ask questions to the AI Copilot to get instant learning assistance, study guidance, and practice insights.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 6: System Support & Summary -->
+    <div class="section">
+      <div class="section-title">6. Roles & Permissions Summary Matrix <span class="badge">Access Matrix</span></div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Module / Feature</th>
+            <th>Owner / Admin</th>
+            <th>Counselor</th>
+            <th>Tutor</th>
+            <th>Student</th>
+            <th>Parent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Executive Dashboard & Revenue</strong></td>
+            <td>✅ Full Access</td>
+            <td>❌ No Access</td>
+            <td>❌ No Access</td>
+            <td>❌ No Access</td>
+            <td>❌ No Access</td>
+          </tr>
+          <tr>
+            <td><strong>Sales Leads & Kanban</strong></td>
+            <td>✅ Full Access</td>
+            <td>✅ Full Access</td>
+            <td>❌ No Access</td>
+            <td>❌ No Access</td>
+            <td>❌ No Access</td>
+          </tr>
+          <tr>
+            <td><strong>Batches & Classes</strong></td>
+            <td>✅ Full Access</td>
+            <td>👁 View Only</td>
+            <td>✅ Full Access</td>
+            <td>👁 View Only</td>
+            <td>👁 View Only</td>
+          </tr>
+          <tr>
+            <td><strong>Attendance & Exams Entry</strong></td>
+            <td>✅ Full Access</td>
+            <td>❌ No Access</td>
+            <td>✅ Full Access</td>
+            <td>👁 View Own</td>
+            <td>👁 View Own</td>
+          </tr>
+          <tr>
+            <td><strong>Fee Invoices & Payments</strong></td>
+            <td>✅ Full Access</td>
+            <td>👁 View Only</td>
+            <td>❌ No Access</td>
+            <td>👁 View Own</td>
+            <td>👁 View Own</td>
+          </tr>
+          <tr>
+            <td><strong>AI Copilot Assistant</strong></td>
+            <td>✅ Full Access</td>
+            <td>✅ Full Access</td>
+            <td>✅ Full Access</td>
+            <td>✅ Full Access</td>
+            <td>✅ Full Access</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      CoachGenie ERP User Guide & Operational Manual &bull; Generated Automatically by Antigravity AI &bull; August 12, 2026
+    </div>
+
+  </div>
+</body>
+</html>`;
+
+async function generatePDF() {
+  const htmlPath = path.join(__dirname, '../../COACHGENIE_USER_GUIDE.html');
+  const pdfPath = path.join(__dirname, '../../CoachGenie_User_Guide_and_Manual.pdf');
+
+  // Write HTML file
+  fs.writeFileSync(htmlPath, htmlContent);
+  console.log('Generated User Guide HTML at:', htmlPath);
+
+  // Launch Playwright and render PDF
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.setContent(htmlContent, { waitUntil: 'networkidle' });
+  
+  await page.pdf({
+    path: pdfPath,
+    format: 'A4',
+    printBackground: true,
+    margin: {
+      top: '10mm',
+      bottom: '10mm',
+      left: '10mm',
+      right: '10mm'
+    }
+  });
+
+  await browser.close();
+  console.log('Successfully generated User Guide PDF at:', pdfPath);
+}
+
+generatePDF().catch(err => {
+  console.error('Error generating PDF:', err);
+  process.exit(1);
+});

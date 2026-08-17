@@ -24,9 +24,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("coaching_erp")
 
 
+from app.database import engine, Base
+import app.models  # ensure models are registered
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME}")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables verified/created.")
+
+    try:
+        from app.services.tenant_provisioning import ensure_demo_tenant
+        await ensure_demo_tenant()
+    except Exception as e:
+        logger.warning(f"Demo tenant initialization note: {e}")
+
+    import os
+    if os.getenv("ALLOW_SEED", "false").lower() in ("true", "1"):
+        try:
+            from seed import seed
+            await seed()
+        except Exception as e:
+            logger.info(f"Seed note: {e}")
+
     start_scheduler()
     yield
     scheduler.shutdown()
@@ -43,6 +65,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins_list,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,13 +88,20 @@ async def global_exception_handler(request: Request, exc: Exception):
     import traceback
 
     traceback.print_exc()
+    logger.error("Unhandled exception: %s — %s", type(exc).__name__, exc)
 
+    if settings.DEBUG:
+        detail = {"message": str(exc), "type": type(exc).__name__}
+    else:
+        detail = {"message": "An internal server error occurred. Please try again later."}
+
+    origin = request.headers.get("origin", "*")
     return JSONResponse(
         status_code=500,
-        content={
-            "success": False,
-            "message": str(exc),
-            "type": type(exc).__name__,
+        content={"success": False, **detail},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
         },
     )
 
@@ -101,4 +131,4 @@ app.include_router(parents.router,            prefix=PREFIX)
 app.include_router(tutors.router,             prefix=PREFIX)
 app.include_router(admins.router,             prefix=PREFIX)
 app.include_router(inbox_notification.router, prefix=PREFIX)
-app.include_router(ai_reports_router,         prefix=PREFIX)
+# FIX BUG-001: removed duplicate app.include_router(ai_reports_router) that was here

@@ -31,11 +31,7 @@ async def monthly_trend(
     current_user=Depends(require_roles("owner")),
 ):
     data = await fee_service.get_monthly_collection(db, str(tenant.id))
-
-    print("===================================")
-    print("Returned Data:", data)
-    print("===================================")
-
+    # FIX BUG-013: removed debug print() of fee data
     return {
         "success": True,
         "data": data,

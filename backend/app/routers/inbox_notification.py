@@ -34,7 +34,7 @@ async def mark_read(
     notif = await inbox_service.mark_read(db, str(tenant.id), notification_id)
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": InboxNotificationOut.model_validate(notif)}
 
 
@@ -45,5 +45,5 @@ async def mark_all_read(
     current_user=Depends(require_roles("owner", "counselor", "admin")),
 ):
     count = await inbox_service.mark_all_read(db, str(tenant.id), str(current_user.id))
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {"success": True, "marked": count}

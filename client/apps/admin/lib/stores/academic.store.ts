@@ -115,10 +115,11 @@ interface AcademicStore {
 }
 
 export const useAcademicStore = create<AcademicStore>()(
-  persist(                                          // ← outermost
-    immer((set) => ({                               // ← inner
+  persist(
+    immer((set) => ({
       students:   [],
-      batches:    SEED_BATCHES,
+      // batches:    SEED_BATCHES,
+      batches: [],
       attendance: generateAttendance(),
       exams: [],
       feeRecords: SEED_FEE_RECORDS,
@@ -208,11 +209,9 @@ export const useAcademicStore = create<AcademicStore>()(
         s.feeRecords.unshift({ ...record, id: `f-${Date.now()}` });
       }),
     })),
-
-    // ── Persist config ──────────────────────────────────────────
     {
       name: "academic-store",
-      partialize: (state) => ({
+      partialize: (state: AcademicStore) => ({
         batches:    state.batches,
         exams:      state.exams,
         feeRecords: state.feeRecords,

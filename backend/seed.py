@@ -111,10 +111,10 @@ async def enroll_student_in_batch(db, batch_id, student_id):
         await db.flush()
 
 
-# ── Path A: Lead → Convert → Admission → Student ───────────────────────────────
+# ── Path A: Lead -> Convert -> Admission -> Student ───────────────────────────────
 
 async def seed_lead_path(db, tenant_id: str, users: dict, batch) -> None:
-    print("\n  [Path A] Lead → convert → student")
+    print("\n  [Path A] Lead -> convert -> student")
 
     # Check if already seeded
     from app.models.lead import Lead
@@ -172,18 +172,18 @@ async def seed_lead_path(db, tenant_id: str, users: dict, batch) -> None:
         },
     )
     print(f"  [+] Admission: {admission.admission_number} (status={admission.status})")
-    print(f"  [+] Student:   {student.enrollment_no} — {student.first_name} {student.last_name}")
-    print(f"       lead_id on admission: {admission.lead_id}  ← not null (lead path)")
+    print(f"  [+] Student:   {student.enrollment_no} - {student.first_name} {student.last_name}")
+    print(f"       lead_id on admission: {admission.lead_id}  <- not null (lead path)")
 
     # 5. Enroll in batch
     await enroll_student_in_batch(db, batch.id, student.id)
     print(f"  [+] Enrolled in batch: {batch.name}")
 
 
-# ── Path B: Walk-in → Direct Admission → Student ──────────────────────────────
+# ── Path B: Walk-in -> Direct Admission -> Student ──────────────────────────────
 
 async def seed_walkin_path(db, tenant_id: str, users: dict, batch) -> None:
-    print("\n  [Path B] Walk-in → direct admission → student")
+    print("\n  [Path B] Walk-in -> direct admission -> student")
 
     # Check if already seeded
     from app.models.admission import Admission
@@ -217,7 +217,7 @@ async def seed_walkin_path(db, tenant_id: str, users: dict, batch) -> None:
         "remarks":       "Walk-in at institute. Father accompanied.",
         # lead_id is intentionally absent — this is the walk-in path
     })
-    print(f"  [+] Admission created: {admission.admission_number} (lead_id=None ← walk-in path)")
+    print(f"  [+] Admission created: {admission.admission_number} (lead_id=None <- walk-in path)")
 
     # 2. Approve admission
     admission = await admission_service.approve_admission(
@@ -227,8 +227,8 @@ async def seed_walkin_path(db, tenant_id: str, users: dict, batch) -> None:
 
     # 3. Generate student (same function as lead path — identical output)
     student = await admission_service.generate_student_from_admission(db, admission)
-    print(f"  [+] Student:   {student.enrollment_no} — {student.first_name} {student.last_name}")
-    print(f"       lead_id on admission: {admission.lead_id}  ← None (walk-in path)")
+    print(f"  [+] Student:   {student.enrollment_no} - {student.first_name} {student.last_name}")
+    print(f"       lead_id on admission: {admission.lead_id}  <- None (walk-in path)")
 
     # 4. Enroll in batch
     await enroll_student_in_batch(db, batch.id, student.id)
@@ -237,8 +237,15 @@ async def seed_walkin_path(db, tenant_id: str, users: dict, batch) -> None:
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
+from app.database import engine, Base
+import app.models
+
+
 async def seed():
-    print("\nSeeding CoachGenie...\n")
+    print("\nCreating tables & Seeding CoachGenie...\n")
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as db:
         tenant = await get_or_create_tenant(db)
@@ -251,22 +258,18 @@ async def seed():
         await db.commit()
 
     print("\nSeed complete!")
-    print("─" * 40)
+    print("-" * 40)
     print("  owner@demo.com      / Admin@1234")
     print("  counselor@demo.com  / Admin@1234")
     print("  tutor@demo.com      / Admin@1234")
     print("  Header: X-Tenant-Subdomain: demo")
     print("\nTwo students created:")
-    print("  Arjun Singh  — via lead conversion (admission.lead_id is set)")
-    print("  Meera Patel  — via walk-in (admission.lead_id is NULL)")
-    print("─" * 40)
+    print("  Arjun Singh  - via lead conversion (admission.lead_id is set)")
+    print("  Meera Patel  - via walk-in (admission.lead_id is NULL)")
+    print("-" * 40)
 
-# if os.getenv("ENVIRONMENT") != "development":
-#     raise Exception("Seed disabled outside development")
-ALLOW_SEED = os.getenv("ALLOW_SEED", "false").lower() == "true"
-
-if not ALLOW_SEED:
-    raise Exception("Seed disabled. Set ALLOW_SEED=true to run.")
 
 if __name__ == "__main__":
-    asyncio.run(seed())
+    ALLOW_SEED = os.getenv("ALLOW_SEED", "true").lower() == "true"
+    if ALLOW_SEED:
+        asyncio.run(seed())

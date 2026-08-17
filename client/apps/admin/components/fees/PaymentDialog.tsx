@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PaymentMode } from "@/lib/types/finance";
 
@@ -36,7 +36,7 @@ interface PaymentDialogProps {
 }
 
 export function PaymentDialog({ invoiceNo, outstanding, onSubmit, onClose }: PaymentDialogProps) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PaymentFormValues>({
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<PaymentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       amount:    outstanding,
@@ -45,6 +45,15 @@ export function PaymentDialog({ invoiceNo, outstanding, onSubmit, onClose }: Pay
       reference: "",
     },
   });
+
+  const handleDevAutoFill = () => {
+    const randUtr = Math.floor(100000000000 + Math.random() * 900000000000);
+    setValue("amount", outstanding > 0 ? outstanding : 5000);
+    setValue("mode", "UPI");
+    setValue("date", new Date().toISOString().split("T")[0]);
+    setValue("reference", `UPI-${randUtr}`);
+    setValue("note", "Auto-filled payment entry for testing verification");
+  };
 
   return (
     <>
@@ -55,9 +64,22 @@ export function PaymentDialog({ invoiceNo, outstanding, onSubmit, onClose }: Pay
             <h2 className="font-semibold">Record Payment</h2>
             <p className="text-sm text-muted-foreground">{invoiceNo} · Outstanding: ₹{outstanding.toLocaleString("en-IN")}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {(process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ENABLE_DEV_AUTOFILL === "true") && (
+              <button
+                type="button"
+                onClick={handleDevAutoFill}
+                title="Fill dummy payment data"
+                className="flex items-center gap-1 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md transition-colors"
+              >
+                <Zap className="h-3 w-3 fill-current" />
+                <span>Auto-Fill</span>
+              </button>
+            )}
+            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">

@@ -263,7 +263,7 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
   }
 
   return (
-    <div className="flex w-full items-center gap-3">
+    <div data-testid="topbar" className="flex w-full items-center gap-3">
 
       {/* Search */}
       <div className="relative flex-1 max-w-sm">

@@ -177,8 +177,15 @@ async def update_admission(
 
     was_confirmed = admission.status == "CONFIRMED"
 
+    if "payment" in data and data["payment"] is not None:
+        payment_data = data["payment"]
+        admission.payment_installment_schedule = json.dumps(
+            payment_data if isinstance(payment_data, dict)
+            else (payment_data.model_dump() if hasattr(payment_data, "model_dump") else payment_data)
+        )
+
     for key, value in data.items():
-        if hasattr(admission, key) and value is not None:
+        if key != "payment" and hasattr(admission, key) and value is not None:
             setattr(admission, key, value)
     if updated_by:
         admission.updated_by = updated_by
@@ -428,15 +435,11 @@ async def generate_student_from_admission(
     #    existed — it's keyed off the admission itself, so it still runs
     #    when fee_amount is set/updated AFTER the student was first created
     #    (e.g. admission confirmed later with fee details filled in). ──
-    fee_amount = float(getattr(admission, "fee_amount", 0) or 0)
-    fee_paid   = float(getattr(admission, "fee_paid",   0) or 0)
+    raw_fee_amount = getattr(admission, "fee_amount", None)
+    fee_amount = float(raw_fee_amount) if raw_fee_amount is not None else 0.0
+    fee_paid   = float(getattr(admission, "fee_paid", 0) or 0.0)
 
     if fee_amount > 0:
-        # existing_inv = await db.scalar(
-        #     select(FeeInvoice).where(
-        #         FeeInvoice.invoice_no == f"INV-{admission.admission_number}"
-        #     )
-        # )
         existing_inv = await db.scalar(
             select(FeeInvoice).where(
                 and_(
@@ -445,26 +448,32 @@ async def generate_student_from_admission(
                 )
             )
         )
-        if not existing_inv:
-            if fee_paid >= fee_amount:
-                inv_status = "paid"
-            elif fee_paid > 0:
-                inv_status = "partial"
-            else:
-                inv_status = "pending"
 
-            # Parse due date from installment schedule
-            due_date = date_type.today()
-            try:
-                sched_raw = admission.payment_installment_schedule
-                if sched_raw:
-                    sched = json.loads(sched_raw) if isinstance(sched_raw, str) else sched_raw
-                    slots = sched.get("installmentSchedule") or []
-                    if slots and slots[0].get("dueDate"):
-                        due_date = date_type.fromisoformat(slots[0]["dueDate"])
-            except Exception:
-                pass
+        if fee_paid >= fee_amount:
+            inv_status = "paid"
+        elif fee_paid > 0:
+            inv_status = "partial"
+        else:
+            inv_status = "pending"
 
+        # Parse due date from installment schedule
+        due_date = date_type.today()
+        try:
+            sched_raw = admission.payment_installment_schedule
+            if sched_raw:
+                sched = json.loads(sched_raw) if isinstance(sched_raw, str) else sched_raw
+                slots = sched.get("installmentSchedule") or []
+                if slots and slots[0].get("dueDate"):
+                    due_date = date_type.fromisoformat(slots[0]["dueDate"])
+        except Exception:
+            pass
+
+        if existing_inv:
+            existing_inv.amount_due = fee_amount
+            existing_inv.amount_paid = fee_paid
+            existing_inv.status = inv_status
+            existing_inv.due_date = due_date
+        else:
             invoice = FeeInvoice(
                 tenant_id   = str(admission.tenant_id),
                 student_id  = student.id,
@@ -476,7 +485,7 @@ async def generate_student_from_admission(
                 status      = inv_status,
             )
             db.add(invoice)
-            await db.flush()
+        await db.flush()
 
     return student
 

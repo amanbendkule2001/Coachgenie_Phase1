@@ -71,4 +71,7 @@ class BadRequestError(AppException):
 
 class TenantNotFoundError(AppException):
     def __init__(self, message: str = "Tenant not found or inactive."):
-        super().__init__(status.HTTP_403_FORBIDDEN, message)
+        # FIX BUG-006: was HTTP_403_FORBIDDEN — changed to 400 Bad Request
+        # because a missing/invalid tenant header is a client input error,
+        # not an authorization failure.
+        super().__init__(status.HTTP_400_BAD_REQUEST, message)

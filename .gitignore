@@ -1,49 +1,55 @@
+# Environment & Secrets
 *.env
-backend.zip/
-client.zip/
-*__pycache__/
+*.env.*
+*.env.test
 *.env.local
-ai-coach-3/
-coach-ai-4/
-generated_reports/
-generated_reports/
-*.pdf
-coach-ai-5/
-coach-ai-6/
 
-backend/node_modules/
-backend/package.json
-backend/pnpm-lock.yaml
-__pycache__/
-*.pyc
-*.pyo
-
-node_modules/
-client/apps/admin/test-results/
-playwright-report/
-test-results/
-
-backend/.coverage
-
-backend/pytest-output.txt
-backend/pytest-output2.txt
-backend/pytest-output3.txt
-backend/pytest-output4.txt
-
-test-run.log
-
+# Large Archives & Dump Files
+*.zip
 client.zip
-
-*.png
-
+backend.zip
+project_tree.txt
+updated_project_tree.txt
+folder_structure.txt
+report_structure.txt
 database_dump.txt
 dependencies_dump.txt
 security_dump.txt
 tenant_dump.txt
 user_dump.txt
 
-backend/batches_model.txt
-backend/batches_router.txt
-backend/batches_schema.txt
-backend/students_router.txt
-backend/students_schema.txt
+# Python & Virtual Envs
+__pycache__/
+*__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+ENV/
+backend/.coverage
+backend/pytest-output*.txt
+*.log
+test-run.log
+
+# Node & Frontend Build Caches
+node_modules/
+backend/node_modules/
+.next/
+dist/
+build/
+playwright-report/
+test-results/
+client/apps/admin/test-results/
+
+# Temp Text Dumps
+backend/*.txt
+
+# Media & PDFs (Optional output files)
+*.pdf
+*.png
+generated_reports/
+
+# IDE & System Files
+.vscode/
+.idea/
+.DS_Store

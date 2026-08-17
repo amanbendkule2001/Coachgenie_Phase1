@@ -20,10 +20,20 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      {/* <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} /> */}
+      <div
+  data-testid="lead-backdrop"
+  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+  onClick={onClose}
+/>
+
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l bg-background shadow-2xl animate-in slide-in-from-right duration-300">
+      {/* <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l bg-background shadow-2xl animate-in slide-in-from-right duration-300"> */}
+      <div
+  data-testid="lead-drawer"
+  className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l bg-background shadow-2xl animate-in slide-in-from-right duration-300"
+>
 
         {/* Header */}
         <div className="flex items-start justify-between border-b p-5">

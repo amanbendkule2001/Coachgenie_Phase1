@@ -202,6 +202,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
         <input
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
+          data-testid="lead-search"
           placeholder="Search leads…"
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
@@ -225,10 +226,17 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.length ? (
+            {/* {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
+                  className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                > */}
+                {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  data-testid="lead-row"
                   className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (

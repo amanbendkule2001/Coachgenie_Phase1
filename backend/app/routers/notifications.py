@@ -168,7 +168,7 @@ async def create_template(
     try:
         data = body.model_dump()
         template = await notif_service.create_template(db, str(tenant.id), data)
-        await db.commit()
+        # db.commit() removed — get_db() handles commit.
         return {"success": True, "data": TemplateOut.model_validate(template)}
     except IntegrityError:
         await db.rollback()
@@ -221,13 +221,13 @@ async def retry_notification(
         )
         log.status = "sent"
         log.sent_at = datetime.utcnow()
-        await db.commit()
+        await db.flush()  # get_db() commits on clean exit.
 
-    except Exception as e:
+    except Exception:
         log.status = "failed"
-        await db.commit()
+        await db.flush()
         traceback.print_exc()
-        raise HTTPException(status_code=502, detail=f"Resend failed: {str(e)}")
+        raise HTTPException(status_code=502, detail="Failed to resend notification.")
 
     return {"success": True, "detail": "Notification resent successfully"}
 
@@ -244,7 +244,7 @@ async def send_notifications(
         [r.model_dump() for r in body.recipients],
         body.variables,
     )
-    await db.commit()
+    # db.commit() removed — get_db() handles commit.
     return {
         "success": True,
         "data": [NotificationLogOut.model_validate(l) for l in logs],

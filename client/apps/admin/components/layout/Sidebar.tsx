@@ -68,6 +68,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
 
   return (
     <aside
+     data-testid="sidebar"
       className={cn(
         "flex h-screen flex-col border-r bg-card transition-all duration-200 ease-in-out",
         collapsed ? "w-16" : "w-60"
@@ -130,7 +131,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
       </nav>
 
       <div className="border-t p-2">
-        <button
+        <button data-testid="sidebar-collapse"
           onClick={onCollapse}
           className="flex w-full items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >

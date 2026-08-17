@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import SettingsBillingPage from "../settings/billing/page";
 
-export default function BillingRedirectPage() {
-  redirect("/settings/billing");
+export default function BillingPage() {
+  return <SettingsBillingPage />;
 }
-
