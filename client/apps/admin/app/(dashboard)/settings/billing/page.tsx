@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import {
   Zap,
@@ -361,12 +362,12 @@ export default function SettingsBillingPage() {
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">Real-time sync with Student Fees &amp; Invoicing Module</p>
           </div>
-          <a
+          <Link
             href="/fees"
             className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
           >
             Manage Student Invoices <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-1">

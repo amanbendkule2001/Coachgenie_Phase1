@@ -111,7 +111,7 @@ export default function ExamDetailPage({ params }: { params: Promise<{ id: strin
   const students = useMemo(() => {
     if (!exam) return [];
     if (fetchedStudents.length > 0) return fetchedStudents;
-    let storeFiltered = store.students.filter(
+    const storeFiltered = store.students.filter(
       (s) =>
         (batch?.studentIds && batch.studentIds.includes(s.id)) ||
         (s.batchIds && exam.batchId && s.batchIds.includes(exam.batchId))

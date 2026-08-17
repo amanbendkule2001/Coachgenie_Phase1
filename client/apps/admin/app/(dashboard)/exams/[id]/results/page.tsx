@@ -83,7 +83,7 @@ export default function ExamResultsPage({ params }: { params: Promise<{ id: stri
     if (fetchedStudents.length > 0) return fetchedStudents;
 
     // 2. Check store students
-    let storeFiltered = store.students.filter(s =>
+    const storeFiltered = store.students.filter(s =>
       (batch?.studentIds && batch.studentIds.length > 0 && batch.studentIds.includes(s.id)) ||
       (s.batchIds && s.batchIds.length > 0 && exam.batchId && s.batchIds.includes(exam.batchId))
     );
