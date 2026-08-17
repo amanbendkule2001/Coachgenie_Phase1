@@ -143,24 +143,27 @@ export const useAcademicStore = create<AcademicStore>()(
       }),
 
       toggleSyllabus: (batchId, topicId) => set((s) => {
-        const topic = s.batches.find((b) => b.id === batchId)
-          ?.syllabus.find((t) => t.id === topicId);
+        const batch = s.batches.find((b) => b.id === batchId);
+        const topic = batch?.syllabus?.find((t) => t.id === topicId);
         if (topic) topic.completed = !topic.completed;
       }),
 
       addSyllabusTopic: (batchId, topic) => set((s) => {
         const batch = s.batches.find((b) => b.id === batchId);
-        if (batch) batch.syllabus.push({
-          id: `sy-${Date.now()}`,
-          title: topic.title,
-          sessions: topic.sessions,
-          completed: false,
-        });
+        if (batch) {
+          if (!batch.syllabus) batch.syllabus = [];
+          batch.syllabus.push({
+            id: `sy-${Date.now()}`,
+            title: topic.title,
+            sessions: topic.sessions,
+            completed: false,
+          });
+        }
       }),
 
       markTopicComplete: (batchId, topicId) => set((s) => {
-        const topic = s.batches.find((b) => b.id === batchId)
-          ?.syllabus.find((t) => t.id === topicId);
+        const batch = s.batches.find((b) => b.id === batchId);
+        const topic = batch?.syllabus?.find((t) => t.id === topicId);
         if (topic) topic.completed = true;
       }),
 

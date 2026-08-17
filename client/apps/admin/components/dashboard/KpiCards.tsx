@@ -112,7 +112,7 @@ export function KpiCards() {
       });
     } else if (academicStore.feeRecords.length > 0) {
       academicStore.feeRecords.forEach((f) => {
-        const paid = f.status === "PAID" ? f.amount : f.paidAmount || 0;
+        const paid = f.status === "PAID" ? f.amount : (f as any).paidAmount || 0;
         calculatedCollected += paid;
         if (f.status !== "PAID") {
           calculatedPending += Math.max(0, f.amount - paid);
