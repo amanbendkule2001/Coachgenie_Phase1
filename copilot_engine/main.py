@@ -60,9 +60,13 @@ app.include_router(
     report_router
 )
 
+from pathlib import Path
+REPORTS_DIR = Path("generated_reports")
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
 app.mount(
     "/generated_reports",
-    StaticFiles(directory="generated_reports"),
+    StaticFiles(directory=str(REPORTS_DIR)),
     name="generated_reports",
 )
 

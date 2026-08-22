@@ -123,7 +123,8 @@ test-results/
 **/test-results/
 fresh_screenshots/
 manual_screenshots/
-generated_reports/
+generated_reports/*
+!generated_reports/.gitkeep
 
 # ==========================================
 # 6. IDEs & OS Files
