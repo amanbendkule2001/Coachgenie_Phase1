@@ -390,7 +390,7 @@ export default function AiAnalyticsPage() {
         ? ownerMetrics.total_collected ?? (ownerMetrics.total_revenue || 0) - (ownerMetrics.pending_revenue || 0)
         : finance.invoices.reduce((s, i) => s + (i.paid || 0), 0);
 
-      const totalTarget = ownerMetrics ? ownerMetrics.total_revenue : finance.invoices.reduce((s, i) => s + (i.amount || 0), 0);
+      const totalTarget = ownerMetrics ? (ownerMetrics.total_revenue ?? 0) : finance.invoices.reduce((s, i) => s + (i.amount || 0), 0);
       const activeStudents = ownerMetrics?.total_students ?? academic.students.filter((s) => s.status === "ACTIVE").length;
       const attendanceRate = ownerMetrics?.avg_attendance_percent ? Math.round(ownerMetrics.avg_attendance_percent) : 92;
 
