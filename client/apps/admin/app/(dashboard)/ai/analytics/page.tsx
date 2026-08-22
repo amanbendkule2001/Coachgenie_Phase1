@@ -52,16 +52,21 @@ import { cn } from "@/lib/utils";
 // ─────────────────────────────────────────────────────────────
 
 interface OwnerMetrics {
-  total_students: number;
-  active_batches: number;
-  total_leads: number;
-  converted_leads: number;
-  total_revenue: number;
-  pending_revenue: number;
-  total_exams: number;
-  avg_attendance_percent: number;
+  total_students?: number;
+  active_batches?: number;
+  total_leads?: number;
+  converted_leads?: number;
+  total_revenue?: number;
+  pending_revenue?: number;
+  total_exams?: number;
+  avg_attendance_percent?: number;
   total_collected?: number;
   total_outstanding?: number;
+  my_batches?: number;
+  my_classes_today?: number;
+  exams_created?: number;
+  avg_student_score?: number;
+  [key: string]: any;
 }
 
 interface MonthlyTrendData {
