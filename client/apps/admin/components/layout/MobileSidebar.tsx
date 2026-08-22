@@ -18,40 +18,40 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const NAV_ITEMS = [
-  { label: "Dashboard",       href: "/dashboard",                                 icon: "LayoutDashboard", external: false },
-  { label: "Leads",           href: "/leads",                                     icon: "UserPlus",        external: false },
-  { label: "Admissions",      href: "/admissions",                                icon: "FileCheck",       external: false },
-  { label: "Students",        href: "/students",                                  icon: "Users",           external: false },
-  { label: "Batches",         href: "/batches",                                   icon: "BookOpen",        external: false },
-  { label: "Exams",           href: "/exams",                                     icon: "ClipboardList",   external: false },
-  { label: "Sessions",        href: "/sessions",                                  icon: "CalendarDays",    external: false },
-  { label: "Attendance",      href: "/attendance",                                icon: "CheckSquare",     external: false },
-  { label: "Attendance Reports",href: "/attendance/reports", icon: "ClipboardList", external: false },
-  { label: "Fees",            href: "/fees",                                      icon: "IndianRupee",     external: false },
-  { label: "Growth Cards",    href: "/growth-cards",                              icon: "Sparkles",        external: false },
-  { label: "Notifications",   href: "/notifications",                             icon: "Bell",            external: false },
-  { label: "Billing",         href: "/settings/billing",                          icon: "CreditCard",      external: false },
-  { label: "Settings",        href: "/settings",                                  icon: "Settings",        external: false },
-  { label: "AI Analytics",    href: "/ai/analytics",                              icon: "Brain",           external: false },
-  { label: "Career Guidance", href: "https://career-guidence-topaz.vercel.app/", icon: "GraduationCap",  external: true  },
+  { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard", external: false },
+  { label: "Leads", href: "/leads", icon: "UserPlus", external: false },
+  { label: "Admissions", href: "/admissions", icon: "FileCheck", external: false },
+  { label: "Students", href: "/students", icon: "Users", external: false },
+  { label: "Batches", href: "/batches", icon: "BookOpen", external: false },
+  { label: "Exams", href: "/exams", icon: "ClipboardList", external: false },
+  { label: "Sessions", href: "/sessions", icon: "CalendarDays", external: false },
+  { label: "Attendance", href: "/attendance", icon: "CheckSquare", external: false },
+  { label: "Attendance Reports", href: "/attendance/reports", icon: "ClipboardList", external: false },
+  { label: "Fees", href: "/fees", icon: "IndianRupee", external: false },
+  { label: "Growth Cards", href: "/growth-cards", icon: "Sparkles", external: false },
+  { label: "Notifications", href: "/notifications", icon: "Bell", external: false },
+  { label: "Billing", href: "/settings/billing", icon: "CreditCard", external: false },
+  { label: "Settings", href: "/settings", icon: "Settings", external: false },
+  { label: "AI Analytics", href: "/ai/analytics", icon: "Brain", external: false },
+  { label: "Career Guidance", href: "https://career-guidence-topaz.vercel.app/", icon: "GraduationCap", external: true },
 ];
 
 const MODULE_ROLES: Record<string, UserRole[]> = {
-  "/dashboard":        ["owner", "counselor", "tutor"],
-  "/leads":            ["owner", "counselor"],
-  "/admissions":       ["owner", "counselor"],
-  "/students":         ["owner", "counselor", "tutor"],
-  "/batches":          ["owner", "counselor", "tutor"],
-  "/exams":            ["owner", "tutor"],
-  "/sessions":         ["owner", "tutor"],
-  "/attendance":       ["owner", "tutor"],
+  "/dashboard": ["owner", "counselor", "tutor"],
+  "/leads": ["owner", "counselor"],
+  "/admissions": ["owner", "counselor"],
+  "/students": ["owner", "counselor", "tutor"],
+  "/batches": ["owner", "counselor", "tutor"],
+  "/exams": ["owner", "tutor"],
+  "/sessions": ["owner", "tutor"],
+  "/attendance": ["owner", "tutor"],
   "/attendance/reports": ["owner", "tutor"],
-  "/fees":             ["owner", "counselor"],
-  "/growth-cards":     ["owner", "counselor", "tutor"],
-  "/notifications":    ["owner", "counselor"],
+  "/fees": ["owner", "counselor"],
+  "/growth-cards": ["owner", "counselor", "tutor"],
+  "/notifications": ["owner", "counselor"],
   "/settings/billing": ["owner"],
-  "/settings":         ["owner"],
-  "/ai/analytics":     ["owner", "counselor", "tutor"],
+  "/settings": ["owner"],
+  "/ai/analytics": ["owner", "counselor", "tutor"],
 };
 
 function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
@@ -89,10 +89,8 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center justify-between border-b px-4 h-[3.75rem] shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <GraduationCap className="h-4 w-4" />
-            </div>
-            <span className="font-bold tracking-tight text-sm truncate">CoachGenie</span>
+            <CoachGenieLogo size="md" plain />
+            <span className="font-bold tracking-tight text-sm truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">CoachGenie</span>
           </div>
           <button
             onClick={onClose}

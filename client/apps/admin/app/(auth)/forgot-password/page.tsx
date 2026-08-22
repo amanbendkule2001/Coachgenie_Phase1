@@ -103,6 +103,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { CoachGenieLogo } from "@/components/common/CoachGenieLogo";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? "demo";
@@ -214,10 +215,8 @@ export default function ForgotPasswordPage() {
     <div className="rounded-2xl border bg-card shadow-xl shadow-black/5 p-8 space-y-6 fade-in">
       {/* Header */}
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-          <GraduationCap className="h-6 w-6" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <CoachGenieLogo size="xl" className="shadow-lg shadow-violet-500/15" />
+        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
           {step === "email" && "Forgot Password"}
           {step === "otp"   && "Enter OTP"}
           {step === "reset" && "New Password"}

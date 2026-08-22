@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { CoachGenieLogo } from "@/components/common/CoachGenieLogo";
 
 const schema = z.object({
   institute: z.string().min(1, "Institute code required"),
@@ -40,10 +41,9 @@ export default function LoginPage() {
 
   async function onSubmit(data: LoginInput) {
     try {
-      const loginUrl = `${
-        process.env.NEXT_PUBLIC_API_URL ??
+      const loginUrl = `${process.env.NEXT_PUBLIC_API_URL ??
         "http://localhost:8000/api/v1"
-      }/auth/login`;
+        }/auth/login`;
 
       const backendRes = await fetch(loginUrl, {
         method: "POST",
@@ -118,11 +118,9 @@ export default function LoginPage() {
   return (
     <div className="rounded-2xl border bg-card shadow-xl shadow-black/5 p-8 space-y-6 fade-in">
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-          <GraduationCap className="h-6 w-6" />
-        </div>
+        <CoachGenieLogo size="xl" className="shadow-lg shadow-violet-500/20" />
 
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
           CoachGenie
         </h1>
 

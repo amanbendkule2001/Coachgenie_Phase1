@@ -4,7 +4,7 @@ import { jwtVerify, type JWTPayload } from "jose";
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
-const ACCESS_TOKEN_MAX_AGE  = 60 * 15;        // 15 minutes
+const ACCESS_TOKEN_MAX_AGE = 60 * 15;        // 15 minutes
 const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 const PUBLIC_PATHS = [

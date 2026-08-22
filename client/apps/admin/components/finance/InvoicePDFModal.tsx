@@ -68,7 +68,7 @@ export function InvoicePDFModal({
 
       {/* Modal Container */}
       <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border bg-background shadow-2xl print:static print:translate-x-0 print:translate-y-0 print:w-full print:max-w-none print:shadow-none print:border-none print:rounded-none">
-        
+
         {/* Modal Action Bar (Hidden in Print) */}
         <div className="flex items-center justify-between border-b px-6 py-3.5 bg-muted/30 shrink-0 print:hidden">
           <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export function InvoicePDFModal({
 
         {/* Printable Invoice Sheet */}
         <div className="overflow-y-auto p-8 flex-1 space-y-6 print:overflow-visible print:p-0" ref={printRef}>
-          
+
           {/* Header & Institute Logo */}
           <div className="flex items-start justify-between border-b pb-6">
             <div className="space-y-1.5">

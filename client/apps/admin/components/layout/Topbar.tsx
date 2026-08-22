@@ -230,7 +230,13 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
     } catch (err) {
       console.error("Logout API failed:", err);
     }
+    // Clear auth store state immediately
     clear();
+    // Remove persisted user data from localStorage so the login page
+    // never briefly shows the previous user's name/email on rehydration
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("coachgenie-ui");
+    }
     await fetch("/api/auth/session", { method: "DELETE" });
     window.location.href = "/login";
   }

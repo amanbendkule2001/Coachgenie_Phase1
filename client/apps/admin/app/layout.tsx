@@ -44,6 +44,15 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "CoachGenie ERP - Coaching Institute Management",
   description: "Enterprise coaching management and analytics system for admissions, attendance, fees, exams, and student growth.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -57,6 +66,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={GeistSans.className}
     >
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+      </head>
       <body>
         {children}
 
