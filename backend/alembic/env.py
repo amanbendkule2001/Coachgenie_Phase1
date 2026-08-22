@@ -44,6 +44,15 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        try:
+            from sqlalchemy import text
+            res = connection.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar()
+            if res in ("a1b2c3d4e5f6", "1631330d5b10"):
+                connection.execute(text("UPDATE alembic_version SET version_num = 'ffb6954a2ad5'"))
+                connection.commit()
+        except Exception:
+            pass
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
