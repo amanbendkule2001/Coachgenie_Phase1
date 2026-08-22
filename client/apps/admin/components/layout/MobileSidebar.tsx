@@ -62,6 +62,11 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
     (item) => item.external || (MODULE_ROLES[item.href]?.includes(role) ?? true)
   );
 
+  // Find the single active item that has the longest matching href prefix
+  const activeItemHref = visibleItems
+    .filter((item) => !item.external && (pathname === item.href || pathname.startsWith(item.href + "/")))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   // Lock body scroll while the drawer is open
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -101,7 +106,7 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
           {visibleItems.map((item) => {
             const Icon = ICON_MAP[item.icon] ?? LayoutDashboard;
-            const active = !item.external && (pathname === item.href || pathname.startsWith(item.href + "/"));
+            const active = !item.external && item.href === activeItemHref;
 
             const commonClass = cn(
               "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",

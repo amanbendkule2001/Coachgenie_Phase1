@@ -50,26 +50,43 @@
 #         from_attributes = True
 
 import uuid
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import date, datetime
 
 
 class FeeStructureCreate(BaseModel):
     batch_id: Optional[uuid.UUID] = None
-    name: str
-    total_amount: float
-    installments: int = 1
+    name: str = Field(min_length=1, max_length=150)
+    total_amount: float = Field(gt=0, description="Total amount must be greater than 0")
+    installments: int = Field(default=1, ge=1, le=24, description="Installments must be between 1 and 24")
     description: Optional[str] = None
 
 
 class FeeInvoiceCreate(BaseModel):
     student_id: uuid.UUID
     fee_structure_id: Optional[uuid.UUID] = None
-    invoice_no: str
-    amount_due: float
-    discount: float = 0
+    invoice_no: str = Field(min_length=1, max_length=50)
+    amount_due: float = Field(gt=0, description="Amount due must be greater than 0")
+    discount: float = Field(default=0, ge=0, description="Discount cannot be negative")
     due_date: str
+
+
+class PaymentCreate(BaseModel):
+    amount: float = Field(gt=0, description="Payment amount must be greater than 0")
+    payment_mode: str = "cash"
+    transaction_ref: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PaymentOut(BaseModel):
+    id:               uuid.UUID
+    amount:           float
+    payment_mode:     str
+    transaction_ref:  Optional[str] = None
+    model_config = {"from_attributes": True}
+    paid_at:          Optional[datetime] = None   # ✅ add
+    created_at:       Optional[datetime] = None
 
 
 class FeeInvoiceOut(BaseModel):
@@ -86,9 +103,13 @@ class FeeInvoiceOut(BaseModel):
     # Flattened from student relationship
     student_name:  Optional[str] = None
     grade:         Optional[str] = None
+    admission_id:  Optional[uuid.UUID] = None
 
     # Installment schedule inherited from linked admission
     payment_installment_schedule: Optional[str] = None
+
+    # Payment history ledger list
+    payments: list[PaymentOut] = []
 
     model_config = {"from_attributes": True}
 
@@ -102,25 +123,14 @@ class FeeInvoiceOut(BaseModel):
             last  = getattr(s, "last_name",  "") or ""
             instance.student_name = f"{first} {last}".strip() or None
             instance.grade        = getattr(s, "current_class", None)
+            if getattr(s, "admission_id", None):
+                instance.admission_id = s.admission_id
             # Pull installment schedule from student's linked admission
             admission = getattr(s, "admission", None)
-            if admission and getattr(admission, "payment_installment_schedule", None):
-                instance.payment_installment_schedule = admission.payment_installment_schedule
+            if admission:
+                instance.admission_id = admission.id
+                if getattr(admission, "payment_installment_schedule", None):
+                    instance.payment_installment_schedule = admission.payment_installment_schedule
+        if hasattr(obj, "payments") and obj.payments:
+            instance.payments = [PaymentOut.model_validate(p) for p in obj.payments]
         return instance
-
-
-class PaymentCreate(BaseModel):
-    amount: float
-    payment_mode: str = "cash"
-    transaction_ref: Optional[str] = None
-    notes: Optional[str] = None
-
-
-class PaymentOut(BaseModel):
-    id:               uuid.UUID
-    amount:           float
-    payment_mode:     str
-    transaction_ref:  Optional[str] = None
-    model_config = {"from_attributes": True}
-    paid_at:          Optional[datetime] = None   # ✅ add
-    created_at:       Optional[datetime] = None

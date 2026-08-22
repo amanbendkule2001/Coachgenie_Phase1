@@ -92,6 +92,8 @@ async def update_student(
     allowed_fields = {
         "first_name", "last_name", "email", "phone",
         "current_class", "date_of_birth", "parent_name", "parent_phone",
+        "gender", "address", "city", "state", "pincode", "parent_email",
+        "school_name", "target_exam", "subjects", "is_active",
     }
 
     for key, value in data.items():

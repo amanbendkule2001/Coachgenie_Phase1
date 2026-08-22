@@ -32,25 +32,27 @@ const NAV_ITEMS = [
   { label: "Billing",         href: "/settings/billing",                          icon: "CreditCard",      external: false },
   { label: "Settings",        href: "/settings",                                  icon: "Settings",        external: false },
   { label: "AI Analytics",    href: "/ai/analytics",                              icon: "Brain",           external: false },
+  { label: "Documentation",   href: "/docs",                                      icon: "BookOpen",        external: false },
   { label: "Career Guidance", href: "https://career-guidence-topaz.vercel.app/", icon: "GraduationCap",  external: true  },
 ];
 
-const MODULE_ROLES: Record<string, UserRole[]> = {
-  "/dashboard":        ["owner", "counselor", "tutor"],
-  "/leads":            ["owner", "counselor"],
-  "/admissions":       ["owner", "counselor"],
-  "/students":         ["owner", "counselor", "tutor"],
-  "/batches":          ["owner", "counselor", "tutor"],
-  "/exams":            ["owner", "tutor"],
-  "/sessions":         ["owner", "tutor"],
-  "/attendance":       ["owner", "tutor"],
-  "/attendance/reports": ["owner", "tutor"],
-  "/fees":             ["owner", "counselor"],
-  "/growth-cards":     ["owner", "counselor", "tutor"],
-  "/notifications":    ["owner", "counselor"],
-  "/settings/billing": ["owner"],
-  "/settings":         ["owner"],
-  "/ai/analytics":     ["owner", "counselor", "tutor"],
+const MODULE_ROLES: Record<string, string[]> = {
+  "/dashboard":          ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
+  "/leads":              ["owner", "super_admin", "admin", "counselor"],
+  "/admissions":         ["owner", "super_admin", "admin", "counselor"],
+  "/students":           ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
+  "/batches":            ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
+  "/exams":              ["owner", "super_admin", "admin", "tutor", "coach"],
+  "/sessions":           ["owner", "super_admin", "admin", "tutor", "coach"],
+  "/attendance":         ["owner", "super_admin", "admin", "tutor", "coach"],
+  "/attendance/reports": ["owner", "super_admin", "admin", "tutor", "coach"],
+  "/fees":               ["owner", "super_admin", "admin", "counselor"],
+  "/growth-cards":       ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
+  "/notifications":      ["owner", "super_admin", "admin", "counselor"],
+  "/settings/billing":   ["owner", "super_admin"],
+  "/settings":           ["owner", "super_admin", "admin"],
+  "/ai/analytics":       ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
+  "/docs":               ["owner", "super_admin", "admin", "counselor", "tutor", "coach"],
 };
 
 interface SidebarProps {
@@ -60,11 +62,24 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const pathname = usePathname();
-  const role = useAuthStore((state) => state.role) ?? "owner";
+  const user = useAuthStore((state) => state.user);
+  const storeRole = useAuthStore((state) => state.role);
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => item.external || (MODULE_ROLES[item.href]?.includes(role) ?? true)
-  );
+  // Normalize role (handle uppercase or lowercase)
+  const rawRole = (user?.role || storeRole || "owner").toLowerCase();
+  const normalizedRole = rawRole === "super_admin" ? "owner" : rawRole;
+
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.external) return true;
+    const allowed = MODULE_ROLES[item.href];
+    if (!allowed) return true;
+    return allowed.includes(normalizedRole) || allowed.includes(rawRole);
+  });
+
+  // Find the single active item that has the longest matching href prefix
+  const activeItemHref = visibleItems
+    .filter((item) => !item.external && (pathname === item.href || pathname.startsWith(item.href + "/")))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
     <aside
@@ -86,7 +101,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
         {visibleItems.map((item) => {
           const Icon   = ICON_MAP[item.icon] ?? LayoutDashboard;
-          const active = !item.external && (pathname === item.href || pathname.startsWith(item.href + "/"));
+          const active = !item.external && item.href === activeItemHref;
 
           const commonClass = cn(
             "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",

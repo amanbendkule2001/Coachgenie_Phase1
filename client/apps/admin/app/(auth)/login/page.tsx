@@ -33,28 +33,17 @@ export default function LoginPage() {
   } = useForm<LoginInput>({
     resolver: zodResolver(schema),
     defaultValues: {
-      institute: "demo",
-      email: "owner@demo.com",
+      institute: "",
+      email: "",
     },
   });
 
   async function onSubmit(data: LoginInput) {
     try {
-      console.log("========== LOGIN DEBUG ==========");
-      console.log(
-        "API URL:",
-        process.env.NEXT_PUBLIC_API_URL ??
-          "http://localhost:8000/api/v1"
-      );
-      console.log("Institute:", data.institute);
-      console.log("Email:", data.email);
-
       const loginUrl = `${
         process.env.NEXT_PUBLIC_API_URL ??
         "http://localhost:8000/api/v1"
       }/auth/login`;
-
-      console.log("POST:", loginUrl);
 
       const backendRes = await fetch(loginUrl, {
         method: "POST",
@@ -68,20 +57,7 @@ export default function LoginPage() {
         }),
       });
 
-      console.log("========== BACKEND RESPONSE ==========");
-      console.log("OK:", backendRes.ok);
-      console.log("STATUS:", backendRes.status);
-      console.log("STATUS TEXT:", backendRes.statusText);
-
-      console.log("HEADERS:");
-      backendRes.headers.forEach((value, key) => {
-        console.log(`${key}: ${value}`);
-      });
-
       const responseText = await backendRes.text();
-
-      console.log("BODY:");
-      console.log(responseText);
 
       if (!backendRes.ok) {
         let errorMsg = "Login failed";
@@ -97,20 +73,11 @@ export default function LoginPage() {
 
       const parsed = JSON.parse(responseText);
 
-      console.log("========== PARSED RESPONSE ==========");
-      console.log(parsed);
-
       const {
         access_token,
         refresh_token = null,
         user = null,
       } = parsed;
-
-      console.log("Has Access Token:", !!access_token);
-      console.log("Has Refresh Token:", !!refresh_token);
-      console.log("User:", user);
-
-      console.log("========== SESSION API ==========");
 
       const sessionRes = await fetch("/api/auth/session", {
         method: "POST",
@@ -124,13 +91,7 @@ export default function LoginPage() {
         }),
       });
 
-      console.log("SESSION STATUS:", sessionRes.status);
-      console.log("SESSION OK:", sessionRes.ok);
-
       const sessionText = await sessionRes.text();
-
-      console.log("SESSION BODY:");
-      console.log(sessionText);
 
       if (!sessionRes.ok) {
         throw new Error(sessionText);
@@ -138,22 +99,14 @@ export default function LoginPage() {
 
       const session = JSON.parse(sessionText);
 
-      console.log("SESSION PARSED:");
-      console.log(session);
-
       if (session.user) {
         setUser(session.user);
       }
 
       toast.success("Login successful");
 
-      console.log("Redirecting to dashboard...");
-
       window.location.href = "/dashboard";
     } catch (err) {
-      console.error("========== LOGIN ERROR ==========");
-      console.error(err);
-
       toast.error(
         err instanceof Error
           ? err.message

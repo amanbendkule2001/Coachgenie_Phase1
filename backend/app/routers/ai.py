@@ -18,7 +18,7 @@ import httpx
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
-COPILOT_URL = "http://localhost:8001", "https://coachgenie-phase1-s227.onrender.com", "https://coachgenie-copilotai.onrender.com"
+COPILOT_URL = "https://coachgenie-copilotai.onrender.com"
 
 class CopilotChatRequest(BaseModel):
     message: str

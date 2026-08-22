@@ -1,6 +1,6 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List, Any
-from datetime import date,datetime
+from datetime import date, datetime
 import uuid
 
 
@@ -72,14 +72,15 @@ class ScheduleSlot(BaseModel):
 
 # ── Batch ──────────────────────────────────────────────────────
 class BatchCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=150)
     code: Optional[str] = None
     description: Optional[str] = None
     target_exam: Optional[str] = None
-    academic_year: str
+    academic_year: str = Field(min_length=1, max_length=20)
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    capacity: int = 50
+    capacity: int = Field(default=50, ge=1, le=2000, description="Capacity must be between 1 and 2000")
+    status: Optional[str] = "ACTIVE"
     schedule: Optional[List[ScheduleSlot]] = None
     subjects: Optional[List[str]] = []
 
@@ -91,47 +92,62 @@ class BatchCreate(BaseModel):
             return None
         return v
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, v: Any) -> Any:
+        if v is not None:
+            v_upper = str(v).upper().strip()
+            if v_upper not in {"ACTIVE", "UPCOMING", "COMPLETED"}:
+                raise ValueError("status must be one of: 'ACTIVE', 'UPCOMING', 'COMPLETED'")
+            return v_upper
+        return "ACTIVE"
+
+    @model_validator(mode="after")
+    def validate_date_range(self):
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError(f"End date ({self.end_date}) cannot be earlier than start date ({self.start_date})")
+        return self
+
 
 class BatchUpdate(BaseModel):
-    # name: Optional[str] = None
-    # description: Optional[str] = None
-    # target_exam: Optional[str] = None
-    # capacity: Optional[int] = None
-    # is_active: Optional[bool] = None
-    # end_date: Optional[date] = None
-    # schedule: Optional[List[ScheduleSlot]] = None
     name: Optional[str] = None
+    code: Optional[str] = None
+    academic_year: Optional[str] = None
     description: Optional[str] = None
     target_exam: Optional[str] = None
-    capacity: Optional[int] = None
+    capacity: Optional[int] = Field(default=None, ge=1, le=2000)
+    status: Optional[str] = None
     is_active: Optional[bool] = None
+    start_date: Optional[date] = None
     end_date: Optional[date] = None
     schedule: Optional[List[ScheduleSlot]] = None
     subjects: Optional[List[str]] = None
 
-    @field_validator("end_date", mode="before")
+    @field_validator("start_date", "end_date", mode="before")
     @classmethod
     def empty_str_to_none(cls, v: Any) -> Any:
         if v == "":
             return None
         return v
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, v: Any) -> Any:
+        if v is not None:
+            v_upper = str(v).upper().strip()
+            if v_upper not in {"ACTIVE", "UPCOMING", "COMPLETED"}:
+                raise ValueError("status must be one of: 'ACTIVE', 'UPCOMING', 'COMPLETED'")
+            return v_upper
+        return v
+
+    @model_validator(mode="after")
+    def validate_date_range(self):
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError(f"End date ({self.end_date}) cannot be earlier than start date ({self.start_date})")
+        return self
+
 
 class BatchOut(BaseModel):
-    # id: uuid.UUID
-    # name: str
-    # code: Optional[str] = None
-    # target_exam: Optional[str] = None
-    # academic_year: str
-    # start_date: Optional[date] = None
-    # end_date: Optional[date] = None
-    # capacity: int
-    # is_active: bool
-    # student_ids: List[str] = []
-    # schedule: Optional[List[ScheduleSlot]] = None   # ✅ NEW
-
-    # class Config:
-    #     from_attributes = True
     id: uuid.UUID
     name: str
     code: Optional[str] = None
@@ -141,6 +157,7 @@ class BatchOut(BaseModel):
     end_date: Optional[date] = None
     capacity: int
     is_active: bool
+    status: Optional[str] = "ACTIVE"
     student_ids: List[str] = []
     schedule: Optional[List[ScheduleSlot]] = None
     subjects: Optional[List[str]] = []
@@ -153,19 +170,17 @@ class ClassCreate(BaseModel):
     batch_id: uuid.UUID
     subject_id: Optional[uuid.UUID] = None
     tutor_id: Optional[uuid.UUID] = None
-    title: str
+    title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
-    # scheduled_at: str
     scheduled_at: datetime
-    duration_min: int = 60
+    duration_min: int = Field(default=60, ge=15, le=720, description="Duration in minutes (15-720)")
     room_or_link: Optional[str] = None
 
 
 class ClassUpdate(BaseModel):
     title: Optional[str] = None
-    # scheduled_at: Optional[str] = None
     scheduled_at: Optional[datetime] = None
-    duration_min: Optional[int] = None
+    duration_min: Optional[int] = Field(default=None, ge=15, le=720)
     room_or_link: Optional[str] = None
     status: Optional[str] = None
 

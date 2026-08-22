@@ -55,10 +55,43 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+tags_metadata = [
+    {"name": "Auth", "description": "Authentication, JWT tokens, session management, and password reset workflows."},
+    {"name": "Tenants", "description": "Multi-tenant coaching institute management and subdomain provisioning."},
+    {"name": "Leads", "description": "Sales CRM pipeline, prospective student lead management, and conversion tracking."},
+    {"name": "Admissions", "description": "Student registration forms, document verification, and admission approval."},
+    {"name": "Students", "description": "Enrolled student profiles, academic rosters, and emergency contact details."},
+    {"name": "Batches", "description": "Course batch scheduling, faculty allocations, and class sessions."},
+    {"name": "Attendance", "description": "Daily student attendance marking, absent alerts, and historical percentage reports."},
+    {"name": "Exams", "description": "Examination creation, student mark entry, class rankings, and report cards."},
+    {"name": "Fees", "description": "Course fee structures, student invoices, partial payment settlements, and PDF receipts."},
+    {"name": "Growth Cards", "description": "360-degree student performance evaluations, soft skills, and faculty remarks."},
+    {"name": "AI", "description": "Context-aware Groq LLaMA 3 study assistance and interactive learning copilot."},
+    {"name": "Notifications", "description": "System alerts, payment due reminders, and inbox notifications."},
+    {"name": "Dashboard", "description": "Executive dashboard statistics, revenue metrics, and operational KPIs."},
+]
+
 app = FastAPI(
-    title=settings.APP_NAME,
+    title=f"{settings.APP_NAME} Multi-Tenant REST API",
+    description="""
+### CoachGenie Enterprise ERP API Specification
+
+Welcome to the official API documentation for **CoachGenie Phase 1**.
+
+#### 🔑 Authentication & Headers
+* **Bearer Token**: `Authorization: Bearer <access_token>`
+* **Tenant Isolation**: `X-Tenant-Id: <tenant_uuid>` or `X-Tenant-Subdomain: <subdomain>`
+
+#### 📚 Documentation Endpoints
+* **Swagger UI**: `/docs`
+* **ReDoc Interface**: `/redoc`
+* **OpenAPI Schema**: `/openapi.json`
+""",
     version="1.0.0",
     docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    openapi_tags=tags_metadata,
     lifespan=lifespan,
 )
 

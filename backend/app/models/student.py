@@ -1,9 +1,8 @@
 import uuid
-from sqlalchemy import String, Boolean, Text, Date, ForeignKey, text, UniqueConstraint, Index
+from sqlalchemy import String, Boolean, Text, Date, ForeignKey, text, UniqueConstraint, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
 from app.database import Base
-from sqlalchemy import String, Boolean, Text, Date, ForeignKey, text, UniqueConstraint, Index, JSON
 
 
 class Student(Base):
@@ -17,11 +16,10 @@ class Student(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    # admission_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("admissions.id", ondelete="SET NULL"), nullable=True)
     admission_id: Mapped[uuid.UUID | None] = mapped_column(
-    UUID(as_uuid=True),
-    ForeignKey("admissions.id", ondelete="SET NULL"),
-    nullable=False, unique=True, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("admissions.id", ondelete="SET NULL"),
+        nullable=True, unique=True, index=True,
     )
     joined_at = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=True)
     enrollment_no: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -45,7 +43,6 @@ class Student(Base):
     target_exam: Mapped[str] = mapped_column(String(150), nullable=True)
     subjects: Mapped[list] = mapped_column(JSON, nullable=True, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    joined_at = mapped_column(Date, nullable=True)
     left_at = mapped_column(Date, nullable=True)
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"))
     updated_at = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), onupdate=text("NOW()"))

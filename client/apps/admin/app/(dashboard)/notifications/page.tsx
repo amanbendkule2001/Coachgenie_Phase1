@@ -75,60 +75,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   admission_approved: "Admission Approved (Admissions Module)",
 };
 
-const DEFAULT_LOGS: NotifLog[] = [
-  {
-    id: "nl-001",
-    channel: "whatsapp",
-    recipient_ref: "9876543211",
-    recipient_name: "Suresh Sharma",
-    recipient_role: "parent",
-    subject: "Fee Due Payment Reminder",
-    body: "Dear Suresh Sharma, tuition fee of ₹2,400 for Aarav Sharma is due on 2025-05-01. Kindly settle via UPI/Portal. Thank you!",
-    status: "sent",
-    trigger_source: "fee_due",
-    sent_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "nl-002",
-    channel: "sms",
-    recipient_ref: "9876543213",
-    recipient_name: "Ramesh Joshi",
-    recipient_role: "parent",
-    subject: "Class Absence Alert",
-    body: "Alert: Sneha Joshi was marked ABSENT for Math Batch A class on 2025-04-12. Please contact administration if unexpected.",
-    status: "sent",
-    trigger_source: "absent",
-    sent_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-  },
-  {
-    id: "nl-003",
-    channel: "email",
-    recipient_ref: "suresh@example.com",
-    recipient_name: "Suresh Sharma",
-    recipient_role: "parent",
-    subject: "Exam Report Card Published - Unit Test 1",
-    body: "Dear Parent, exam results for Unit Test 1 have been published. Aarav Sharma scored 92% (Rank #1). Check parent portal for detailed analytics.",
-    status: "sent",
-    trigger_source: "results_published",
-    sent_at: new Date(Date.now() - 86400000).toISOString(),
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: "nl-004",
-    channel: "whatsapp",
-    recipient_ref: "9876543215",
-    recipient_name: "Rahul Verma",
-    recipient_role: "tutor",
-    subject: "Batch Session Timetable",
-    body: "Reminder: You have a scheduled Physics Batch A lecture today at 4:00 PM in Room 101.",
-    status: "sent",
-    trigger_source: "manual",
-    sent_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-];
+const DEFAULT_LOGS: NotifLog[] = [];
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
@@ -160,13 +107,13 @@ export default function NotificationsPage() {
       .then((r) => r.json())
       .then((res: any) => {
         const raw = res?.data ?? res ?? [];
-        if (Array.isArray(raw) && raw.length > 0) {
+        if (Array.isArray(raw)) {
           setLogs(raw);
         } else {
-          setLogs(DEFAULT_LOGS);
+          setLogs([]);
         }
       })
-      .catch(() => setLogs(DEFAULT_LOGS))
+      .catch(() => setLogs([]))
       .finally(() => setLoading(false));
   }
 
@@ -389,7 +336,7 @@ export default function NotificationsPage() {
 
             return (
               <div key={n.id} className="rounded-2xl border bg-card p-5 shadow-sm space-y-3 hover:border-primary/30 transition-all fade-in">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className="mt-0.5 rounded-xl p-2.5 bg-muted shrink-0">
                       <chanCfg.icon className={cn("h-5 w-5", chanCfg.color)} />
@@ -424,7 +371,7 @@ export default function NotificationsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0">
                     <span className={cn("flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase", statusCfg.className)}>
                       <StatusIcon className="h-3 w-3" /> {statusCfg.label}
                     </span>

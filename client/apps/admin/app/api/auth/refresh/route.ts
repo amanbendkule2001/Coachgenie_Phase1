@@ -50,30 +50,37 @@ console.log(
 // },
 //     body: JSON.stringify({ refresh_token: refreshToken }),
 //   });
-const backendRes = await fetch(`${BACKEND}/auth/refresh`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "x-playwright-fail-refresh":
-      requestHeaders.get("x-playwright-fail-refresh") ?? "",
-  },
-  body: JSON.stringify({
-    refresh_token: refreshToken,
-  }),
-});
+  let backendRes: Response;
+  try {
+    backendRes = await fetch(`${BACKEND}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-playwright-fail-refresh":
+          requestHeaders.get("x-playwright-fail-refresh") ?? "",
+      },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+      }),
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Backend service temporarily unavailable" },
+      { status: 503 }
+    );
+  }
 
   if (!backendRes.ok) {
     // Refresh token invalid/expired/reused — clear cookies so we don't loop.
     const response = NextResponse.json({ error: "Refresh failed" }, { status: 401 });
-     console.log("Backend refresh failed - clearing cookies");
     response.cookies.set("cg_access_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
-    response.cookies.set("cg_refresh_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/api/auth", maxAge: 0 });
+    response.cookies.set("cg_refresh_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
     return response;
   }
 
   const { access_token, refresh_token } = await backendRes.json();
 
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true, access_token });
 
   response.cookies.set("cg_access_token", access_token, {
     httpOnly: true,
@@ -87,7 +94,7 @@ const backendRes = await fetch(`${BACKEND}/auth/refresh`, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path:     "/api/auth",
+    path:     "/",
     maxAge:   REFRESH_TOKEN_MAX_AGE,
   });
 

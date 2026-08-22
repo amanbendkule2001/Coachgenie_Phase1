@@ -1,12 +1,17 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Phone, Mail, User, GraduationCap, ExternalLink, BookOpen, Building2, Layers } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { Lead } from "@/lib/types/lead";
+import type { Lead, LeadActivity, LeadStage } from "@/lib/types/lead";
 import { StageBadge } from "./StageBadge"; 
 import { STAGE_CONFIG, STAGES } from "@/lib/constants/leads";
 import { useLeadStore } from "@/lib/stores/leads.store";
+import { authHeaders } from "@/lib/auth-headers";
+import { toast } from "sonner";
+
+const API = "/api/proxy";
 
 interface LeadDrawerProps {
   lead:    Lead;
@@ -16,6 +21,51 @@ interface LeadDrawerProps {
 export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
   const router      = useRouter();
   const updateStage = useLeadStore((s) => s.updateStage);
+  const [activities, setActivities] = useState<LeadActivity[]>(lead.activities || []);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadActivities() {
+      try {
+        const res = await fetch(`${API}/leads/${lead.id}/activities`, { headers: authHeaders() }).catch(() => null);
+        if (res && res.ok) {
+          const json = await res.json();
+          const list = json.data ?? json;
+          if (isMounted && Array.isArray(list) && list.length > 0) {
+            setActivities(
+              list.map((a: any) => ({
+                id: String(a.id),
+                type: String(a.type || "NOTE").toUpperCase(),
+                content: a.content || a.description || "",
+                createdAt: a.created_at || a.createdAt || new Date().toISOString(),
+                createdBy: a.created_by || a.createdBy || "Staff Counselor",
+              }))
+            );
+          }
+        }
+      } catch {
+        // quiet fallback
+      }
+    }
+    loadActivities();
+    return () => {
+      isMounted = false;
+    };
+  }, [lead.id]);
+
+  async function handleStageChange(stage: LeadStage) {
+    updateStage(lead.id, stage);
+    try {
+      await fetch(`${API}/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ status: stage.toLowerCase() }),
+      }).catch(() => null);
+      toast.success(`Stage updated to ${STAGE_CONFIG[stage]?.label || stage}`);
+    } catch {
+      // quiet fallback
+    }
+  }
 
   return (
     <>
@@ -70,12 +120,12 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
                 return (
                   <button
                     key={s}
-                    onClick={() => updateStage(lead.id, s)}
+                    onClick={() => handleStageChange(s)}
                     className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium border transition-all",
+                      "rounded-full px-3 py-1 text-xs font-medium border transition-all cursor-pointer",
                       active
-                        ? `${cfg.color} ${cfg.bg} ${cfg.border} shadow-sm`
-                        : "hover:bg-accent"
+                        ? `${cfg.color} ${cfg.bg} ${cfg.border} shadow-sm font-bold`
+                        : "hover:bg-accent text-muted-foreground"
                     )}
                   >
                     {cfg.label}
@@ -87,31 +137,18 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
 
           {/* -- Contact Info ----------------------------------------------- */}
           <Section title="Contact">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={Mail}          label="Email"          value={lead.email} />
               <InfoCard icon={Phone}         label="Phone"          value={lead.phone} />
               <InfoCard icon={User}          label="Parent"         value={lead.parentName} />
               <InfoCard icon={Phone}         label="Parent Contact" value={lead.parentContactNumber} />
-              <InfoCard icon={Building2}     label="School"         value={lead.schoolName} className="col-span-2" />
+              <InfoCard icon={Building2}     label="School"         value={lead.schoolName} className="col-span-1 sm:col-span-2" />
             </div>
           </Section>
 
-          {/* -- Academic Info (NEW) ----------------------------------------- */}
-          {/* <Section title="Academic Details">
-            <div className="grid grid-cols-2 gap-3">
-              <InfoCard icon={GraduationCap} label="Grade"          value={lead.grade} />
-              <InfoCard icon={BookOpen}      label="Board"          value={lead.boardName} />
-              <InfoCard icon={GraduationCap} label="Source"         value={lead.source?.replace(/_/g, " ")} />
-              <InfoCard
-                icon={Layers}
-                label="Batch"
-                value={lead.batchName || (lead.batchId ? "Assigned" : undefined)}
-                className="col-span-2"
-              />
-            </div>
-          </Section> */}
-           <Section title="Academic Details">
-            <div className="grid grid-cols-2 gap-3">
+          {/* -- Academic Info ----------------------------------------- */}
+          <Section title="Academic Details">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={GraduationCap} label="Grade"  value={lead.grade} />
               <InfoCard icon={BookOpen}      label="Board"  value={lead.boardName} />
               <InfoCard icon={GraduationCap} label="Source" value={lead.source?.replace(/_/g, " ")} />
@@ -119,7 +156,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
                 icon={Layers}
                 label="Batch"
                 value={lead.batchName || (lead.batchId ? "Assigned" : undefined)}
-                className="col-span-2"
+                className="col-span-1 sm:col-span-2"
               />
             </div>
             {(() => {
@@ -160,19 +197,31 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
           )}
 
           {/* Recent activity */}
-          {lead.activities?.length > 0 && (
+          {activities.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Recent Activity</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Recent Activity</p>
               <div className="space-y-2">
-                {lead.activities.slice(0, 3).map((act) => (
-                  <div key={act.id} className="rounded-lg border bg-card p-3">
-                    <div className="flex justify-between mb-0.5">
-                      <span className="text-xs font-medium">{act.type.replace(/_/g, " ")}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(act.createdAt), "dd MMM")}
+                {activities.slice(0, 4).map((act) => (
+                  <div key={act.id} className="rounded-xl border bg-card p-3 shadow-2xs hover:border-primary/20 transition-colors">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                        {act.type.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {(() => {
+                          try {
+                            const d = new Date(act.createdAt);
+                            return isValid(d) ? format(d, "dd MMM, hh:mm a") : "Recent";
+                          } catch {
+                            return "Recent";
+                          }
+                        })()}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{act.content}</p>
+                    <p className="text-xs text-foreground/90 line-clamp-2">{act.content}</p>
+                    {act.createdBy && (
+                      <p className="text-[10px] text-muted-foreground mt-1">• {act.createdBy}</p>
+                    )}
                   </div>
                 ))}
               </div>

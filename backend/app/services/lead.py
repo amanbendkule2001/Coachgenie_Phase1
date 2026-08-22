@@ -108,11 +108,12 @@ async def get_lead(db: AsyncSession, tenant_id: str, lead_id: str) -> Lead:
     import uuid
     try:
         uuid_obj = uuid.UUID(str(lead_id))
+        tenant_uuid = uuid.UUID(str(tenant_id)) if isinstance(tenant_id, (str, uuid.UUID)) else tenant_id
     except (ValueError, TypeError):
         raise NotFoundError("Lead")
 
     result = await db.execute(
-        select(Lead).where(and_(Lead.id == uuid_obj, Lead.tenant_id == tenant_id))
+        select(Lead).where(and_(Lead.id == uuid_obj, Lead.tenant_id == tenant_uuid))
     )
     lead = result.scalar_one_or_none()
     if not lead:
@@ -155,12 +156,27 @@ async def delete_lead(db: AsyncSession, tenant_id: str, lead_id: str):
 
 
 async def add_activity(db: AsyncSession, tenant_id: str, lead_id: str,
-                       user_id: str, data: dict) -> LeadActivity:
+                       user_id: str | None, data: dict) -> LeadActivity:
+    import uuid
+    tenant_uuid = uuid.UUID(str(tenant_id)) if isinstance(tenant_id, (str, uuid.UUID)) else tenant_id
+    lead_uuid = uuid.UUID(str(lead_id)) if isinstance(lead_id, (str, uuid.UUID)) else lead_id
+    user_uuid = None
+    if user_id:
+        try:
+            user_uuid = uuid.UUID(str(user_id))
+        except (ValueError, TypeError):
+            user_uuid = None
+
+    act_type = str(data.get("type") or "NOTE").upper()
+    act_desc = str(data.get("description") or data.get("content") or "").strip()
+
     activity = LeadActivity(
-        tenant_id=tenant_id,
-        lead_id=lead_id,
-        created_by=user_id,
-        **data
+        id=uuid.uuid4(),
+        tenant_id=tenant_uuid,
+        lead_id=lead_uuid,
+        created_by=user_uuid,
+        type=act_type,
+        description=act_desc,
     )
     db.add(activity)
     await db.flush()
@@ -168,11 +184,18 @@ async def add_activity(db: AsyncSession, tenant_id: str, lead_id: str,
 
 
 async def get_activities(db: AsyncSession, tenant_id: str, lead_id: str) -> list:
+    import uuid
+    try:
+        lead_uuid = uuid.UUID(str(lead_id))
+        tenant_uuid = uuid.UUID(str(tenant_id)) if isinstance(tenant_id, (str, uuid.UUID)) else tenant_id
+    except (ValueError, TypeError):
+        return []
+
     result = await db.execute(
         select(LeadActivity).where(
             and_(
-                LeadActivity.lead_id == lead_id,
-                LeadActivity.tenant_id == tenant_id,
+                LeadActivity.lead_id == lead_uuid,
+                LeadActivity.tenant_id == tenant_uuid,
             )
         ).order_by(LeadActivity.created_at.desc())
     )

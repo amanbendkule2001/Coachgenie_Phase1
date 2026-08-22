@@ -22,18 +22,7 @@ export function AttendanceHeatmap() {
       .get("/attendance/heatmap")
       .then((res: any) => setAttendance(res.data?.data ?? res.data ?? {}))
       .catch(() => {
-        // Mock fallback heatmap
-        const mock: Record<string, number> = {};
-        const days = eachDayOfInterval({ start: subDays(new Date(), 180), end: new Date() });
-        days.forEach((d) => {
-          const key = format(d, "yyyy-MM-dd");
-          const dayOfWeek = getDay(d);
-          if (dayOfWeek !== 0) {
-            // Monday to Saturday
-            mock[key] = Math.floor(Math.random() * 4) + 1;
-          }
-        });
-        setAttendance(mock);
+        setAttendance({});
       });
   }, []);
 
@@ -54,12 +43,12 @@ export function AttendanceHeatmap() {
     <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4 fade-in">
       <div className="flex items-center justify-between border-b pb-3">
         <div>
-          <h3 className="font-bold text-base tracking-tight flex items-center gap-2">
+          <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
             Institute Attendance Activity Matrix
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold text-violet-600">
               <Calendar className="h-3 w-3" /> Attendance Module
             </span>
-          </h3>
+          </h2>
           <p className="text-xs text-muted-foreground mt-0.5">Past 6-month daily session presence volume — darker cells indicate higher attendance</p>
         </div>
       </div>

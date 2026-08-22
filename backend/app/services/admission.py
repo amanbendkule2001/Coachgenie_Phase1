@@ -1,14 +1,15 @@
 import json
 import uuid
 from datetime import datetime
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_, or_
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.admission import Admission
 from app.models.student import Student
 from app.models.lead import Lead
 from app.utils.exceptions import NotFoundError
 from app.utils.pagination import paginate
-from app.models.fee import FeeInvoice
+from app.models.fee import FeeInvoice, FeePayment
 from datetime import date as date_type
 
 # ── Admission number generator ─────────────────────────────────────────────────
@@ -65,7 +66,6 @@ async def get_admissions(
     if status:
         conditions.append(Admission.status == status)
 
-    from sqlalchemy import and_
     total = await db.scalar(
         select(func.count()).select_from(Admission).where(and_(*conditions))
     )
@@ -81,7 +81,6 @@ async def get_admissions(
 async def get_admission(
     db: AsyncSession, tenant_id: str, admission_id: str
 ) -> Admission:
-    from sqlalchemy import and_
     result = await db.execute(
         select(Admission).where(
             and_(
@@ -93,6 +92,36 @@ async def get_admission(
     admission = result.scalar_one_or_none()
     if not admission:
         raise NotFoundError("Admission")
+
+    # Always sync fee_paid from the live FeeInvoice so Admissions page
+    # always shows the authoritative amount matching the Fees module.
+    try:
+        inv_res = await db.execute(
+            select(FeeInvoice).where(
+                and_(
+                    FeeInvoice.tenant_id == str(admission.tenant_id),
+                    FeeInvoice.invoice_no == f"INV-{admission.admission_number}",
+                )
+            )
+        )
+        live_inv = inv_res.scalar_one_or_none()
+        if live_inv:
+            live_paid = float(live_inv.amount_paid or 0)
+            if live_paid != float(admission.fee_paid or 0):
+                admission.fee_paid = live_paid
+                # Also update the JSON schedule amountPaid if present
+                if admission.payment_installment_schedule:
+                    try:
+                        sched = json.loads(admission.payment_installment_schedule)
+                        sched["amountPaid"] = live_paid
+                        sched["remaining"] = max(0.0, float(live_inv.amount_due or 0) - live_paid)
+                        admission.payment_installment_schedule = json.dumps(sched)
+                    except Exception:
+                        pass
+                await db.flush()
+    except Exception:
+        pass
+
     return admission
 
 
@@ -191,6 +220,63 @@ async def update_admission(
         admission.updated_by = updated_by
 
     await db.flush()
+
+    # Synchronize linked FeeInvoice in PostgreSQL DB
+    try:
+        new_fee_amount = float(getattr(admission, "fee_amount", 0) or 0)
+        new_fee_paid   = float(getattr(admission, "fee_paid", 0) or 0)
+
+        inv_res = await db.execute(
+            select(FeeInvoice).options(selectinload(FeeInvoice.payments)).where(
+                and_(
+                    FeeInvoice.tenant_id == str(admission.tenant_id),
+                    FeeInvoice.invoice_no == f"INV-{admission.admission_number}",
+                )
+            )
+        )
+        inv = inv_res.scalar_one_or_none()
+        if inv:
+            if new_fee_amount > 0:
+                inv.amount_due = new_fee_amount
+            inv.amount_paid = new_fee_paid
+            inv.status = "paid" if new_fee_paid >= float(inv.amount_due) else ("partial" if new_fee_paid > 0 else "pending")
+            if admission.payment_installment_schedule:
+                inv.payment_installment_schedule = admission.payment_installment_schedule
+
+            # Synchronize FeePayment records
+            payments = list(inv.payments or [])
+            payments_sum = sum(float(p.amount) for p in payments)
+            if payments_sum > new_fee_paid + 0.01:
+                excess = payments_sum - new_fee_paid
+                for p in sorted(payments, key=lambda x: x.created_at or datetime.min, reverse=True):
+                    p_amt = float(p.amount)
+                    if excess <= 0:
+                        break
+                    if p_amt <= excess + 0.01:
+                        excess -= p_amt
+                        await db.delete(p)
+                    else:
+                        p.amount = p_amt - excess
+                        excess = 0
+            elif new_fee_paid > payments_sum + 0.01:
+                diff = new_fee_paid - payments_sum
+                t_uuid = uuid.UUID(str(admission.tenant_id)) if isinstance(admission.tenant_id, str) else admission.tenant_id
+                st_id = inv.student_id
+                pay = FeePayment(
+                    id=uuid.uuid4(),
+                    tenant_id=t_uuid,
+                    invoice_id=inv.id,
+                    student_id=st_id,
+                    amount=diff,
+                    payment_mode="cash",
+                    transaction_ref=f"REC-{inv.invoice_no}-{int(datetime.now().timestamp())}",
+                    paid_at=datetime.now(),
+                    notes="Installment payment updated from Admissions",
+                )
+                db.add(pay)
+            await db.flush()
+    except Exception:
+        pass
 
     # ── Bug 1 fix: generate student when status transitions to CONFIRMED ──
     if not was_confirmed and admission.status == "CONFIRMED":
@@ -473,6 +559,7 @@ async def generate_student_from_admission(
             existing_inv.amount_paid = fee_paid
             existing_inv.status = inv_status
             existing_inv.due_date = due_date
+            inv_obj = existing_inv
         else:
             invoice = FeeInvoice(
                 tenant_id   = str(admission.tenant_id),
@@ -485,7 +572,40 @@ async def generate_student_from_admission(
                 status      = inv_status,
             )
             db.add(invoice)
+            inv_obj = invoice
         await db.flush()
+
+        if fee_paid > 0:
+            existing_pay = await db.scalar(
+                select(FeePayment).where(
+                    FeePayment.invoice_id == inv_obj.id,
+                    FeePayment.tenant_id == str(admission.tenant_id),
+                )
+            )
+            if not existing_pay:
+                pay_mode = getattr(admission, "payment_mode", None) or "cash"
+                pay_date = getattr(admission, "payment_date", None) or date_type.today()
+                try:
+                    if admission.payment_installment_schedule:
+                        raw_sched = json.loads(admission.payment_installment_schedule) if isinstance(admission.payment_installment_schedule, str) else admission.payment_installment_schedule
+                        if isinstance(raw_sched, dict):
+                            pay_mode = raw_sched.get("modeOfPayment") or raw_sched.get("paymentMode") or pay_mode
+                            if raw_sched.get("dateOfPayment"):
+                                pay_date = date_type.fromisoformat(str(raw_sched["dateOfPayment"]))
+                except Exception:
+                    pass
+                pay = FeePayment(
+                    tenant_id=str(admission.tenant_id),
+                    invoice_id=inv_obj.id,
+                    student_id=student.id,
+                    amount=fee_paid,
+                    payment_mode=pay_mode,
+                    transaction_ref=f"REC-{inv_obj.invoice_no}",
+                    paid_at=pay_date,
+                    notes="Initial admission fee payment",
+                )
+                db.add(pay)
+                await db.flush()
 
     return student
 

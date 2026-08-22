@@ -13,56 +13,7 @@ import { authHeaders } from "@/lib/auth-headers";
 
 const API = "/api/proxy";
 
-const DEFAULT_FALLBACK_STUDENTS: Student[] = [
-  {
-    id: "s-001",
-    name: "Aarav Sharma",
-    grade: "10th",
-    email: "aarav@example.com",
-    phone: "9876543210",
-    parentName: "Suresh Sharma",
-    parentPhone: "9876543211",
-    subjects: ["Math", "Physics"],
-    batchIds: ["b-001"],
-    status: "ACTIVE",
-    address: "Mumbai",
-    dob: "2008-05-15",
-    joinedAt: "2024-06-01",
-    fees: { total: 48000, paid: 48000, due: 0 },
-  },
-  {
-    id: "s-002",
-    name: "Sneha Joshi",
-    grade: "10th",
-    email: "sneha@example.com",
-    phone: "9876543212",
-    parentName: "Ramesh Joshi",
-    parentPhone: "9876543213",
-    subjects: ["Math", "Biology"],
-    batchIds: ["b-001", "b-003"],
-    status: "ACTIVE",
-    address: "Pune",
-    dob: "2008-08-20",
-    joinedAt: "2024-06-01",
-    fees: { total: 54000, paid: 27000, due: 27000 },
-  },
-  {
-    id: "s-003",
-    name: "Rohan Mehta",
-    grade: "10th",
-    email: "rohan@example.com",
-    phone: "9876543214",
-    parentName: "Vikram Mehta",
-    parentPhone: "9876543215",
-    subjects: ["Math"],
-    batchIds: ["b-001"],
-    status: "ACTIVE",
-    address: "Mumbai",
-    dob: "2008-03-10",
-    joinedAt: "2024-06-01",
-    fees: { total: 48000, paid: 48000, due: 0 },
-  },
-];
+const DEFAULT_FALLBACK_STUDENTS: Student[] = [];
 
 export default function ExamDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

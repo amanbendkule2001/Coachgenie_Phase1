@@ -46,12 +46,12 @@ export function LeadFunnelChart() {
     <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4 fade-in">
       <div className="flex items-center justify-between border-b pb-3">
         <div>
-          <h3 className="font-bold text-base tracking-tight flex items-center gap-2">
+          <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
             Admissions Conversion Funnel
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600">
               <UserPlus className="h-3 w-3" /> Leads Module
             </span>
-          </h3>
+          </h2>
           <p className="text-xs text-muted-foreground mt-0.5">Enquiry to active student admission stage metrics</p>
         </div>
       </div>

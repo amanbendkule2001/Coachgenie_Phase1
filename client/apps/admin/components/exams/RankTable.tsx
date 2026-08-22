@@ -23,8 +23,8 @@ export function RankTable({ students, results, maxMarks }: RankTableProps) {
   };
 
   return (
-    <div className="rounded-xl border overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="rounded-xl border overflow-x-auto min-w-full">
+      <table className="w-full text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b bg-muted/40">
             <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground w-16">Rank</th>
@@ -32,7 +32,7 @@ export function RankTable({ students, results, maxMarks }: RankTableProps) {
             <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground">Marks</th>
             <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground">Grade</th>
             <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground">Percentile</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Score Bar</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground min-w-[120px]">Score Bar</th>
           </tr>
         </thead>
         <tbody>

@@ -32,8 +32,16 @@ type View = "table" | "kanban";
 
 /** Map raw API lead object → frontend Lead shape */
 function mapLead(raw: any): Lead {
+  const activities = (raw.activities ?? []).map((a: any) => ({
+    id: String(a.id || `a-${Date.now()}`),
+    type: String(a.type || "NOTE").toUpperCase(),
+    content: a.content || a.description || "",
+    createdAt: a.created_at || a.createdAt || new Date().toISOString(),
+    createdBy: a.created_by || a.createdBy || "Staff Counselor",
+  }));
+
   return {
-    id: raw.id,
+    id: String(raw.id),
     name: raw.full_name ?? raw.name ?? "",
     email: raw.email ?? "",
     phone: raw.phone ?? "",
@@ -47,7 +55,7 @@ function mapLead(raw: any): Lead {
     notes: raw.notes ?? "",
     createdAt: raw.created_at ?? new Date().toISOString(),
     updatedAt: raw.updated_at ?? new Date().toISOString(),
-    activities: raw.activities ?? [],
+    activities,
     tags: raw.tags ?? [],
     boardName: raw.board_name ?? "",
     batchId: raw.batch_id ?? "",
@@ -62,74 +70,7 @@ export interface Batch {
   subjects: string[];
 }
 
-const DEFAULT_SEED_LEADS: Lead[] = [
-  {
-    id: "lead-001",
-    name: "Aarav Sharma",
-    email: "aarav@example.com",
-    phone: "9876543210",
-    parentContactNumber: "9876543211",
-    schoolName: "St. Xavier High School",
-    source: "WEBSITE",
-    stage: "NEW",
-    subject: "Mathematics & Physics",
-    grade: "10th",
-    parentName: "Suresh Sharma",
-    notes: "Interested in 10th CBSE intensive coaching batch",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    activities: [],
-    tags: ["CBSE", "Top Target"],
-    boardName: "CBSE",
-    batchId: "batch-101",
-    batchName: "10th Science Batch A",
-    assignedTo: "Rahul Verma",
-  },
-  {
-    id: "lead-002",
-    name: "Sneha Joshi",
-    email: "sneha@example.com",
-    phone: "9876543212",
-    parentContactNumber: "9876543213",
-    schoolName: "Delhi Public School",
-    source: "REFERRAL",
-    stage: "CONTACTED",
-    subject: "Biology & Chemistry",
-    grade: "10th",
-    parentName: "Ramesh Joshi",
-    notes: "Referred by parent of alumni student",
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-    activities: [],
-    tags: ["Referral"],
-    boardName: "CBSE",
-    batchId: "batch-102",
-    batchName: "10th Biology Batch B",
-    assignedTo: "Anita Desai",
-  },
-  {
-    id: "lead-003",
-    name: "Rohan Mehta",
-    email: "rohan@example.com",
-    phone: "9876543214",
-    parentContactNumber: "9876543215",
-    schoolName: "Loyola High School",
-    source: "WALK_IN",
-    stage: "DEMO_SCHEDULED",
-    subject: "Mathematics",
-    grade: "10th",
-    parentName: "Vikram Mehta",
-    notes: "Visited campus center on Saturday",
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    activities: [],
-    tags: ["Walk-in"],
-    boardName: "ICSE",
-    batchId: "batch-101",
-    batchName: "10th Science Batch A",
-    assignedTo: "Rahul Verma",
-  },
-];
+const DEFAULT_SEED_LEADS: Lead[] = [];
 
 export default function LeadsPage() {
   const { leads, setLeads, addLead, deleteLead, updateStage } = useLeadStore();
@@ -154,14 +95,14 @@ export default function LeadsPage() {
         const raw: any[] = Array.isArray(json) ? json : json.data ?? json.items ?? [];
         if (raw.length > 0) {
           setLeads(raw.map(mapLead));
-        } else if (leads.length === 0) {
-          setLeads(DEFAULT_SEED_LEADS);
+        } else {
+          setLeads([]);
         }
-      } else if (leads.length === 0) {
-        setLeads(DEFAULT_SEED_LEADS);
+      } else {
+        setLeads([]);
       }
     } catch {
-      if (leads.length === 0) setLeads(DEFAULT_SEED_LEADS);
+      // keep current state
     } finally {
       setLoading(false);
     }
@@ -329,6 +270,7 @@ export default function LeadsPage() {
           <button
             onClick={fetchLeads}
             disabled={loading}
+            aria-label="Refresh leads list"
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
             title="Refresh list"
           >
@@ -341,6 +283,7 @@ export default function LeadsPage() {
               <button
                 key={v}
                 onClick={() => setView(v)}
+                aria-label={`Switch to ${v} view`}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize",
                   view === v ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
@@ -355,6 +298,7 @@ export default function LeadsPage() {
           <button
             data-testid="add-lead-btn"
             onClick={() => setShowForm(true)}
+            aria-label="Add new lead"
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
             <Plus className="h-4 w-4" /> Add New Lead
@@ -379,7 +323,7 @@ export default function LeadsPage() {
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Converted Admissions</span>
           <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">{kpiStats.enrolledCount}</p>
-          <p className="text-xs text-emerald-600 font-medium">Successfully enrolled</p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Successfully enrolled</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
@@ -400,16 +344,19 @@ export default function LeadsPage() {
               placeholder="Search lead name, phone, email, or school..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search lead name, phone, email, or school"
               className="h-9 w-full rounded-xl border bg-background pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
             />
           </div>
 
           {/* Source Filter */}
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-muted-foreground">Source:</label>
+            <label htmlFor="lead-source-select" className="text-xs font-semibold text-muted-foreground">Source:</label>
             <select
+              id="lead-source-select"
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value as any)}
+              aria-label="Filter leads by source"
               className="h-9 rounded-xl border bg-background px-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
             >
               <option value="ALL">All Sources</option>

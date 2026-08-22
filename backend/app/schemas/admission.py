@@ -27,6 +27,22 @@ class PaymentIn(BaseModel):
     installmentSchedule:  List[InstallmentIn] = []
     notes:                str   = ""
 
+    @model_validator(mode="after")
+    def validate_payment_math(self):
+        self.totalFee = max(0.0, float(self.totalFee or 0))
+        self.amountPaid = max(0.0, float(self.amountPaid or 0))
+        if self.totalFee > 0 and self.amountPaid > self.totalFee:
+            raise ValueError(f"Amount paid ({self.amountPaid}) cannot exceed total fee ({self.totalFee})")
+        self.remaining = max(0.0, self.totalFee - self.amountPaid)
+        if self.totalFee > 0:
+            if self.amountPaid >= self.totalFee:
+                self.paymentStatus = "PAID"
+            elif self.amountPaid > 0:
+                self.paymentStatus = "PARTIAL"
+            else:
+                self.paymentStatus = "PENDING"
+        return self
+
 
 class DocumentIn(BaseModel):
     name:      str

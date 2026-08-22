@@ -3,16 +3,30 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
+const ACCESS_TOKEN_MAX_AGE  = 60 * 15;
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7;
+
+async function refreshBackendTokens(refreshToken: string) {
+  try {
+    const res = await fetch(`${BACKEND}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { access_token: string; refresh_token: string };
+  } catch {
+    return null;
+  }
+}
+
 async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("cg_access_token")?.value;
-
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let token = cookieStore.get("cg_access_token")?.value;
+  const refreshToken = cookieStore.get("cg_refresh_token")?.value;
 
   // Middleware already verified the JWT and injected this header
   const tenantId = request.headers.get("x-tenant-id");
@@ -24,6 +38,26 @@ async function handler(
   const { path } = await params;
   const search = request.nextUrl.search;
   const url = `${BACKEND}/${path.join("/")}${search}`;
+  const rawBody = !["GET", "DELETE", "HEAD"].includes(request.method)
+    ? await request.text()
+    : undefined;
+
+  let newTokens: { access_token: string; refresh_token: string } | null = null;
+
+  // If access token is missing but refresh token exists, refresh first
+  if (!token && refreshToken) {
+    newTokens = await refreshBackendTokens(refreshToken);
+    if (newTokens) {
+      token = newTokens.access_token;
+    }
+  }
+
+  if (!token) {
+    const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    response.cookies.set("cg_access_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+    response.cookies.set("cg_refresh_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+    return response;
+  }
 
   const headers: HeadersInit = {
     "Content-Type":  "application/json",
@@ -32,54 +66,79 @@ async function handler(
   };
 
   const init: RequestInit = { method: request.method, headers };
-  if (!["GET", "DELETE", "HEAD"].includes(request.method)) {
-    init.body = await request.text();
+  if (rawBody !== undefined) {
+    init.body = rawBody;
   }
 
-  // const res = await fetch(url, init);
-  // const data = await res.text();
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Backend service temporarily unavailable. Please verify the backend is running." },
+      { status: 503 }
+    );
+  }
 
-  // return new NextResponse(data, {
-  //   status: res.status,
-  //   headers: { "Content-Type": "application/json" },
-  // });
-  const res = await fetch(url, init);
-const data = await res.text();
+  // If backend returns 401 (token expired), try refreshing and retrying
+  if (res.status === 401 && refreshToken && !newTokens) {
+    newTokens = await refreshBackendTokens(refreshToken);
+    if (newTokens) {
+      const retryHeaders: HeadersInit = {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${newTokens.access_token}`,
+        "X-Tenant-Id":   tenantId,
+      };
+      const retryInit: RequestInit = { method: request.method, headers: retryHeaders };
+      if (rawBody !== undefined) {
+        retryInit.body = rawBody;
+      }
+      try {
+        res = await fetch(url, retryInit);
+      } catch (err) {
+        return NextResponse.json(
+          { error: "Backend service temporarily unavailable. Please verify the backend is running." },
+          { status: 503 }
+        );
+      }
+    }
+  }
 
-// If backend says Unauthorized, clear auth cookies
-if (res.status === 401) {
+  const data = await res.text();
+
+  if (res.status === 401) {
+    const response = new NextResponse(data, {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+    response.cookies.set("cg_access_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+    response.cookies.set("cg_refresh_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+    return response;
+  }
+
   const response = new NextResponse(data, {
-    status: 401,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    status: res.status,
+    headers: { "Content-Type": "application/json" },
   });
 
-  response.cookies.set("cg_access_token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 0,
-  });
-
-  response.cookies.set("cg_refresh_token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 0,
-  });
+  if (newTokens) {
+    response.cookies.set("cg_access_token", newTokens.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+    response.cookies.set("cg_refresh_token", newTokens.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+    });
+  }
 
   return response;
-}
-
-return new NextResponse(data, {
-  status: res.status,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 }
 
 export const GET    = handler;

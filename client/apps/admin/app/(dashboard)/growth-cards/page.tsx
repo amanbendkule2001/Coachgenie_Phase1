@@ -47,13 +47,7 @@ interface GrowthCard {
   created_at: string;
 }
 
-const DEFAULT_FALLBACK_STUDENTS: Student[] = [
-  { id: "s-001", name: "Aarav Sharma", grade: "10th", subjects: ["Mathematics", "Physics"] },
-  { id: "s-002", name: "Sneha Joshi", grade: "10th", subjects: ["Mathematics", "Biology"] },
-  { id: "s-003", name: "Rohan Mehta", grade: "10th", subjects: ["Mathematics"] },
-  { id: "s-004", name: "Priya Patel", grade: "10th", subjects: ["Physics", "Chemistry"] },
-  { id: "s-005", name: "Ananya Iyer", grade: "10th", subjects: ["Mathematics"] },
-];
+const DEFAULT_FALLBACK_STUDENTS: Student[] = [];
 
 export default function GrowthCardsPage() {
   const academicStore = useAcademicStore();
@@ -83,7 +77,7 @@ export default function GrowthCardsPage() {
 
         // Parse students
         const rawStudents = Array.isArray(sRes) ? sRes : sRes?.data ?? [];
-        if (Array.isArray(rawStudents) && rawStudents.length > 0) {
+        if (Array.isArray(rawStudents)) {
           setStudents(
             rawStudents.map((s: any) => ({
               id: String(s.id),
@@ -95,7 +89,7 @@ export default function GrowthCardsPage() {
         } else if (academicStore.students.length > 0) {
           setStudents(academicStore.students);
         } else {
-          setStudents(DEFAULT_FALLBACK_STUDENTS);
+          setStudents([]);
         }
 
         // Parse growth cards
@@ -119,7 +113,7 @@ export default function GrowthCardsPage() {
       } catch (err) {
         console.warn("Failed fetching growth cards from API:", err);
         if (academicStore.students.length > 0) setStudents(academicStore.students);
-        else setStudents(DEFAULT_FALLBACK_STUDENTS);
+        else setStudents([]);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -153,8 +147,8 @@ export default function GrowthCardsPage() {
       }
     });
 
-    const avgAcademicScore = scoreCount > 0 ? Math.round(totalScoreSum / scoreCount) : 84;
-    const parentSeenPct = totalGeneratedCount > 0 ? Math.round((parentSeenCount / totalGeneratedCount) * 100) : 100;
+    const avgAcademicScore = scoreCount > 0 ? Math.round(totalScoreSum / scoreCount) : 0;
+    const parentSeenPct = totalGeneratedCount > 0 ? Math.round((parentSeenCount / totalGeneratedCount) * 100) : 0;
 
     return {
       totalStudents,
@@ -316,11 +310,9 @@ export default function GrowthCardsPage() {
             const latest = studentCards[0];
 
             // Real-time score fallbacks linked from Exams & Attendance modules
-            const avgScore =
-              typeof latest?.academic_score === "number" ? latest.academic_score : 85 - (i % 3) * 6;
-            const attPct =
-              typeof latest?.attendance_percent === "number" ? latest.attendance_percent : 92 - (i % 4) * 5;
-            const behaviorRating = latest?.behavior_rating ?? 5 - (i % 2);
+            const avgScore = typeof latest?.academic_score === "number" ? latest.academic_score : 0;
+            const attPct = typeof latest?.attendance_percent === "number" ? latest.attendance_percent : 0;
+            const behaviorRating = latest?.behavior_rating ?? 0;
 
             return (
               <Link

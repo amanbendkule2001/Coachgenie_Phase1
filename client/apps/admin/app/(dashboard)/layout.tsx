@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuthStore, type UserRole } from "@/lib/stores/auth.store";
-import { DevAutoFill } from "@/components/dev/DevAutoFill";
 
 const MODULE_ROLES: Record<string, UserRole[]> = {
   "/dashboard": ["owner", "counselor", "tutor"],
@@ -25,6 +24,7 @@ const MODULE_ROLES: Record<string, UserRole[]> = {
   "/growth-cards": ["owner", "counselor", "tutor"],
   "/notifications": ["owner", "counselor", "tutor"],
   "/ai": ["owner", "counselor", "tutor"],
+  "/docs": ["owner", "counselor", "tutor"],
 };
 
 function getAllowedRoles(pathname: string): UserRole[] {
@@ -75,42 +75,28 @@ export default function DashboardLayout({
   }, [hydrated, user, role, pathname, router]);
 
   /**
-   * Show loader while auth state is restoring.
+   * Proactive background token refresh every 10 minutes.
    */
-  if (!hydrated) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!hydrated || !user) return;
 
-  /**
-   * Hydrated but unauthenticated.
-   * Redirect effect above will run.
-   */
-  if (!user || !role) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+    const refresh = async () => {
+      try {
+        await fetch("/api/auth/refresh", { method: "POST" });
+      } catch {}
+    };
 
-  const allowed = getAllowedRoles(pathname);
+    // Refresh every 10 minutes
+    const interval = setInterval(refresh, 10 * 60 * 1000);
 
-  if (!allowed.includes(role)) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+    return () => {
+      clearInterval(interval);
+    };
+  }, [hydrated, user]);
 
   return (
     <AppShell>
       {children}
-      <DevAutoFill />
     </AppShell>
   );
 }

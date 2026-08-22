@@ -99,6 +99,18 @@ async def create_lead(
         data,
     )
 
+    # ── Initial Activity Log ────────────────────────────────────────────
+    await lead_service.add_activity(
+        db,
+        str(tenant.id),
+        str(lead.id),
+        str(current_user.id) if current_user else None,
+        {
+            "type": "NOTE",
+            "description": f"Lead created via {(lead.source or 'website').replace('_', ' ').title()}",
+        },
+    )
+
     # ── Inbox notification ───────────────────────────────────────────────
     await create_notification(
         db,
@@ -140,12 +152,18 @@ async def update_lead(
         data["batch_id"] = str(data["batch_id"])
     lead = await lead_service.update_lead(db, str(tenant.id), lead_id, data)
 
-
-
-
-
-    # ── Notify on stage change ──────────────────────────────────────────────
+    # ── Notify & Log on stage change ─────────────────────────────────────────
     if "status" in data:
+        await lead_service.add_activity(
+            db,
+            str(tenant.id),
+            lead_id,
+            str(current_user.id) if current_user else None,
+            {
+                "type": "STAGE_CHANGE",
+                "description": f"Stage updated to {data['status'].upper().replace('_', ' ')}",
+            },
+        )
         await create_notification(
             db,
             tenant_id=str(tenant.id),
@@ -190,9 +208,6 @@ async def assign_counselor(
         {"assigned_to": body.counselor_id}
     )
 
-
-
-
     await create_notification(
         db,
         tenant_id=str(tenant.id),
@@ -222,6 +237,16 @@ async def change_stage(
         raise HTTPException(status_code=422, detail=f"Invalid stage. Must be one of: {valid_stages}")
     lead = await lead_service.update_lead(
         db, str(tenant.id), lead_id, {"status": body.stage}
+    )
+    await lead_service.add_activity(
+        db,
+        str(tenant.id),
+        lead_id,
+        str(current_user.id) if current_user else None,
+        {
+            "type": "STAGE_CHANGE",
+            "description": f"Stage changed to {body.stage.upper().replace('_', ' ')}",
+        },
     )
     await create_notification(
         db,
@@ -253,12 +278,9 @@ async def schedule_followup(
     )
     if body.notes:
         await lead_service.add_activity(
-            db, str(tenant.id), lead_id, str(current_user.id),
+            db, str(tenant.id), lead_id, str(current_user.id) if current_user else None,
             {"type": "follow_up_scheduled", "description": body.notes}
         )
-
-
-
 
     await create_notification(
         db,
@@ -357,6 +379,7 @@ async def add_activity(
     activity = await lead_service.add_activity(
         db, str(tenant.id), lead_id, str(current_user.id), body.model_dump()
     )
+    activity.user = current_user
     # db.commit() removed — get_db() handles commit.
     return {"success": True, "data": ActivityOut.model_validate(activity)}
 

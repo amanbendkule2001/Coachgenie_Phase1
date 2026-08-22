@@ -70,10 +70,16 @@ async def create_tenant(
         # Create Admin User
         # --------------------------------------------------
 
+        name_parts = (admin_name or "Admin").strip().split(" ", 1)
+        first_name = name_parts[0] or "Admin"
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+
         admin_user = User(
             tenant_id=tenant.id,
-            name=admin_name,
-            email=admin_email,
+            first_name=first_name,
+            last_name=last_name,
+            role="owner",
+            email=admin_email.strip().lower(),
             password_hash=get_password_hash(
                 admin_password
             ),

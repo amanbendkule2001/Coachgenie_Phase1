@@ -27,9 +27,17 @@ async def create_subject(db: AsyncSession, tenant_id: str, data: dict) -> Subjec
 # ── Batch helpers ──────────────────────────────────────────────
 
 async def _attach_student_ids(db: AsyncSession, batch: Batch) -> Batch:
-    """Add .student_ids list to batch object."""
+    """Add .student_ids list of active students to batch object."""
+    from app.models.student import Student
     result = await db.execute(
-        select(BatchStudent.student_id).where(BatchStudent.batch_id == batch.id)
+        select(BatchStudent.student_id)
+        .join(Student, Student.id == BatchStudent.student_id)
+        .where(
+            and_(
+                BatchStudent.batch_id == batch.id,
+                Student.is_active == True,
+            )
+        )
     )
     batch.student_ids = [str(row) for row in result.scalars().all()]
     return batch
@@ -100,14 +108,24 @@ async def create_batch(db: AsyncSession, tenant_id: str, data: dict) -> Batch:
 async def update_batch(db: AsyncSession, tenant_id: str,
                        batch_id: str, data: dict) -> Batch:
     batch = await get_batch(db, tenant_id, batch_id)
+    if "status" in data and data["status"] is not None:
+        status_val = str(data["status"]).upper().strip()
+        if status_val not in {"ACTIVE", "UPCOMING", "COMPLETED"}:
+            raise ValueError("Invalid status. Must be ACTIVE, UPCOMING, or COMPLETED.")
+        data["status"] = status_val
+        if "is_active" not in data or data["is_active"] is None:
+            data["is_active"] = (status_val != "COMPLETED")
     for key, value in data.items():
-        # Allow empty lists (e.g. clearing subjects) but skip None
         if value is not None and hasattr(batch, key):
             setattr(batch, key, value)
-    # FIX BUG-007: was db.commit() — must use flush() to preserve
-    # atomicity; the get_db() context manager handles the final commit.
-    await db.flush()
+    await db.commit()
     return await _attach_student_ids(db, batch)
+
+
+async def delete_batch(db: AsyncSession, tenant_id: str, batch_id: str) -> None:
+    batch = await get_batch(db, tenant_id, batch_id)
+    await db.delete(batch)
+    await db.commit()
 
 # ── Enrollment ─────────────────────────────────────────────────
 
@@ -140,17 +158,26 @@ async def enroll_student(
             and_(Batch.id == batch_id, Batch.tenant_id == tenant_id)
         )
     )
-    if not batch_result.scalar_one_or_none():
+    batch = batch_result.scalar_one_or_none()
+    if not batch:
         raise NotFoundError("Batch")
 
-    # Verify student belongs to this tenant
+    # Verify student belongs to this tenant and is active
     student_result = await db.execute(
         select(Student).where(
-            and_(Student.id == student_id, Student.tenant_id == tenant_id)
+            and_(Student.id == student_id, Student.tenant_id == tenant_id, Student.is_active == True)
         )
     )
     if not student_result.scalar_one_or_none():
-        raise NotFoundError("Student")
+        raise NotFoundError("Active Student")
+
+    # Verify capacity
+    enrolled_count = (await db.execute(
+        select(func.count(BatchStudent.student_id)).where(BatchStudent.batch_id == batch_id)
+    )).scalar() or 0
+
+    if batch.capacity and enrolled_count >= batch.capacity:
+        raise ConflictError(f"Batch has reached maximum capacity ({batch.capacity} students).")
 
     existing = await db.execute(
         select(BatchStudent).where(
@@ -169,7 +196,7 @@ async def enroll_student(
         enrolled_at=date.today(),
     )
     db.add(enrollment)
-    await db.flush()  # FIX BUG-007: was db.commit()
+    await db.flush()
 
 
 async def remove_student(
@@ -177,7 +204,6 @@ async def remove_student(
 ):
     """
     FIX BUG-003: validate batch belongs to this tenant before removing.
-    FIX BUG-007: use db.flush() instead of db.commit().
     """
     # Verify batch belongs to this tenant
     batch_result = await db.execute(
@@ -200,7 +226,7 @@ async def remove_student(
     if not enrollment:
         raise NotFoundError("Enrollment")
     await db.delete(enrollment)
-    await db.flush()  # FIX BUG-007: was db.commit()
+    await db.commit()
 
 async def get_batch_students(db: AsyncSession, tenant_id: str, batch_id: str) -> list:
     """Return full Student objects enrolled in a batch."""

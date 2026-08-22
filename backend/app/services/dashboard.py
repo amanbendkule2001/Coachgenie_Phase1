@@ -9,32 +9,37 @@ from app.models.fee import FeeInvoice
 from app.models.attendance import AttendanceRecord
 from app.models.growth_card import GrowthCard
 from app.models.user import User
+from app.services import fee as fee_service
+import uuid
 
 
 async def get_owner_dashboard(db: AsyncSession, tenant_id: str) -> dict:
+    await fee_service.ensure_invoices_synced(db, tenant_id)
+    t_uuid = uuid.UUID(str(tenant_id)) if isinstance(tenant_id, str) else tenant_id
+
     # Total students
     total_students = (await db.execute(
         select(func.count()).select_from(Student).where(
-            and_(Student.tenant_id == tenant_id, Student.is_active == True)
+            and_(Student.tenant_id == t_uuid, Student.is_active == True)
         )
     )).scalar()
 
     # Active batches
     active_batches = (await db.execute(
         select(func.count()).select_from(Batch).where(
-            and_(Batch.tenant_id == tenant_id, Batch.is_active == True)
+            and_(Batch.tenant_id == t_uuid, Batch.is_active == True)
         )
     )).scalar()
 
     # Total leads
     total_leads = (await db.execute(
-        select(func.count()).select_from(Lead).where(Lead.tenant_id == tenant_id)
+        select(func.count()).select_from(Lead).where(Lead.tenant_id == t_uuid)
     )).scalar()
 
     # Converted leads
     converted_leads = (await db.execute(
         select(func.count()).select_from(Lead).where(
-            and_(Lead.tenant_id == tenant_id, Lead.status == "converted")
+            and_(Lead.tenant_id == t_uuid, Lead.status == "converted")
         )
     )).scalar()
 
@@ -43,7 +48,7 @@ async def get_owner_dashboard(db: AsyncSession, tenant_id: str) -> dict:
         select(
             func.coalesce(func.sum(FeeInvoice.amount_due), 0).label("total"),
             func.coalesce(func.sum(FeeInvoice.amount_paid), 0).label("paid"),
-        ).where(FeeInvoice.tenant_id == tenant_id)
+        ).where(FeeInvoice.tenant_id == t_uuid)
     )).one()
 
     # Total exams

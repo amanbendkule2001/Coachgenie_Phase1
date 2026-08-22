@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api } from "@/lib/api";
-import { IndianRupee } from "lucide-react";
+import { IndianRupee, TrendingUp, Sparkles } from "lucide-react";
 
 interface MonthlyFee {
   month: string;
@@ -19,65 +19,94 @@ interface MonthlyFee {
 }
 
 const DEFAULT_TREND_DATA: MonthlyFee[] = [
-  { month: "Nov", fees: 125000 },
-  { month: "Dec", fees: 140000 },
-  { month: "Jan", fees: 165000 },
-  { month: "Feb", fees: 150000 },
-  { month: "Mar", fees: 184000 },
-  { month: "Apr", fees: 210000 },
+  { month: "Sep", fees: 0 },
+  { month: "Oct", fees: 0 },
+  { month: "Nov", fees: 0 },
+  { month: "Dec", fees: 0 },
+  { month: "Jan", fees: 0 },
+  { month: "Feb", fees: 0 },
+  { month: "Mar", fees: 0 },
+  { month: "Apr", fees: 0 },
+  { month: "May", fees: 0 },
+  { month: "Jun", fees: 0 },
+  { month: "Jul", fees: 0 },
+  { month: "Aug", fees: 0 },
 ];
 
-function formatCurrency(value: number | string | undefined) {
+function formatCurrencyAxis(value: number | string | undefined) {
   const amount = Number(value ?? 0);
   if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
   if (amount >= 1000) return `₹${(amount / 1000).toFixed(0)}K`;
   return `₹${amount}`;
 }
 
+function formatExactCurrency(value: number | string | undefined) {
+  const amount = Number(value ?? 0);
+  return `₹${amount.toLocaleString("en-IN")}`;
+}
+
 export function FeeCollectionChart() {
   const [data, setData] = useState<MonthlyFee[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadChart() {
-      try {
-        const response = (await api.get<any>("/fees/monthly-trend")) as any;
-        const list = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-          ? response.data
-          : [];
+  const loadChart = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const response = (await api.get<any>("/fees/monthly-trend")) as any;
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : [];
 
-        if (list.length > 0) {
-          setData(list);
-        } else {
-          setData(DEFAULT_TREND_DATA);
-        }
-      } catch {
+      if (list.length > 0) {
+        setData(list);
+      } else {
         setData(DEFAULT_TREND_DATA);
-      } finally {
-        setLoading(false);
       }
+    } catch {
+      setData((prev) => (prev.length > 0 ? prev : DEFAULT_TREND_DATA));
+    } finally {
+      if (!silent) setLoading(false);
     }
-
-    loadChart();
   }, []);
+
+  useEffect(() => {
+    loadChart(false);
+  }, [loadChart]);
+
+  const totalCollected = useMemo(() => {
+    return data.reduce((acc, curr) => acc + (Number(curr.fees) || 0), 0);
+  }, [data]);
 
   return (
     <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4 fade-in">
-      <div className="flex items-center justify-between border-b pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
         <div>
-          <h3 className="font-bold text-base tracking-tight flex items-center gap-2">
+          <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
             Fee Collection Trend
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
               <IndianRupee className="h-3 w-3" /> Financial Ledger
             </span>
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Monthly revenue collection trends (academic year)</p>
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Monthly revenue collection trends (academic year)
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              Total Collected
+            </p>
+            <p className="text-sm font-extrabold text-emerald-600">
+              {formatExactCurrency(totalCollected)}
+            </p>
+          </div>
         </div>
       </div>
 
-      {loading ? (
+      {loading && data.length === 0 ? (
         <div className="h-[240px] flex items-center justify-center text-xs font-semibold text-muted-foreground animate-pulse">
           Loading financial trend chart…
         </div>
@@ -93,10 +122,15 @@ export function FeeCollectionChart() {
 
             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
 
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "currentColor" }} tickLine={false} axisLine={false} />
+            <XAxis
+              dataKey="month"
+              tick={{ fontSize: 11, fill: "currentColor" }}
+              tickLine={false}
+              axisLine={false}
+            />
 
             <YAxis
-              tickFormatter={formatCurrency}
+              tickFormatter={formatCurrencyAxis}
               allowDecimals={false}
               tickCount={5}
               tick={{ fontSize: 11, fill: "currentColor" }}
@@ -113,7 +147,7 @@ export function FeeCollectionChart() {
                 fontWeight: "600",
                 boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
               }}
-              formatter={(value) => [formatCurrency(value as number), "Revenue Collected"]}
+              formatter={(value) => [formatExactCurrency(value as number), "Revenue Collected"]}
             />
 
             <Area

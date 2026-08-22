@@ -55,7 +55,7 @@ from sqlalchemy import String, Boolean, ForeignKey, text, UniqueConstraint, Inde
 
 import uuid
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import String, Boolean, ForeignKey, text, UniqueConstraint, Index, Integer
+from sqlalchemy import String, Boolean, ForeignKey, text, UniqueConstraint, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
 from app.database import Base
@@ -77,7 +77,7 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=True)
-    avatar_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    avatar_url: Mapped[str] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_login_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)

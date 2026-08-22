@@ -30,9 +30,21 @@
 // }
 
 
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { GeistSans } from "geist/font/sans";
 import { Toaster } from "sonner";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
+export const metadata: Metadata = {
+  title: "CoachGenie ERP - Coaching Institute Management",
+  description: "Enterprise coaching management and analytics system for admissions, attendance, fees, exams, and student growth.",
+};
 
 export default function RootLayout({
   children,

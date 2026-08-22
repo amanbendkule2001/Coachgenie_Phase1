@@ -194,6 +194,7 @@ export function StudentTable({
           <div className="flex gap-1">
             {/* View */}
             <Link href={`/students/${row.original.id}`}
+              aria-label={`View profile for ${row.original.name}`}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               title="View profile">
               <Eye className="h-3.5 w-3.5" />
@@ -203,6 +204,7 @@ export function StudentTable({
             {onEdit && (
               <button
                 onClick={() => onEdit(row.original)}
+                aria-label={`Edit student ${row.original.name}`}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 title="Edit student"
               >
@@ -215,6 +217,7 @@ export function StudentTable({
               <button
                 onClick={() => onGenerateReport(row.original.id)}
                 disabled={isGenerating}
+                aria-label={`Generate report for ${row.original.name}`}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
                 title="Generate report"
               >
@@ -229,6 +232,7 @@ export function StudentTable({
             {/* Delete / Deactivate */}
             <button
               onClick={() => onDelete(row.original.id)}
+              aria-label={`Deactivate student ${row.original.name}`}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Deactivate student"
             >
@@ -257,11 +261,11 @@ export function StudentTable({
 
     autoResetAll: false,
   });
-console.log({
-  selected: statusFilter,
-  filtered: filtered.length,
-  rows: table.getRowModel().rows.length,
-});
+  console.log({
+    selected: statusFilter,
+    filtered: filtered.length,
+    rows: table.getRowModel().rows.length,
+  });
 
 
   // const headerGroups = useMemo(
@@ -273,40 +277,19 @@ console.log({
   //   () => table.getRowModel().rows,
   //   [table]
   // );
-const headerGroups = table.getHeaderGroups();
-const rows = table.getRowModel().rows;
+  const headerGroups = table.getHeaderGroups();
+  const rows = table.getRowModel().rows;
 
 
   return (
     <div className="space-y-3">
-      {/* Search + filter */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 flex-1 min-w-[200px] max-w-xs">
-          <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <input
-            value={globalFilter}
-            onChange={e => setGlobalFilter(e.target.value)}
-            placeholder="Search students…"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {(["ALL", "ACTIVE", "INACTIVE"] as const).map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={cn("rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                statusFilter === s ? "bg-foreground text-background" : "hover:bg-accent"
-              )}>
-              {s === "ALL" ? `All (${students.length})` : s}
-            </button>
-          ))}
-        </div>
-      </div>
+      
 
       {/* Table */}
-      <div className="rounded-xl border overflow-hidden">
+      <div className="rounded-xl border overflow-x-auto min-w-full">
         <table className="w-full text-sm">
           <thead>
-             {headerGroups.map((hg) => (
+            {headerGroups.map((hg) => (
               <tr key={hg.id} className="border-b bg-muted/40">
                 {hg.headers.map(h => (
                   <th key={h.id} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">

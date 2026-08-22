@@ -47,41 +47,7 @@ type Session = ClassApi & {
   subject: string;
 };
 
-const DEFAULT_SEED_SESSIONS: Session[] = [
-  {
-    id: "sess-101",
-    title: "Quadratic Equations & Polynomials Problem Solving",
-    scheduled_at: new Date().toISOString(),
-    duration_min: 90,
-    status: "scheduled",
-    room_or_link: "Room 101 (Main Campus)",
-    batchId: "batch-101",
-    batchName: "10th Science Batch A",
-    subject: "Mathematics",
-  },
-  {
-    id: "sess-102",
-    title: "Newton's Laws of Motion & Friction Experiment",
-    scheduled_at: new Date(Date.now() + 3600000 * 3).toISOString(),
-    duration_min: 60,
-    status: "scheduled",
-    room_or_link: "Physics Lab 2",
-    batchId: "batch-101",
-    batchName: "10th Science Batch A",
-    subject: "Physics",
-  },
-  {
-    id: "sess-103",
-    title: "Cell Structure & Biology Microscopic Observation",
-    scheduled_at: new Date(Date.now() - 86400000).toISOString(),
-    duration_min: 60,
-    status: "completed",
-    room_or_link: "Bio Lab 1",
-    batchId: "batch-102",
-    batchName: "10th Biology Batch B",
-    subject: "Biology",
-  },
-];
+const DEFAULT_SEED_SESSIONS: Session[] = [];
 
 function unwrap<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -146,13 +112,13 @@ export default function SessionsPage() {
         if (flat.length > 0) {
           setSessions(flat.sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()));
         } else {
-          setSessions(DEFAULT_SEED_SESSIONS);
+          setSessions([]);
         }
       } else {
-        setSessions(DEFAULT_SEED_SESSIONS);
+        setSessions([]);
       }
     } catch {
-      setSessions(DEFAULT_SEED_SESSIONS);
+      setSessions([]);
     } finally {
       setLoading(false);
     }

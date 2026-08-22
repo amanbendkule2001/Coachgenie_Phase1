@@ -8,13 +8,15 @@ from fastapi import HTTPException
 logger = logging.getLogger(__name__)
 
 
+import os
+
 # =========================================================
 # CONFIG
 # =========================================================
 
-COPILOT_ENGINE_BASE_URL = (
-    "http://127.0.0.1:8001",
-    "https://coachgenie-phase1-s227.onrender.com"
+COPILOT_ENGINE_BASE_URL = os.getenv(
+    "COPILOT_ENGINE_URL",
+    "http://127.0.0.1:8001"
 )
 
 DEFAULT_TIMEOUT = 120.0

@@ -1,55 +1,134 @@
-# Environment & Secrets
-*.env
-*.env.*
-*.env.test
-*.env.local
+# # Environment & Secrets
+# *.env
+# *.env.*
+# *.env.test
+# *.env.local
 
-# Large Archives & Dump Files
+# # Large Archives & Dump Files
+# *.zip
+# client.zip
+# backend.zip
+# project_tree.txt
+# updated_project_tree.txt
+# folder_structure.txt
+# report_structure.txt
+# database_dump.txt
+# dependencies_dump.txt
+# security_dump.txt
+# tenant_dump.txt
+# user_dump.txt
+
+# # Python & Virtual Envs
+# __pycache__/
+# *__pycache__/
+# *.pyc
+# *.pyo
+# .venv/
+# venv/
+# ENV/
+# backend/.coverage
+# backend/pytest-output*.txt
+# *.log
+# test-run.log
+
+# # Node & Frontend Build Caches
+# node_modules/
+# backend/node_modules/
+# .next/
+# dist/
+# build/
+# playwright-report/
+# test-results/
+# client/apps/admin/test-results/
+
+# # Temp Text Dumps
+# backend/*.txt
+
+# # Media & PDFs (Optional output files)
+# *.pdf
+# *.png
+# generated_reports/
+
+# # IDE & System Files
+# .vscode/
+# .idea/
+# .DS_Store
+
+
+
+# ==========================================
+# 1. Environment & Secrets
+# ==========================================
+.env
+.env.*
+*.env
+*.env.local
+*.env.test
+backend/.env
+update_pw.sql
+
+# ==========================================
+# 2. Oversized Archives & Dumps (> 20MB - 100MB)
+# ==========================================
 *.zip
 client.zip
 backend.zip
+client/structure.md
 project_tree.txt
 updated_project_tree.txt
 folder_structure.txt
 report_structure.txt
+*_dump.txt
 database_dump.txt
 dependencies_dump.txt
 security_dump.txt
 tenant_dump.txt
 user_dump.txt
 
-# Python & Virtual Envs
+# ==========================================
+# 3. Python & Virtual Environments
+# ==========================================
 __pycache__/
 *__pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
 ENV/
-backend/.coverage
 backend/pytest-output*.txt
 *.log
 test-run.log
 
-# Node & Frontend Build Caches
+# ==========================================
+# 4. Node.js, Next.js & Turborepo
+# ==========================================
 node_modules/
 backend/node_modules/
+client/node_modules/
 .next/
+client/apps/*/.next/
 dist/
 build/
+.turbo/
+pnpm-debug.log*
+
+# ==========================================
+# 5. Playwright & Test Artifacts
+# ==========================================
 playwright-report/
 test-results/
-client/apps/admin/test-results/
-
-# Temp Text Dumps
-backend/*.txt
-
-# Media & PDFs (Optional output files)
-*.pdf
-*.png
+**/test-results/
+fresh_screenshots/
+manual_screenshots/
 generated_reports/
 
-# IDE & System Files
+# ==========================================
+# 6. IDEs & OS Files
+# ==========================================
 .vscode/
 .idea/
-.DS_Store
+.DS_Store
+Thumbs.db

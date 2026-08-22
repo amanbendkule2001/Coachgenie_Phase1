@@ -77,11 +77,6 @@ class Admission(Base):
     grade: Mapped[str | None] = mapped_column(String(50), nullable=True)
     board_name:   Mapped[str | None] = mapped_column(String(100), nullable=True)  # ← ADD
     batch_name:   Mapped[str | None] = mapped_column(String(100), nullable=True)  # ← ADD
-    batch_id:     Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("batches.id", ondelete="SET NULL"),
-        nullable=True,
-    )
     subjects: Mapped[list] = mapped_column(JSON, nullable=True, default=list)
 
     # ── Fee fields (quick-access without parsing JSON) ─────────────────────────

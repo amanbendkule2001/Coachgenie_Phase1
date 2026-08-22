@@ -20,48 +20,7 @@ const STATUS_CONFIG: Record<
   COMPLETED: { label: "Completed", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: CheckCircle },
 };
 
-const DEFAULT_SEED_EXAMS: Exam[] = [
-  {
-    id: "exam-101",
-    name: "10th Mathematics Term 1 Examination",
-    subject: "Mathematics",
-    date: new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0]!,
-    maxMarks: 100,
-    duration: 90,
-    batchId: "batch-101",
-    status: "COMPLETED",
-    results: [
-      { studentId: "s-001", marks: 92 },
-      { studentId: "s-002", marks: 85 },
-      { studentId: "s-003", marks: 78 },
-    ],
-  },
-  {
-    id: "exam-102",
-    name: "Physics Motion & Energy Unit Test",
-    subject: "Physics",
-    date: new Date(Date.now() - 86400000).toISOString().split("T")[0]!,
-    maxMarks: 50,
-    duration: 60,
-    batchId: "batch-101",
-    status: "COMPLETED",
-    results: [
-      { studentId: "s-001", marks: 46 },
-      { studentId: "s-002", marks: 41 },
-    ],
-  },
-  {
-    id: "exam-103",
-    name: "Chemistry Periodic Table Mid-Term",
-    subject: "Chemistry",
-    date: new Date(Date.now() + 86400000 * 5).toISOString().split("T")[0]!,
-    maxMarks: 100,
-    duration: 120,
-    batchId: "batch-102",
-    status: "UPCOMING",
-    results: [],
-  },
-];
+const DEFAULT_SEED_EXAMS: Exam[] = [];
 
 export default function ExamsPage() {
   const { exams, addExam, setExams, batches } = useAcademicStore();
@@ -69,12 +28,6 @@ export default function ExamsPage() {
   const [filter, setFilter] = useState<Exam["status"] | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Populate seed exams if store array is empty
-  useEffect(() => {
-    if (exams.length === 0) {
-      setExams(DEFAULT_SEED_EXAMS);
-    }
-  }, [exams.length, setExams]);
 
   const filtered = useMemo(() => {
     return exams.filter((e) => {
@@ -103,7 +56,7 @@ export default function ExamsPage() {
       });
     });
 
-    const avgScorePct = totalMax > 0 ? Math.round((totalMarks / totalMax) * 100) : 84;
+    const avgScorePct = totalMax > 0 ? Math.round((totalMarks / totalMax) * 100) : 0;
     const upcomingCount = exams.filter((e) => e.status === "UPCOMING").length;
 
     return {
@@ -211,9 +164,12 @@ export default function ExamsPage() {
         )}
 
         {filtered.map((exam) => {
-          const cfg = STATUS_CONFIG[exam.status];
+          const cfg =
+            STATUS_CONFIG[exam.status] ??
+            (exam.status ? STATUS_CONFIG[exam.status.toUpperCase() as Exam["status"]] : null) ??
+            STATUS_CONFIG.UPCOMING;
           const batch = batches.find((b) => b.id === exam.batchId);
-          const StatusIcon = cfg.icon;
+          const StatusIcon = cfg.icon || Calendar;
 
           return (
             <Link

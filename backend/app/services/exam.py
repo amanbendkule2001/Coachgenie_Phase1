@@ -64,29 +64,42 @@ async def update_exam(db: AsyncSession, tenant_id: str,
 
 async def submit_results(db: AsyncSession, tenant_id: str,
                          exam_id: str, results: list) -> list:
+    from app.utils.exceptions import BadRequestError
     exam = await get_exam(db, tenant_id, exam_id)
     created = []
+    seen_students = set()
 
     for r in results:
+        st_id = str(r.get("student_id") or "").strip()
+        if not st_id or st_id in seen_students:
+            continue
+        seen_students.add(st_id)
+
+        marks = float(r.get("marks_obtained", 0))
+        if marks < 0 or marks > float(exam.total_marks):
+            raise BadRequestError(
+                f"Marks ({marks}) for student {st_id} must be between 0 and total marks ({exam.total_marks})."
+            )
+
         existing = await db.execute(
             select(ExamResult).where(
                 and_(
                     ExamResult.exam_id == exam_id,
-                    ExamResult.student_id == r["student_id"]
+                    ExamResult.student_id == st_id
                 )
             )
         )
         if existing.scalar_one_or_none():
-            raise ConflictError(f"Result already exists for student {r['student_id']}")
+            raise ConflictError(f"Result already exists for student {st_id}")
 
-        is_pass = float(r["marks_obtained"]) >= float(exam.passing_marks)
-        grade   = calculate_grade(float(r["marks_obtained"]), float(exam.total_marks))
+        is_pass = marks >= float(exam.passing_marks)
+        grade   = calculate_grade(marks, float(exam.total_marks))
 
         result_obj = ExamResult(
             tenant_id=tenant_id,
             exam_id=exam_id,
-            student_id=r["student_id"],
-            marks_obtained=r["marks_obtained"],
+            student_id=st_id,
+            marks_obtained=marks,
             grade=grade,
             is_pass=is_pass,
             remarks=r.get("remarks"),

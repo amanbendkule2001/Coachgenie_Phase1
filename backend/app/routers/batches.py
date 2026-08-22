@@ -107,7 +107,7 @@ async def create_batch(
     body: BatchCreate,
     db: DB,
     tenant=Depends(get_tenant),
-    current_user=Depends(require_roles("owner")),
+    current_user=Depends(require_roles("owner", "counselor", "tutor")),
 ):
     batch = await batch_service.create_batch(db, str(tenant.id), body.model_dump())
     return {"success": True, "data": BatchOut.model_validate(batch)}
@@ -141,11 +141,22 @@ async def update_batch(
     body: BatchUpdate,
     db: DB,
     tenant=Depends(get_tenant),
-    current_user=Depends(require_roles("owner")),
+    current_user=Depends(require_roles("owner", "counselor", "tutor")),
 ):
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     batch = await batch_service.update_batch(db, str(tenant.id), batch_id, data)
     return {"success": True, "data": BatchOut.model_validate(batch)}
+
+
+@router.delete("/{batch_id}")
+async def delete_batch(
+    batch_id: str,
+    db: DB,
+    tenant=Depends(get_tenant),
+    current_user=Depends(require_roles("owner", "counselor")),
+):
+    await batch_service.delete_batch(db, str(tenant.id), batch_id)
+    return {"success": True, "message": "Batch deleted successfully."}
 
 
 # ── Enrollment ─────────────────────────────────────────────────
@@ -156,9 +167,8 @@ async def enroll_student(
     student_id: str,
     db: DB,
     tenant=Depends(get_tenant),
-    current_user=Depends(require_roles("owner", "counselor")),
+    current_user=Depends(require_roles("owner", "counselor", "tutor")),
 ):
-    # FIX BUG-003: pass tenant.id so service can validate batch/student ownership
     await batch_service.enroll_student(db, str(tenant.id), batch_id, student_id)
     return {"success": True, "message": "Student enrolled."}
 
@@ -169,9 +179,8 @@ async def remove_student(
     student_id: str,
     db: DB,
     tenant=Depends(get_tenant),
-    current_user=Depends(require_roles("owner", "counselor")),
+    current_user=Depends(require_roles("owner", "counselor", "tutor")),
 ):
-    # FIX BUG-003: pass tenant.id so service can validate batch ownership
     await batch_service.remove_student(db, str(tenant.id), batch_id, student_id)
     return {"success": True, "message": "Student removed from batch."}
 

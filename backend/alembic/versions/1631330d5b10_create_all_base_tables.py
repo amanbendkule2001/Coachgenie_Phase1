@@ -44,6 +44,7 @@ def upgrade() -> None:
     sa.Column('end_date', sa.Date(), nullable=True),
     sa.Column('capacity', sa.SmallInteger(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('status', sa.String(length=20), server_default='ACTIVE', nullable=False),
     sa.Column('schedule', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('subjects', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('NOW()'), nullable=True),

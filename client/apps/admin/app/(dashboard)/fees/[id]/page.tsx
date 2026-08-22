@@ -2,10 +2,19 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, CreditCard, Clock, IndianRupee } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, CreditCard, Clock, IndianRupee, Printer, Download, Plus, Trash2 } from "lucide-react";
 import { format, parseISO, isValid, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { InvoicePDFModal, type InvoicePDFData } from "@/components/finance/InvoicePDFModal";
+import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
+import {
+  createInitialInstallmentSchedule,
+  rebalanceInstallmentSchedule,
+  addInstallmentToSchedule,
+  removeInstallmentFromSchedule,
+  type InstallmentItem,
+} from "@/lib/utils/installment-rebalancer";
 
 const API = "/api/proxy";
 
@@ -48,12 +57,11 @@ function resolveInstallments(
   totalDue: number,
   totalPaid: number,
   invoiceDueDate: string,
-  paymentInstallmentSchedule?: string | object | null
+  paymentInstallmentSchedule?: string | object | null,
+  paymentsList: any[] = []
 ): InstallmentSlot[] {
+  // ── 1. Parse stored installment schedule ──────────────────────────────────
   let rawSlots: any[] = [];
-  let numInstallments = 1;
-  let hasInstallments = false;
-  let schedAmountPaid = 0;
 
   if (paymentInstallmentSchedule) {
     try {
@@ -61,96 +69,127 @@ function resolveInstallments(
         ? JSON.parse(paymentInstallmentSchedule)
         : paymentInstallmentSchedule;
 
-      hasInstallments = Boolean(sched?.hasInstallments);
-      numInstallments = parseInt(sched?.numberOfInstallments) || 0;
-      schedAmountPaid = parseFloat(sched?.amountPaid) || 0;
-
       if (Array.isArray(sched?.installmentSchedule) && sched.installmentSchedule.length > 0) {
-        rawSlots = sched.installmentSchedule;
+        rawSlots = sched.installmentSchedule.map((s: any) => ({ ...s }));
       }
     } catch { /* ignore */ }
   }
 
-  let slots: any[] = [];
-
+  // ── 2. If stored schedule exists, use it as authoritative ─────────────────
+  //       Keep the SCHEDULED amounts exactly — don't override with payment
+  //       ledger amounts. The initial down-payment is separate from slots.
   if (rawSlots.length > 0) {
-    slots = rawSlots;
-  } else if (hasInstallments && numInstallments > 1) {
-    const base = Math.floor(totalDue / numInstallments);
-    const extra = totalDue - base * numInstallments;
-    const invDue = parseISO(invoiceDueDate ?? "");
-    const baseDate = isValid(invDue) ? invDue : new Date();
+    // Sum of all scheduled slot amounts (may be < totalDue if initial payment exists)
+    const scheduledTotal = rawSlots.reduce((a: number, s: any) => a + (parseFloat(s.amount) || 0), 0);
 
-    slots = Array.from({ length: numInstallments }, (_, i) => {
-      const date = new Date(baseDate);
-      date.setMonth(date.getMonth() + i);
+    // Paid slots keep their original scheduled amounts
+    const paidSlotsTotal = rawSlots
+      .filter((s: any) => Boolean(s.paid))
+      .reduce((a: number, s: any) => a + (parseFloat(s.amount) || 0), 0);
+
+    // Remaining = only the installment portion, not counting the initial payment
+    const remainingForUnpaid = Math.max(0, scheduledTotal - paidSlotsTotal);
+    const unpaidCount = rawSlots.filter((s: any) => !Boolean(s.paid)).length;
+
+    const baseUnpaid = unpaidCount > 0 ? Math.floor(remainingForUnpaid / unpaidCount) : 0;
+    const extraUnpaid = unpaidCount > 0 ? remainingForUnpaid - baseUnpaid * unpaidCount : 0;
+
+    let uIdx = 0;
+    const finalSlots = rawSlots.map((s: any) => {
+      if (!Boolean(s.paid)) {
+        const amt = uIdx === 0 ? baseUnpaid + extraUnpaid : baseUnpaid;
+        uIdx++;
+        return { ...s, amount: amt, paid: false };
+      }
+      return { ...s, amount: parseFloat(s.amount) || 0, paid: true };
+    });
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return finalSlots.map((s: any, idx: number) => {
+      const instAmount = parseFloat(s.amount) || 0;
+      const isPaid = Boolean(s.paid);
+      const dStr = s.dueDate ?? s.due_date ?? invoiceDueDate ?? "";
+      const dParsed = parseISO(dStr);
+      const isOverdue = !isPaid && isValid(dParsed) && dParsed < today;
       return {
-        number: i + 1,
-        amount: i === 0 ? base + extra : base,
-        dueDate: format(date, "yyyy-MM-dd"),
+        label: `Installment ${s.number ?? idx + 1}`,
+        number: s.number ?? idx + 1,
+        amount: instAmount,
+        dueDate: dStr,
+        paid: isPaid,
+        partial: false,
+        overdue: isOverdue,
+        paidAmount: isPaid ? instAmount : 0,
+        instRemaining: isPaid ? 0 : instAmount,
+        statusKey: isPaid ? "paid" : isOverdue ? "overdue" : "due",
       };
     });
-  } else {
-    slots = [
-      {
-        number: 1,
-        amount: totalDue,
-        dueDate: invoiceDueDate || format(new Date(), "yyyy-MM-dd"),
-      },
-    ];
   }
 
-  // Calculate sum of slots to check if initial payment was deducted before schedule
-  const slotsSum = slots.reduce((acc: number, s: any) => acc + (parseFloat(s.amount) || 0), 0);
+  // ── 3. No stored schedule — build slots from payment history ──────────────
+  //       Each payment becomes one PAID card; remaining = one DUE card
+  const sortedPayments = [...paymentsList].sort(
+    (a: any, b: any) => new Date(a.paid_at || a.created_at || 0).getTime() - new Date(b.paid_at || b.created_at || 0).getTime()
+  );
 
-  let initialPaid = 0;
-  if (slotsSum > 0 && slotsSum < totalDue) {
-    initialPaid = totalDue - slotsSum;
-  } else if (schedAmountPaid > 0 && schedAmountPaid < totalDue) {
-    initialPaid = schedAmountPaid;
-  }
+  if (sortedPayments.length > 0) {
+    const paidTotal = sortedPayments.reduce((a: number, p: any) => a + (parseFloat(p.amount) || 0), 0);
+    const remainingAfterPayments = Math.max(0, totalDue - paidTotal);
 
-  // Payments allocated to installment slots AFTER initial payment
-  let remainingPaidPool = Math.max(0, totalPaid - initialPaid);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const slots: InstallmentSlot[] = sortedPayments.map((p: any, idx: number) => {
+      const amt = parseFloat(p.amount) || 0;
+      const dateStr = (p.paid_at || p.created_at || invoiceDueDate || format(new Date(), "yyyy-MM-dd")).substring(0, 10);
+      return {
+        label: `Installment ${idx + 1}`,
+        number: idx + 1,
+        amount: amt,
+        dueDate: dateStr,
+        paid: true,
+        partial: false,
+        overdue: false,
+        paidAmount: amt,
+        instRemaining: 0,
+        statusKey: "paid",
+      };
+    });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return slots.map((s: any, idx: number) => {
-    const instAmount = parseFloat(s.amount) || 0;
-    let paidAmount = 0;
-    let isPaid = false;
-    let isPartial = false;
-
-    if (remainingPaidPool >= instAmount && instAmount > 0) {
-      paidAmount = instAmount;
-      remainingPaidPool -= instAmount;
-      isPaid = true;
-    } else if (remainingPaidPool > 0) {
-      paidAmount = remainingPaidPool;
-      remainingPaidPool = 0;
-      isPartial = true;
+    if (remainingAfterPayments > 0) {
+      const nextDue = new Date(invoiceDueDate || new Date());
+      nextDue.setMonth(nextDue.getMonth() + sortedPayments.length);
+      slots.push({
+        label: `Installment ${sortedPayments.length + 1}`,
+        number: sortedPayments.length + 1,
+        amount: remainingAfterPayments,
+        dueDate: format(nextDue, "yyyy-MM-dd"),
+        paid: false,
+        partial: false,
+        overdue: nextDue < today,
+        paidAmount: 0,
+        instRemaining: remainingAfterPayments,
+        statusKey: nextDue < today ? "overdue" : "due",
+      });
     }
+    return slots;
+  }
 
-    const dStr = s.dueDate ?? s.due_date ?? invoiceDueDate ?? "";
-    const dParsed = parseISO(dStr);
-    const isOverdue = !isPaid && isValid(dParsed) && dParsed < today;
-
-    const statusKey = isPaid ? "paid" : isPartial ? "partial" : isOverdue ? "overdue" : "due";
-
-    return {
-      label: `Installment ${s.number ?? idx + 1}`,
-      number: s.number ?? idx + 1,
-      amount: instAmount,
-      dueDate: dStr,
-      paid: isPaid,
-      partial: isPartial,
-      overdue: isOverdue,
-      paidAmount,
-      instRemaining: Math.max(0, instAmount - paidAmount),
-      statusKey,
-    };
-  });
+  // ── 4. No payments, no schedule — single slot for full amount ────────────
+  const today2 = new Date(); today2.setHours(0, 0, 0, 0);
+  const dStr = invoiceDueDate || format(new Date(), "yyyy-MM-dd");
+  const dParsed = parseISO(dStr);
+  const isOverdue = isValid(dParsed) && dParsed < today2;
+  return [{
+    label: "Installment 1",
+    number: 1,
+    amount: totalDue,
+    dueDate: dStr,
+    paid: totalPaid >= totalDue,
+    partial: totalPaid > 0 && totalPaid < totalDue,
+    overdue: isOverdue && totalPaid < totalDue,
+    paidAmount: Math.min(totalPaid, totalDue),
+    instRemaining: Math.max(0, totalDue - totalPaid),
+    statusKey: totalPaid >= totalDue ? "paid" : isOverdue ? "overdue" : "due",
+  }];
 }
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -163,6 +202,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const [installments,    setInstallments]    = useState<InstallmentSlot[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState<string | null>(null);
+  const [showPDF,         setShowPDF]         = useState(false);
 
   // Payment Modal
   const [payModal,        setPayModal]        = useState<{ open: boolean; amount: string; installmentLabel?: string }>({ open: false, amount: "" });
@@ -179,8 +219,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     } catch { return "—"; }
   }
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       // Fetch invoice by scanning list (backend enriches with installment schedule from admission)
@@ -201,9 +241,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       }
 
       // Fetch payments
+      let payList: any[] = [];
       if (payRes && payRes.ok) {
         const payJson = await payRes.json();
-        setPayments(Array.isArray(payJson) ? payJson : (payJson.data ?? []));
+        payList = Array.isArray(payJson) ? payJson : (payJson.data ?? []);
+        setPayments(payList);
       }
 
       const totalDue  = parseFloat(found.amount_due)  || 0;
@@ -214,19 +256,187 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         totalDue,
         totalPaid,
         dueDate,
-        found.payment_installment_schedule
+        found.payment_installment_schedule,
+        payList
       );
 
       setInstallments(reconciled);
 
     } catch (e: any) {
-      setError(e.message ?? "Something went wrong");
+      if (!silent) setError(e.message ?? "Something went wrong");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
+  // Initial load
   useEffect(() => { load(); }, [load]);
+
+
+  const amountDue = parseFloat(invoice?.amount_due) || 0;
+  const amountPaid = parseFloat(invoice?.amount_paid) || 0;
+  const outstanding = Math.max(0, amountDue - amountPaid);
+
+  async function saveInstallmentScheduleToBackend(newSchedule: InstallmentSlot[]) {
+    let admId = invoice?.admission_id || invoice?.student?.admission?.id;
+
+    const currentPaid = amountPaid;
+    const currentDue = amountDue;
+    const currentRemaining = Math.max(0, currentDue - currentPaid);
+
+    const payload = {
+      fee_paid: currentPaid,
+      payment: {
+        totalFee: currentDue,
+        amountPaid: currentPaid,
+        remaining: currentRemaining,
+        hasInstallments: newSchedule.length > 0,
+        numberOfInstallments: newSchedule.length,
+        installmentSchedule: newSchedule.map((s) => ({
+          number: s.number,
+          amount: s.amount,
+          dueDate: s.dueDate,
+          paid: s.paid,
+        })),
+      },
+    };
+
+    // Update local state invoice immediately so subsequent reconciliations keep this schedule
+    setInvoice((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        payment_installment_schedule: JSON.stringify(payload.payment),
+      };
+    });
+
+    // If admId is not on invoice directly, search by invoice_no prefix
+    if (!admId && invoice?.invoice_no) {
+      try {
+        const admNum = invoice.invoice_no.replace(/^INV-/, "");
+        const admRes = await fetch(`${API}/admissions?limit=100`, { headers: authHeaders() }).catch(() => null);
+        if (admRes && admRes.ok) {
+          const admJson = await admRes.json();
+          const list = admJson.data ?? admJson.items ?? admJson ?? [];
+          const matched = Array.isArray(list) ? list.find((a: any) => a.admission_number === admNum || a.id === invoice.student_id) : null;
+          if (matched) admId = matched.id;
+        }
+      } catch {}
+    }
+
+    if (admId) {
+      try {
+        await fetch(`${API}/admissions/${admId}`, {
+          method: "PATCH",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } catch {
+        // quiet fallback
+      }
+    }
+  }
+
+  function handleInstAmountChange(idx: number, newVal: number) {
+    setInstallments((prev) => {
+      const items: InstallmentItem[] = prev.map((inst) => ({
+        number: inst.number,
+        amount: inst.amount,
+        dueDate: inst.dueDate,
+        paid: inst.paid,
+      }));
+      const rebalanced = rebalanceInstallmentSchedule(items, outstanding, idx, newVal);
+      const nextSlots = rebalanced.map((item, i) => {
+        const orig = prev[i] || {};
+        const paidAmt = orig.paidAmount || 0;
+        const isPaid = item.paid;
+        const isPartial = !isPaid && paidAmt > 0;
+        const instRemaining = Math.max(0, item.amount - paidAmt);
+        const statusKey = isPaid ? "paid" : isPartial ? "partial" : "due";
+        return {
+          label: `Installment ${item.number}`,
+          number: item.number,
+          amount: item.amount,
+          dueDate: item.dueDate,
+          paid: isPaid,
+          partial: isPartial,
+          overdue: false,
+          paidAmount: paidAmt,
+          instRemaining,
+          statusKey,
+        };
+      });
+      saveInstallmentScheduleToBackend(nextSlots);
+      return nextSlots;
+    });
+  }
+
+  function handleInstDateChange(idx: number, newDate: string) {
+    setInstallments((prev) => {
+      const nextSlots = prev.map((inst, i) => (i === idx ? { ...inst, dueDate: newDate } : inst));
+      saveInstallmentScheduleToBackend(nextSlots);
+      return nextSlots;
+    });
+  }
+
+  function handleAddTerm() {
+    setInstallments((prev) => {
+      const items: InstallmentItem[] = prev.map((inst) => ({
+        number: inst.number,
+        amount: inst.amount,
+        dueDate: inst.dueDate,
+        paid: inst.paid,
+      }));
+      const added = addInstallmentToSchedule(items, outstanding);
+      const nextSlots = added.map((item) => {
+        const statusKey = item.paid ? "paid" : "due";
+        return {
+          label: `Installment ${item.number}`,
+          number: item.number,
+          amount: item.amount,
+          dueDate: item.dueDate,
+          paid: item.paid,
+          partial: false,
+          overdue: false,
+          paidAmount: 0,
+          instRemaining: item.amount,
+          statusKey,
+        };
+      });
+      saveInstallmentScheduleToBackend(nextSlots);
+      return nextSlots;
+    });
+  }
+
+  function handleRemoveTerm(idx: number) {
+    if (installments.length <= 1) return;
+    setInstallments((prev) => {
+      const items: InstallmentItem[] = prev.map((inst) => ({
+        number: inst.number,
+        amount: inst.amount,
+        dueDate: inst.dueDate,
+        paid: inst.paid,
+      }));
+      const removed = removeInstallmentFromSchedule(items, idx, outstanding);
+      const nextSlots = removed.map((item) => {
+        const statusKey = item.paid ? "paid" : "due";
+        return {
+          label: `Installment ${item.number}`,
+          number: item.number,
+          amount: item.amount,
+          dueDate: item.dueDate,
+          paid: item.paid,
+          partial: false,
+          overdue: false,
+          paidAmount: 0,
+          instRemaining: item.amount,
+          statusKey,
+        };
+      });
+      saveInstallmentScheduleToBackend(nextSlots);
+      return nextSlots;
+    });
+  }
 
   function openPayModal(amount: number, label?: string) {
     setPayModal({ open: true, amount: String(amount), installmentLabel: label });
@@ -267,7 +477,21 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           notes:           payNote || null,
         }),
       });
-      if (!res.ok) throw new Error("Payment failed");
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        let errMsg = "Payment failed";
+        try {
+          const json = JSON.parse(text);
+          if (Array.isArray(json?.detail)) {
+            errMsg = json.detail.map((e: any) => e.msg?.replace(/^Value error,\s*/i, "") || e.message || JSON.stringify(e)).join(", ");
+          } else {
+            errMsg = json?.detail ?? json?.message ?? text;
+          }
+        } catch {
+          if (text) errMsg = text;
+        }
+        throw new Error(errMsg || "Payment failed");
+      }
       toast.success("Payment recorded successfully!");
       closePayModal();
       await load();
@@ -296,11 +520,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     </div>
   );
 
-  const amountDue   = parseFloat(invoice.amount_due)  || 0;
-  const amountPaid  = parseFloat(invoice.amount_paid) || 0;
-  const outstanding = Math.max(0, amountDue - amountPaid);
   const pct         = amountDue > 0 ? Math.min(100, Math.round((amountPaid / amountDue) * 100)) : 0;
-  const invStatus   = invoice.status ?? "pending";
+  const invStatus   = invoice?.status ?? "pending";
   const cfg         = STATUS_CONFIG[invStatus] ?? STATUS_CONFIG.pending;
 
   const studentName =
@@ -315,6 +536,49 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     { id: "installments", label: "Installments"    },
     { id: "payments",     label: "Payment History" },
   ];
+
+  function handleDownloadPDF() {
+    if (!invoice) return;
+    const invData: InvoicePDFData = {
+      invoiceNo: invoice.invoice_no || `INV-${id.slice(-6).toUpperCase()}`,
+      date: safeFormat(invoice.issue_date || invoice.created_at || invoice.due_date),
+      studentName: studentName,
+      parentName: invoice.student?.parent_name || (invoice as any).parent_name || "Parent / Guardian",
+      phone: invoice.student?.phone || invoice.student_phone,
+      email: invoice.student?.email || invoice.student_email,
+      grade: invoice.grade || invoice.student?.current_class || "10th",
+      boardName: (invoice.student as any)?.board_name || "CBSE",
+      batchName: (invoice.student as any)?.target_exam || (invoice as any).batch_name || "Standard Academic Batch",
+      totalFee: amountDue,
+      feePaid: amountPaid,
+      status: invStatus,
+      installments: installments.map((inst, i) => ({
+        number: inst.number ?? i + 1,
+        amount: inst.amount,
+        dueDate: safeFormat(inst.dueDate),
+        paid: inst.paid,
+      })),
+      paymentHistory: payments.length > 0
+        ? payments.map((p, i) => ({
+            date: p.paid_at ? p.paid_at.substring(0, 10) : (p.payment_date ? p.payment_date.substring(0, 10) : safeFormat(p.created_at)),
+            mode: MODE_LABELS[p.payment_mode] || p.payment_mode || "UPI",
+            amount: parseFloat(p.amount) || 0,
+            reference: p.transaction_ref || p.reference_no || `REC-${invoice.invoice_no}-${i + 1}`,
+          }))
+        : amountPaid > 0
+        ? [
+            {
+              date: safeFormat(invoice.issue_date || invoice.created_at || invoice.due_date),
+              mode: "UPI / DOWN PAYMENT",
+              amount: amountPaid,
+              reference: `REC-${invoice.invoice_no}`,
+            },
+          ]
+        : [],
+    };
+    generateInvoicePDF(invData);
+    toast.success("Downloading PDF invoice...");
+  }
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -341,6 +605,14 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 transition-all shadow-sm"
+        >
+          <Download className="h-3.5 w-3.5" /> Download PDF Invoice
+        </button>
       </div>
 
       {/* ── Tabs ── */}
@@ -428,14 +700,25 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <div className="rounded-xl border bg-card p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-base">Installment Schedule</h3>
+                <h3 className="font-bold text-base flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-violet-600" /> Dynamic Adjustable Installment Schedule
+                </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {installments.filter(i => i.paid).length} of {installments.length} installments paid
+                  {installments.filter(i => i.paid).length} of {installments.length} installments paid · Amounts auto-rebalance on edit
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Progress</p>
-                <p className="font-bold text-primary text-lg">{pct}% Cleared</p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddTerm}
+                  className="flex items-center gap-1 text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-950/50 hover:bg-violet-100 dark:hover:bg-violet-900/60 px-3 py-1.5 rounded-lg border border-violet-200/60 transition-all shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Term
+                </button>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Progress</p>
+                  <p className="font-bold text-primary text-lg">{pct}% Cleared</p>
+                </div>
               </div>
             </div>
 
@@ -480,7 +763,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 <div
                   key={idx}
                   className={cn(
-                    "rounded-xl border p-4 space-y-3 transition-all",
+                    "rounded-xl border p-4 space-y-3 transition-all relative",
                     inst.paid    && "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-800/50",
                     inst.partial && "border-blue-200 bg-blue-50/40 dark:bg-blue-950/20 dark:border-blue-800/50",
                     inst.overdue && !inst.paid && !inst.partial && "border-red-200 bg-red-50/40 dark:bg-red-950/20 dark:border-red-800/50",
@@ -491,20 +774,55 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       {inst.label}
                     </span>
-                    <span className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                      cfg.className
-                    )}>
-                      <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotColor)} />
-                      {cfg.label}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                        cfg.className
+                      )}>
+                        <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotColor)} />
+                        {cfg.label}
+                      </span>
+                      {installments.length > 1 && !inst.paid && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTerm(idx)}
+                          className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                          title="Remove installment term"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-2xl font-bold font-mono">₹{inst.amount.toLocaleString("en-IN")}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Due: <span className={cn("font-semibold", inst.overdue ? "text-red-500" : "text-foreground")}>{safeFormat(inst.dueDate)}</span>
-                    </p>
+                  <div className="space-y-1.5">
+                    {inst.paid ? (
+                      <p className="text-2xl font-bold font-mono">₹{inst.amount.toLocaleString("en-IN")}</p>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-bold text-muted-foreground">₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={inst.amount}
+                          onChange={(e) => handleInstAmountChange(idx, parseFloat(e.target.value) || 0)}
+                          className="w-full text-xl font-bold font-mono rounded-lg border bg-background px-2 py-0.5 outline-none focus:ring-1 focus:ring-violet-500"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>Due:</span>
+                      {inst.paid ? (
+                        <span className={cn("font-semibold", inst.overdue ? "text-red-500" : "text-foreground")}>{safeFormat(inst.dueDate)}</span>
+                      ) : (
+                        <input
+                          type="date"
+                          value={inst.dueDate}
+                          onChange={(e) => handleInstDateChange(idx, e.target.value)}
+                          className="rounded border bg-background px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-violet-500"
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Progress bar per installment */}
@@ -623,7 +941,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             onClick={closePayModal}
           />
-          <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-[440px] rounded-2xl border bg-background shadow-2xl p-6 space-y-5">
+          <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] sm:w-full max-w-[440px] rounded-2xl border bg-background shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div>
               <h2 className="text-lg font-bold">Record Payment</h2>
               {payModal.installmentLabel && (
@@ -712,6 +1030,35 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </>
+      )}
+
+      {showPDF && invoice && (
+        <InvoicePDFModal
+          data={{
+            invoiceNo: invoice.invoice_no || `INV-${id.slice(-6).toUpperCase()}`,
+            date: safeFormat(invoice.issue_date || invoice.created_at),
+            studentName: studentName,
+            phone: invoice.student?.phone || invoice.student_phone,
+            email: invoice.student?.email || invoice.student_email,
+            grade: invoice.grade,
+            totalFee: amountDue,
+            feePaid: amountPaid,
+            status: invStatus,
+            installments: installments.map((inst, i) => ({
+              number: i + 1,
+              amount: inst.amount,
+              dueDate: safeFormat(inst.dueDate),
+              paid: inst.paid,
+            })),
+            paymentHistory: payments.map((p, i) => ({
+              date: safeFormat(p.payment_date || p.created_at),
+              mode: MODE_LABELS[p.payment_mode] || p.payment_mode || "UPI",
+              amount: parseFloat(p.amount) || 0,
+              reference: p.reference_no || `PAY-${i + 101}`,
+            })),
+          }}
+          onClose={() => setShowPDF(false)}
+        />
       )}
     </div>
   );

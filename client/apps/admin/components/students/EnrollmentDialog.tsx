@@ -26,9 +26,10 @@ interface EnrollmentDialogProps {
   studentId: string;
   studentName: string;
   onClose: () => void;
+  onEnrollmentChange?: () => void;
 }
 
-export function EnrollmentDialog({ studentId, studentName, onClose }: EnrollmentDialogProps) {
+export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollmentChange }: EnrollmentDialogProps) {
   const [batches,        setBatches]        = useState<any[]>([]);
   const [enrolledIds,    setEnrolledIds]    = useState<Set<string>>(new Set());
   const [loading,        setLoading]        = useState(true);
@@ -78,6 +79,19 @@ export function EnrollmentDialog({ studentId, studentName, onClose }: Enrollment
         if (isEnrolled) { next.delete(batchId); } else { next.add(batchId); }
         return next;
       });
+      setBatches(prev =>
+        prev.map(b => {
+          if (String(b.id) !== batchId) return b;
+          const currentStudentIds: string[] = Array.isArray(b.student_ids) ? b.student_ids.map(String) : [];
+          const updatedIds = isEnrolled
+            ? currentStudentIds.filter(id => id !== String(studentId))
+            : currentStudentIds.includes(String(studentId))
+              ? currentStudentIds
+              : [...currentStudentIds, String(studentId)];
+          return { ...b, student_ids: updatedIds };
+        })
+      );
+      onEnrollmentChange?.();
       toast.success(isEnrolled ? "Removed from batch" : "Enrolled in batch");
     } catch (err: any) {
       toast.error(err.message);
@@ -85,6 +99,14 @@ export function EnrollmentDialog({ studentId, studentName, onClose }: Enrollment
       setSaving(null);
     }
   }
+
+  // Calculate dynamic enrolled count for a batch
+  const getBatchStudentCount = (batch: any) => {
+    const isCurrentlyEnrolled = enrolledIds.has(String(batch.id));
+    const rawIds: string[] = Array.isArray(batch.student_ids) ? batch.student_ids.map(String) : [];
+    const baseIdsWithoutCurrent = rawIds.filter(id => id !== String(studentId));
+    return isCurrentlyEnrolled ? baseIdsWithoutCurrent.length + 1 : baseIdsWithoutCurrent.length;
+  };
 
   return (
     <>
@@ -144,7 +166,7 @@ export function EnrollmentDialog({ studentId, studentName, onClose }: Enrollment
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-medium">
-                    {(batch.student_ids?.length ?? 0)}/{batch.capacity ?? "∞"}
+                    {getBatchStudentCount(batch)}/{batch.capacity ?? "∞"}
                   </p>
                   <p className="text-xs text-muted-foreground">students</p>
                 </div>

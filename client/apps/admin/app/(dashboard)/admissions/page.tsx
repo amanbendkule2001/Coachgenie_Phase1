@@ -18,12 +18,24 @@ import {
   IndianRupee,
   ShieldCheck,
   BookOpen,
+  Printer,
+  Download,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useLeadStore } from "@/lib/stores/leads.store";
 import type { Admission } from "@/lib/types/lead";
 import { authHeaders } from "@/lib/auth-headers";
+import { InvoicePDFModal, type InvoicePDFData } from "@/components/finance/InvoicePDFModal";
+import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
+import {
+  createInitialInstallmentSchedule,
+  rebalanceInstallmentSchedule,
+  addInstallmentToSchedule,
+  removeInstallmentFromSchedule,
+  type InstallmentItem,
+} from "@/lib/utils/installment-rebalancer";
 
 type PaymentMode = "upi" | "cash" | "bank" | "other";
 type PaymentStatus = "PENDING" | "PARTIAL" | "FULL";
@@ -158,77 +170,7 @@ const DEFAULT_FORM: AddFormState = {
   subjects: [],
 };
 
-const DEFAULT_SEED_ADMISSIONS: AdmissionWithPayment[] = [
-  {
-    id: "adm-001",
-    studentName: "Arjun Verma",
-    grade: "10th",
-    boardName: "CBSE",
-    batchName: "10th Science Batch A",
-    subjects: ["Mathematics", "Physics"],
-    phone: "9876543210",
-    email: "arjun@example.com",
-    parentName: "Ramesh Verma",
-    parentPhone: "9876543211",
-    schoolName: "Delhi Public School",
-    status: "CONFIRMED",
-    feeAmount: 50000,
-    feePaid: 50000,
-    createdAt: new Date().toISOString(),
-    documents: [
-      { name: "Aadhar Card", required: true, submitted: true },
-      { name: "Previous Marksheet", required: true, submitted: true },
-      { name: "Passport Photo", required: true, submitted: true },
-    ],
-    payment: {
-      totalFee: 50000,
-      amountPaid: 50000,
-      remaining: 0,
-      paymentStatus: "FULL",
-      dateOfPayment: new Date().toISOString(),
-      modeOfPayment: "upi",
-      hasInstallments: false,
-      numberOfInstallments: 0,
-      installmentAmount: 0,
-      installmentSchedule: [],
-      notes: "Full payment received via UPI Direct",
-    },
-  },
-  {
-    id: "adm-002",
-    studentName: "Ananya Iyer",
-    grade: "10th",
-    boardName: "ICSE",
-    batchName: "10th Biology Batch B",
-    subjects: ["Biology", "Chemistry"],
-    phone: "9876543212",
-    email: "ananya@example.com",
-    parentName: "Srinivasan Iyer",
-    parentPhone: "9876543213",
-    schoolName: "St. Mary School",
-    status: "FEE_PENDING",
-    feeAmount: 45000,
-    feePaid: 20000,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    documents: [
-      { name: "Aadhar Card", required: true, submitted: true },
-      { name: "Previous Marksheet", required: true, submitted: false },
-    ],
-    payment: {
-      totalFee: 45000,
-      amountPaid: 20000,
-      remaining: 25000,
-      paymentStatus: "PARTIAL",
-      dateOfPayment: new Date().toISOString(),
-      modeOfPayment: "bank",
-      hasInstallments: true,
-      numberOfInstallments: 2,
-      installmentAmount: 12500,
-      installmentSchedule: [],
-      notes: "Installment #1 paid",
-    },
-  },
-];
+const DEFAULT_SEED_ADMISSIONS: AdmissionWithPayment[] = [];
 
 interface AddAdmissionModalProps {
   onClose: () => void;
@@ -239,29 +181,52 @@ interface AddAdmissionModalProps {
 
 function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionModalProps) {
   const [form, setForm] = useState<AddFormState>(DEFAULT_FORM);
+  const [customSchedule, setCustomSchedule] = useState<InstallmentItem[]>([]);
 
   const totalFee = parseFloat(form.totalFee) || 0;
   const amountPaid = parseFloat(form.amountPaid) || 0;
   const remaining = Math.max(0, totalFee - amountPaid);
   const payStatus = derivePaymentStatus(amountPaid, totalFee);
-  const instAmt =
-    form.hasInstallments && form.numberOfInstallments > 0 && remaining > 0
-      ? Math.ceil(remaining / form.numberOfInstallments)
-      : 0;
+
+  useEffect(() => {
+    if (form.hasInstallments && remaining > 0) {
+      setCustomSchedule(createInitialInstallmentSchedule(remaining, form.numberOfInstallments));
+    }
+  }, [form.hasInstallments, form.numberOfInstallments, remaining]);
 
   function setInstCount(n: number) {
     setForm((f) => ({
       ...f,
       numberOfInstallments: n,
-      installmentDates: Array.from({ length: n }, (_, i) => f.installmentDates[i] ?? ""),
     }));
+    if (remaining > 0) {
+      setCustomSchedule(createInitialInstallmentSchedule(remaining, n));
+    }
   }
 
-  function setInstDate(i: number, val: string) {
-    setForm((f) => {
-      const d = [...f.installmentDates];
-      d[i] = val;
-      return { ...f, installmentDates: d };
+  function handleInstAmountChange(idx: number, newVal: number) {
+    setCustomSchedule((prev) => rebalanceInstallmentSchedule(prev, remaining, idx, newVal));
+  }
+
+  function handleInstDateChange(idx: number, dateStr: string) {
+    setCustomSchedule((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, dueDate: dateStr } : item))
+    );
+  }
+
+  function handleAddTerm() {
+    setCustomSchedule((prev) => {
+      const updated = addInstallmentToSchedule(prev, remaining);
+      setForm((f) => ({ ...f, numberOfInstallments: updated.length }));
+      return updated;
+    });
+  }
+
+  function handleRemoveTerm(idx: number) {
+    setCustomSchedule((prev) => {
+      const updated = removeInstallmentFromSchedule(prev, idx, remaining);
+      setForm((f) => ({ ...f, numberOfInstallments: updated.length }));
+      return updated;
     });
   }
 
@@ -269,8 +234,10 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
     setForm((f) => ({
       ...f,
       hasInstallments: checked,
-      installmentDates: checked ? Array.from({ length: f.numberOfInstallments }, (_, i) => f.installmentDates[i] ?? "") : [],
     }));
+    if (checked && remaining > 0) {
+      setCustomSchedule(createInitialInstallmentSchedule(remaining, form.numberOfInstallments));
+    }
   }
 
   function toggleDoc(docId: string) {
@@ -291,18 +258,18 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
+      <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] sm:w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border bg-background shadow-2xl">
+        <div className="flex items-center justify-between border-b px-4 sm:px-6 py-4 shrink-0">
           <h2 className="text-base font-bold">New Admission Application</h2>
           <button onClick={onClose} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="overflow-y-auto px-6 py-5 flex-1 space-y-5 text-xs">
+        <div className="overflow-y-auto px-4 sm:px-6 py-5 flex-1 space-y-5 text-xs">
           {/* Student Information */}
           <SectionDivider label="Student Profile & Academic Info" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Field label="Student Name *">
               <input
                 value={form.studentName}
@@ -363,7 +330,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
           {/* Contact Information */}
           <SectionDivider label="Contact Information" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Field label="Student Phone">
               <input
                 value={form.phone}
@@ -401,7 +368,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
           {/* Fee & Payment Ledger Details */}
           <SectionDivider label="Initial Tuition Fee Payment" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <Field label="Total Course Fee (₹)">
               <input
                 type="number"
@@ -427,7 +394,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Field label="Payment Date">
               <input
                 type="date"
@@ -452,7 +419,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
           {/* Document Verification Checkboxes */}
           <SectionDivider label="Required Document Verification" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {REQUIRED_DOCUMENTS.map((doc) => {
               const isSelected = form.selectedDocs.includes(doc.id);
               return (
@@ -513,6 +480,7 @@ export default function AdmissionsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<{ id: string; name: string; subjects: string[] }[]>([]);
+  const [pdfData, setPdfData] = useState<InvoicePDFData | null>(null);
 
   // Fetch admissions list from API or store fallback
   const loadAdmissions = useCallback(async () => {
@@ -524,18 +492,18 @@ export default function AdmissionsPage() {
         const raw = Array.isArray(json) ? json : json.data ?? json.items ?? [];
         if (raw.length > 0) {
           setAdmissions(raw);
-        } else if (storeAdmissions.length === 0) {
-          setAdmissions(DEFAULT_SEED_ADMISSIONS);
+        } else {
+          setAdmissions([]);
         }
-      } else if (storeAdmissions.length === 0) {
-        setAdmissions(DEFAULT_SEED_ADMISSIONS);
+      } else {
+        setAdmissions([]);
       }
     } catch {
-      if (storeAdmissions.length === 0) setAdmissions(DEFAULT_SEED_ADMISSIONS);
+      // keep current state
     } finally {
       setLoading(false);
     }
-  }, [setAdmissions, storeAdmissions.length]);
+  }, [setAdmissions]);
 
   // Fetch batches for dropdown
   useEffect(() => {
@@ -788,8 +756,11 @@ export default function AdmissionsPage() {
             </div>
           )}
           {filtered.map((adm) => {
-            const cfg = STATUS_CONFIG[adm.status];
-            const StatusIcon = cfg.icon;
+            const cfg =
+              STATUS_CONFIG[adm.status] ??
+              (adm.status ? STATUS_CONFIG[adm.status.toUpperCase() as Admission["status"]] : null) ??
+              STATUS_CONFIG.PENDING_DOCS;
+            const StatusIcon = cfg.icon || Clock;
             const docsTotal = adm.documents?.filter((d) => d.required).length ?? 0;
             const docsOk = adm.documents?.filter((d) => d.required && d.submitted).length ?? 0;
 
@@ -817,7 +788,7 @@ export default function AdmissionsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                   <div className="hidden sm:flex flex-col items-end gap-0.5 text-xs">
                     <span className={cn("font-bold text-xs", cfg.color)}>{cfg.label}</span>
                     <span className="text-muted-foreground font-medium">
@@ -831,6 +802,94 @@ export default function AdmissionsPage() {
                     {adm.createdAt ? format(new Date(adm.createdAt), "dd MMM yyyy") : "—"}
                   </div>
 
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const totalFee = adm.feeAmount ?? (adm as any).fee_amount ?? 50000;
+                      const feePaid = adm.feePaid ?? (adm as any).fee_paid ?? 0;
+                      const admNumber = adm.admissionNumber ?? (adm as any).admission_number ?? `ADM-${adm.id.slice(-6).toUpperCase()}`;
+                      const invNo = `INV-${admNumber.replace(/^INV-/, "")}`;
+
+                      let slots: any[] = [];
+                      if (Array.isArray(adm.payment?.installmentSchedule)) {
+                        slots = adm.payment.installmentSchedule;
+                      } else if ((adm as any).payment_installment_schedule) {
+                        try {
+                          const parsed = typeof (adm as any).payment_installment_schedule === "string"
+                            ? JSON.parse((adm as any).payment_installment_schedule)
+                            : (adm as any).payment_installment_schedule;
+                          slots = Array.isArray(parsed) ? parsed : (parsed?.installmentSchedule ?? []);
+                        } catch {}
+                      }
+
+                      // Fetch real payment receipts from fees invoices if possible
+                      let paymentHistoryList: any[] = [];
+                      try {
+                        const invRes = await fetch(`${API}/fees/invoices`, { headers: authHeaders() }).catch(() => null);
+                        if (invRes && invRes.ok) {
+                          const invJson = await invRes.json();
+                          const list: any[] = Array.isArray(invJson) ? invJson : (invJson.data ?? []);
+                          const matched = list.find((i: any) =>
+                            i.admission_id === adm.id ||
+                            i.invoice_no === invNo ||
+                            i.student?.admission_id === adm.id
+                          );
+                          if (matched && Array.isArray(matched.payments) && matched.payments.length > 0) {
+                            paymentHistoryList = matched.payments.map((p: any, idx: number) => ({
+                              date: p.paid_at ? p.paid_at.substring(0, 10) : (p.created_at ? p.created_at.substring(0, 10) : format(new Date(), "yyyy-MM-dd")),
+                              mode: p.payment_mode || "UPI",
+                              amount: parseFloat(p.amount) || 0,
+                              reference: p.transaction_ref || `REC-${admNumber}-${idx + 1}`,
+                            }));
+                          }
+                        }
+                      } catch {}
+
+                      if (paymentHistoryList.length === 0 && feePaid > 0) {
+                        paymentHistoryList = [
+                          {
+                            date: adm.createdAt ? format(new Date(adm.createdAt), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+                            mode: (adm as any).payment?.modeOfPayment || "UPI / DOWN PAYMENT",
+                            amount: feePaid,
+                            reference: `REC-${admNumber}`,
+                          },
+                        ];
+                      }
+
+                      const formattedInstallments = slots.map((s: any, idx: number) => ({
+                        number: s.number ?? idx + 1,
+                        amount: parseFloat(s.amount) || 0,
+                        dueDate: s.dueDate || s.due_date || "",
+                        paid: Boolean(s.paid),
+                      }));
+
+                      const invData: InvoicePDFData = {
+                        invoiceNo: invNo,
+                        date: adm.createdAt ? format(new Date(adm.createdAt), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+                        studentName: adm.studentName ?? (adm as any).student_name ?? "Student",
+                        parentName: adm.parentName ?? (adm as any).parent_name ?? "Parent / Guardian",
+                        phone: adm.phone,
+                        email: adm.email,
+                        grade: adm.grade || "10th",
+                        boardName: adm.boardName ?? (adm as any).board_name ?? "CBSE",
+                        batchName: adm.batchName ?? (adm as any).batch_name ?? "Standard Academic Batch",
+                        totalFee,
+                        feePaid,
+                        status: adm.status,
+                        installments: formattedInstallments,
+                        paymentHistory: paymentHistoryList,
+                      };
+                      generateInvoicePDF(invData);
+                      toast.success("Downloading PDF invoice...");
+                    }}
+                    className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-[11px] font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors shadow-2xs shrink-0"
+                    title="Direct Download PDF Invoice"
+                  >
+                    <Download className="h-3.5 w-3.5" /> PDF
+                  </button>
+
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                 </div>
               </Link>
@@ -841,6 +900,10 @@ export default function AdmissionsPage() {
 
       {showForm && (
         <AddAdmissionModal onClose={() => setShowForm(false)} onSave={handleSave} isSaving={saving} batches={batches} />
+      )}
+
+      {pdfData && (
+        <InvoicePDFModal data={pdfData} onClose={() => setPdfData(null)} />
       )}
     </div>
   );

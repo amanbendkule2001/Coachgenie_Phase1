@@ -27,22 +27,24 @@ export function AttendanceGrid({ students, entries, onMark, onMarkAll }: Attenda
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="flex items-center gap-4 rounded-xl border bg-card p-4">
-        {[
-          { label:"Present", value:present, color:"text-emerald-600" },
-          { label:"Absent",  value:absent,  color:"text-red-500" },
-          { label:"Late",    value:late,    color:"text-amber-600" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="flex items-center gap-2">
-            <span className={cn("text-2xl font-bold", color)}>{value}</span>
-            <span className="text-xs text-muted-foreground">{label}</span>
-          </div>
-        ))}
-        <div className="ml-auto flex gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4">
+        <div className="flex items-center gap-4">
+          {[
+            { label:"Present", value:present, color:"text-emerald-600" },
+            { label:"Absent",  value:absent,  color:"text-red-500" },
+            { label:"Late",    value:late,    color:"text-amber-600" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex items-center gap-1.5 sm:gap-2">
+              <span className={cn("text-xl sm:text-2xl font-bold", color)}>{value}</span>
+              <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-muted-foreground self-center">Mark all:</span>
           {STATUSES.map(s => (
             <button key={s} onClick={() => onMarkAll(s)}
-              className={cn("rounded-md border px-3 py-1 text-xs font-medium transition-colors", STATUS_STYLE[s])}>
+              className={cn("rounded-md border px-2.5 sm:px-3 py-1 text-xs font-medium transition-colors", STATUS_STYLE[s])}>
               {s.charAt(0) + s.slice(1).toLowerCase()}
             </button>
           ))}

@@ -76,11 +76,16 @@ async def get_attendance_by_batch(
 
 
 async def take_attendance(db: AsyncSession, tenant_id: str, taken_by: str,
-                          class_id: str, session_date: date, records: list):  # ← str → date
+                          class_id: str, session_date: date, records: list):
+    import uuid
+    t_uuid = uuid.UUID(str(tenant_id)) if isinstance(tenant_id, (str, uuid.UUID)) else tenant_id
+    c_uuid = uuid.UUID(str(class_id)) if isinstance(class_id, (str, uuid.UUID)) else class_id
+
     existing = await db.execute(
         select(AttendanceSession).where(
             and_(
-                AttendanceSession.class_id == class_id,
+                AttendanceSession.tenant_id == t_uuid,
+                AttendanceSession.class_id == c_uuid,
                 AttendanceSession.session_date == session_date
             )
         )
@@ -89,19 +94,25 @@ async def take_attendance(db: AsyncSession, tenant_id: str, taken_by: str,
         raise ConflictError("Attendance already taken for this class on this date.")
 
     session = AttendanceSession(
-        tenant_id=tenant_id,
-        class_id=class_id,
-        taken_by=taken_by,
+        tenant_id=t_uuid,
+        class_id=c_uuid,
+        taken_by=uuid.UUID(str(taken_by)) if taken_by else None,
         session_date=session_date,
     )
     db.add(session)
     await db.flush()
 
+    seen_student_ids = set()
     for record in records:
+        raw_st_id = str(record.get("student_id") or "").strip()
+        if not raw_st_id or raw_st_id in seen_student_ids:
+            continue
+        seen_student_ids.add(raw_st_id)
+
         att = AttendanceRecord(
-            tenant_id=tenant_id,
+            tenant_id=t_uuid,
             session_id=session.id,
-            student_id=record["student_id"],
+            student_id=uuid.UUID(raw_st_id),
             status=record.get("status", "present"),
             remarks=record.get("remarks"),
         )

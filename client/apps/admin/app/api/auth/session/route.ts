@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
       maxAge:    ACCESS_TOKEN_MAX_AGE,
     });
 
-    // Refresh token — longer-lived, locked to the refresh path only
+    // Refresh token — longer-lived, accessible across app for auto-refresh
     response.cookies.set("cg_refresh_token", refresh_token, {
       httpOnly:  true,
       secure:    process.env.NODE_ENV === "production",
       sameSite:  "strict",
-      path:      "/api/auth",   // only sent to our own auth API routes
+      path:      "/",
       maxAge:    REFRESH_TOKEN_MAX_AGE,
     });
 
@@ -76,7 +76,7 @@ export async function DELETE() {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path:     "/api/auth",
+    path:     "/",
     maxAge:   0,
   });
 

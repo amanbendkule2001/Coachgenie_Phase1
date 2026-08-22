@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from app.dependencies import get_tenant, require_roles, DB
 from app.schemas.fee import FeeStructureCreate, FeeInvoiceCreate, FeeInvoiceOut, PaymentCreate, PaymentOut
@@ -167,6 +168,17 @@ async def revenue_summary(
 ):
     summary = await fee_service.get_revenue_summary(db, str(tenant.id))
     return {"success": True, "data": summary}
+
+
+@router.get("/payments/history")
+async def get_payment_history(
+    db: DB,
+    tenant=Depends(get_tenant),
+    student_id: Optional[str] = None,
+    current_user=Depends(require_roles("owner", "counselor", "tutor", "student")),
+):
+    payments = await fee_service.get_all_payments_for_tenant(db, str(tenant.id), student_id)
+    return {"success": True, "data": payments}
 
 
 

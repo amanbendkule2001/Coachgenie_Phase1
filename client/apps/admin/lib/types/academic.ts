@@ -24,11 +24,14 @@ export interface Student {
     due:    number;
   };
   targetExam?: string;
+  schoolName?: string;
+  gender?:     string;
 }
 
 export interface Batch {
   id:        string;
   name:      string;
+  code?:     string;
   subject:   string;
   teacher:   string;
   grade:     string;

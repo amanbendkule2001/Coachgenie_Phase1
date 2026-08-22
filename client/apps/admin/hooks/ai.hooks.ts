@@ -231,7 +231,7 @@ export type CoachGenieMessage = {
 
 export function useCoachGenieChat({
   context,
-  apiEndpoint = "/api/ai/chat",
+  apiEndpoint = "/api/chat",
 }: UseCoachGenieChatProps = {}) {
   const { consent } = useAiStore();
   const { user } = useAuthStore(); // ? inside the hook

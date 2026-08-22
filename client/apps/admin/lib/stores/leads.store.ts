@@ -121,10 +121,14 @@ export const useLeadStore = create<LeadStore>()(
 
           if (!lead) return;
 
-          (lead.activities as any[]).unshift({
+          if (!Array.isArray(lead.activities)) {
+            lead.activities = [];
+          }
+
+          lead.activities.unshift({
             ...act,
-            id: `a-${Date.now()}`,
-            createdAt: new Date().toISOString(),
+            id: (act as any).id || `a-${Date.now()}`,
+            createdAt: (act as any).createdAt || new Date().toISOString(),
           });
 
           lead.updatedAt = new Date().toISOString();

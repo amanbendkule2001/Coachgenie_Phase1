@@ -161,20 +161,22 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
       id: "actions",
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-         <button
-  onClick={() => onView(row.original)}
-  data-testid={`lead-view-${row.original.id}`}
-  className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
->
-  <Eye className="h-3.5 w-3.5" />
-</button>
-<button
-  onClick={() => onDelete(row.original.id)}
-  data-testid={`lead-delete-${row.original.id}`}
-  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
->
-  <Trash2 className="h-3.5 w-3.5" />
-</button>
+          <button
+            onClick={() => onView(row.original)}
+            data-testid={`lead-view-${row.original.id}`}
+            aria-label={`View lead ${row.original.name}`}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => onDelete(row.original.id)}
+            data-testid={`lead-delete-${row.original.id}`}
+            aria-label={`Delete lead ${row.original.name}`}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       ),
     },
@@ -204,6 +206,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           onChange={(e) => setGlobalFilter(e.target.value)}
           data-testid="lead-search"
           placeholder="Search leads…"
+          aria-label="Search leads"
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
       </div>
@@ -226,13 +229,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
             ))}
           </thead>
           <tbody>
-            {/* {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b last:border-0 hover:bg-muted/30 transition-colors"
-                > */}
-                {table.getRowModel().rows.length ? (
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
@@ -270,6 +267,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            aria-label="Go to previous page"
             className="rounded-md border p-1.5 disabled:opacity-40 hover:bg-accent transition-colors"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
@@ -280,6 +278,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            aria-label="Go to next page"
             className="rounded-md border p-1.5 disabled:opacity-40 hover:bg-accent transition-colors"
           >
             <ChevronRight className="h-3.5 w-3.5" />

@@ -27,16 +27,38 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [loading, setLoading] = useState(!lead);
 
-  // Sync lead details from API
+  // Sync lead details and activities from API
   useEffect(() => {
     let isMounted = true;
     async function loadLeadDetail() {
       try {
-        const res = await fetch(`${API}/leads/${id}`, { headers: authHeaders() }).catch(() => null);
-        if (res && res.ok) {
-          const json = await res.json();
+        const [leadRes, actRes] = await Promise.all([
+          fetch(`${API}/leads/${id}`, { headers: authHeaders() }).catch(() => null),
+          fetch(`${API}/leads/${id}/activities`, { headers: authHeaders() }).catch(() => null),
+        ]);
+
+        if (leadRes && leadRes.ok) {
+          const json = await leadRes.json();
           const raw = json.data ?? json;
+
+          let rawActivities = raw.activities ?? [];
+          if (actRes && actRes.ok) {
+            const actJson = await actRes.json();
+            const fetchedActs = actJson.data ?? actJson;
+            if (Array.isArray(fetchedActs) && fetchedActs.length > 0) {
+              rawActivities = fetchedActs;
+            }
+          }
+
           if (isMounted && raw && raw.id) {
+            const mappedActivities = rawActivities.map((a: any) => ({
+              id: String(a.id || `a-${Date.now()}`),
+              type: String(a.type || "NOTE").toUpperCase(),
+              content: a.content || a.description || "",
+              createdAt: a.created_at || a.createdAt || new Date().toISOString(),
+              createdBy: a.created_by || a.createdBy || "Staff Counselor",
+            }));
+
             setLead({
               id: String(raw.id),
               name: raw.full_name ?? raw.name ?? "",
@@ -52,7 +74,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               notes: raw.notes ?? "",
               createdAt: raw.created_at ?? new Date().toISOString(),
               updatedAt: raw.updated_at ?? new Date().toISOString(),
-              activities: raw.activities ?? [],
+              activities: mappedActivities,
               tags: raw.tags ?? [],
               boardName: raw.board_name ?? "",
               batchId: raw.batch_id ?? "",
@@ -98,17 +120,53 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   async function handleAddActivity(type: ActivityType, content: string) {
-    const createdBy = currentUser?.first_name ?? currentUser?.email ?? "Staff Counselor";
-    store.addActivity(lead!.id, { type, content, createdBy });
+    const createdBy = currentUser?.first_name
+      ? `${currentUser.first_name} ${currentUser.last_name || ""}`.trim()
+      : currentUser?.email ?? "Staff Counselor";
 
     try {
-      await fetch(`${API}/leads/${lead!.id}/activities`, {
+      const res = await fetch(`${API}/leads/${lead!.id}/activities`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ type: type.toLowerCase(), content, created_by: createdBy }),
-      }).catch(() => null);
-      toast.success("Activity logged");
+        body: JSON.stringify({
+          type: type.toUpperCase(),
+          description: content,
+          content: content,
+          created_by: createdBy,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawAct = json.data ?? json;
+        const newAct = {
+          id: String(rawAct.id || `a-${Date.now()}`),
+          type: (rawAct.type || type).toUpperCase(),
+          content: rawAct.content || rawAct.description || content,
+          createdAt: rawAct.created_at || rawAct.createdAt || new Date().toISOString(),
+          createdBy: rawAct.created_by || rawAct.createdBy || createdBy,
+        };
+
+        setLead((prev) => (prev ? { ...prev, activities: [newAct, ...(prev.activities || [])] } : prev));
+        store.addActivity(lead!.id, {
+          type: newAct.type,
+          content: newAct.content,
+          createdBy: newAct.createdBy,
+        });
+        toast.success("Activity logged successfully");
+      } else {
+        throw new Error("Failed to save on server");
+      }
     } catch {
+      const localAct = {
+        id: `a-${Date.now()}`,
+        type,
+        content,
+        createdAt: new Date().toISOString(),
+        createdBy,
+      };
+      setLead((prev) => (prev ? { ...prev, activities: [localAct, ...(prev.activities || [])] } : prev));
+      store.addActivity(lead!.id, { type, content, createdBy });
       toast.success("Activity logged locally");
     }
   }
@@ -240,7 +298,20 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   <button
                     key={s}
                     onClick={async () => {
-                      setLead({ ...lead, stage: s });
+                      const stageAct = {
+                        id: `a-${Date.now()}`,
+                        type: "STAGE_CHANGE",
+                        content: `Stage updated to ${cfg.label}`,
+                        createdAt: new Date().toISOString(),
+                        createdBy: currentUser?.first_name
+                          ? `${currentUser.first_name} ${currentUser.last_name || ""}`.trim()
+                          : "Staff Counselor",
+                      };
+                      setLead({
+                        ...lead,
+                        stage: s,
+                        activities: [stageAct, ...(lead.activities || [])],
+                      });
                       store.updateStage(lead.id, s);
                       try {
                         await fetch(`${API}/leads/${lead.id}`, {

@@ -151,24 +151,8 @@ export default function GrowthCardPage({ params }: { params: Promise<{ studentId
       } else {
         throw new Error("Invalid API response format");
       }
-    } catch {
-      // Local fallback generation synthesizing cross-module data
-      const mockCard: GrowthCard = {
-        id: `gc-${Date.now()}`,
-        student_id: studentId,
-        period_label: `Term Performance (${new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" })})`,
-        academic_score: liveAcademicPct,
-        attendance_percent: liveAttendancePct,
-        behavior_rating: 5,
-        strengths: "Demonstrates high logical problem-solving abilities, active participation in class discussions, and exceptional accuracy in numerical problems.",
-        improvement_areas: "Can improve written conceptual explanations and time allocation during multi-step exam questions.",
-        tutor_remarks: "Excellent academic effort this month! Consistently attends lectures on time and completes all homework assignments promptly.",
-        parent_seen: false,
-        created_at: new Date().toISOString(),
-      };
-
-      setCards((prev) => [mockCard, ...prev]);
-      toast.success("Growth Card raised successfully!");
+    } catch (err) {
+      toast.error("Failed to generate AI Growth Card. Please check your API connection.");
     } finally {
       setGenerating(false);
     }

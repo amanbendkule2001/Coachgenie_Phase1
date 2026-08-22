@@ -1,11 +1,18 @@
 "use client";
-import { useState } from "react";
-import { X, Loader2, IndianRupee, UserCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Loader2, IndianRupee, UserCheck, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@/lib/types/lead";
 import { authHeaders } from "@/lib/auth-headers";
+import {
+  createInitialInstallmentSchedule,
+  rebalanceInstallmentSchedule,
+  addInstallmentToSchedule,
+  removeInstallmentFromSchedule,
+  type InstallmentItem,
+} from "@/lib/utils/installment-rebalancer";
 
 const API = "/api/proxy";
 
@@ -39,13 +46,7 @@ export function ConvertLeadModal({ lead, onClose, onSuccess }: ConvertLeadModalP
   const [dateOfPayment, setDateOfPayment] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [hasInstallments, setHasInstallments] = useState<boolean>(false);
   const [numberOfInstallments, setNumberOfInstallments] = useState<number>(3);
-  const [installmentDates, setInstallmentDates] = useState<string[]>(
-    Array.from({ length: 3 }, (_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() + i + 1);
-      return format(d, "yyyy-MM-dd");
-    })
-  );
+  const [customSchedule, setCustomSchedule] = useState<InstallmentItem[]>([]);
   const [selectedDocs, setSelectedDocs] = useState<string[]>(["aadhar", "marksheet", "photo"]);
   const [notes, setNotes] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -58,26 +59,43 @@ export function ConvertLeadModal({ lead, onClose, onSuccess }: ConvertLeadModalP
   if (numAmountPaid >= numTotalFee && numTotalFee > 0) payStatus = "FULL";
   else if (numAmountPaid > 0) payStatus = "PARTIAL";
 
-  const instAmt = hasInstallments && numberOfInstallments > 0 && remaining > 0
-    ? Math.ceil(remaining / numberOfInstallments)
-    : 0;
+  // Re-initialize installment schedule on count or remaining change
+  useEffect(() => {
+    if (hasInstallments && remaining > 0) {
+      setCustomSchedule(createInitialInstallmentSchedule(remaining, numberOfInstallments));
+    }
+  }, [hasInstallments, numberOfInstallments, remaining]);
 
   function setNumInstallments(n: number) {
     setNumberOfInstallments(n);
-    setInstallmentDates(
-      Array.from({ length: n }, (_, i) => {
-        const d = new Date();
-        d.setMonth(d.getMonth() + i + 1);
-        return format(d, "yyyy-MM-dd");
-      })
+    if (remaining > 0) {
+      setCustomSchedule(createInitialInstallmentSchedule(remaining, n));
+    }
+  }
+
+  function handleAmountChange(idx: number, newVal: number) {
+    setCustomSchedule((prev) => rebalanceInstallmentSchedule(prev, remaining, idx, newVal));
+  }
+
+  function handleDateChange(idx: number, dateStr: string) {
+    setCustomSchedule((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, dueDate: dateStr } : item))
     );
   }
 
-  function setInstDate(idx: number, dateStr: string) {
-    setInstallmentDates(prev => {
-      const next = [...prev];
-      next[idx] = dateStr;
-      return next;
+  function handleAddTerm() {
+    setCustomSchedule((prev) => {
+      const updated = addInstallmentToSchedule(prev, remaining);
+      setNumberOfInstallments(updated.length);
+      return updated;
+    });
+  }
+
+  function handleRemoveTerm(idx: number) {
+    setCustomSchedule((prev) => {
+      const updated = removeInstallmentFromSchedule(prev, idx, remaining);
+      setNumberOfInstallments(updated.length);
+      return updated;
     });
   }
 
@@ -94,12 +112,12 @@ export function ConvertLeadModal({ lead, onClose, onSuccess }: ConvertLeadModalP
       if (payStatus === "FULL") admStatus = "CONFIRMED";
       else if (payStatus === "PARTIAL") admStatus = "FEE_PENDING";
 
-      const schedule = hasInstallments && numberOfInstallments > 0 && remaining > 0
-        ? Array.from({ length: numberOfInstallments }, (_, i) => ({
-            number: i + 1,
-            amount: i === 0 ? remaining - instAmt * (numberOfInstallments - 1) : instAmt,
-            dueDate: installmentDates[i] ?? format(new Date(), "yyyy-MM-dd"),
-            paid: false,
+      const schedule = hasInstallments && remaining > 0 && customSchedule.length > 0
+        ? customSchedule.map((inst) => ({
+            number: inst.number,
+            amount: inst.amount,
+            dueDate: inst.dueDate || format(new Date(), "yyyy-MM-dd"),
+            paid: inst.paid || false,
           }))
         : [];
 
@@ -140,7 +158,7 @@ export function ConvertLeadModal({ lead, onClose, onSuccess }: ConvertLeadModalP
           modeOfPayment,
           hasInstallments,
           numberOfInstallments,
-          installmentAmount: instAmt,
+          installmentAmount: customSchedule[0]?.amount ?? (hasInstallments && numberOfInstallments > 0 ? Math.ceil(remaining / numberOfInstallments) : 0),
           installmentSchedule: schedule,
           notes,
         },
@@ -282,37 +300,63 @@ export function ConvertLeadModal({ lead, onClose, onSuccess }: ConvertLeadModalP
 
               {hasInstallments && remaining > 0 && (
                 <div className="rounded-xl border bg-card p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">Number of Installments</label>
+                      <label className="text-xs text-muted-foreground font-medium">Number of Installments</label>
                       <select
                         value={numberOfInstallments}
                         onChange={e => setNumInstallments(parseInt(e.target.value))}
-                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs outline-none"
+                        className="rounded-lg border bg-background px-3 py-1 text-xs outline-none font-semibold"
                       >
-                        {[2, 3, 4, 5, 6, 9, 12].map(n => (
+                        {[1, 2, 3, 4, 5, 6, 9, 12].map(n => (
                           <option key={n} value={n}>{n} Installments</option>
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">Per Installment Amount</label>
-                      <div className="rounded-lg border bg-muted px-3 py-1.5 text-xs font-bold">
-                        ₹{instAmt.toLocaleString("en-IN")}
-                      </div>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddTerm}
+                      className="flex items-center gap-1 text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-950/50 hover:bg-violet-100 dark:hover:bg-violet-900/60 px-3 py-1.5 rounded-lg border border-violet-200/60 transition-all"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Term
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {Array.from({ length: numberOfInstallments }, (_, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className="w-24 text-muted-foreground shrink-0">Term {i + 1} Date:</span>
-                        <input
-                          type="date"
-                          value={installmentDates[i] ?? ""}
-                          onChange={e => setInstDate(i, e.target.value)}
-                          className="w-full rounded-lg border bg-background px-2 py-1 text-xs outline-none"
-                        />
+                  <div className="space-y-2 pt-1">
+                    {customSchedule.map((inst, i) => (
+                      <div key={i} className="grid grid-cols-12 gap-2 items-center text-xs border rounded-lg p-2 bg-muted/20">
+                        <span className="col-span-3 font-bold text-foreground">Term #{inst.number}</span>
+                        <div className="col-span-4">
+                          <input
+                            type="date"
+                            value={inst.dueDate}
+                            onChange={e => handleDateChange(i, e.target.value)}
+                            className="w-full rounded-md border bg-background px-2 py-1 text-xs outline-none"
+                          />
+                        </div>
+                        <div className="col-span-4 flex items-center gap-1">
+                          <span className="text-muted-foreground font-semibold">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={inst.amount}
+                            onChange={e => handleAmountChange(i, parseFloat(e.target.value) || 0)}
+                            className="w-full rounded-md border bg-background px-2 py-1 text-xs font-bold text-foreground outline-none focus:ring-1 focus:ring-violet-500"
+                          />
+                        </div>
+                        <div className="col-span-1 text-right">
+                          {customSchedule.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTerm(i)}
+                              className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                              title="Remove installment term"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

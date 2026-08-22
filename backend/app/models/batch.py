@@ -38,6 +38,7 @@ class Batch(Base):
     end_date = mapped_column(Date, nullable=True)
     capacity: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=50)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
 
     # ✅ NEW: weekly schedule stored as JSON array
     # e.g. [{"day": "Monday", "start_time": "09:00", "end_time": "10:30", "room_or_link": "Room 4"}]

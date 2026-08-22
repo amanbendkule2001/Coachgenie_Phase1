@@ -3,8 +3,6 @@ import { useState }        from "react";
 import { Sidebar }         from "./Sidebar";
 import { Topbar }          from "./Topbar";
 import { MobileSidebar }   from "./MobileSidebar";
-import { CopilotSidebar }  from "@/components/ai/CopilotSidebar";
-import { CopilotTrigger }  from "@/components/ai/CopilotTrigger";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -13,31 +11,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div data-testid="app-shell" className="flex h-screen w-full overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex shrink-0">
-        <Sidebar  collapsed={collapsed} onCollapse={() => setCollapsed(v => !v)} />
+        <Sidebar collapsed={collapsed} onCollapse={() => setCollapsed(v => !v)} />
       </div>
 
       {/* Main area */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {/* <div className="flex items-center gap-2 border-b bg-card/80 backdrop-blur-sm px-4 h-[3.75rem] shrink-0"> */}
         <div
-  data-testid="topbar-container"
-  className="flex items-center gap-2 border-b bg-card/80 backdrop-blur-sm px-4 h-[3.75rem] shrink-0"
->
-          <div className="lg:hidden">
+          data-testid="topbar-container"
+          className="relative z-40 flex items-center gap-2 border-b bg-card px-3 sm:px-4 h-[3.75rem] shrink-0 shadow-xs"
+        >
+          <div className="lg:hidden shrink-0">
             <MobileSidebar />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Topbar data-testid="topbar" sidebarCollapsed={collapsed} />
           </div>
         </div>
-        <main data-testid="main-content" className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main data-testid="main-content" className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 lg:p-6">
           {children}
         </main>
       </div>
-
-      {/* AI Copilot — global
-      <CopilotSidebar />
-      <CopilotTrigger /> */}
     </div>
   );
 }

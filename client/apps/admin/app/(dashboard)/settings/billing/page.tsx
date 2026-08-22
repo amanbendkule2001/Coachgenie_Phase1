@@ -22,6 +22,7 @@ import {
   HelpCircle,
   Clock,
   Plus,
+  IndianRupee,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -107,44 +108,7 @@ const PLANS = [
 ];
 
 // SaaS Platform Billing Transactions
-const INITIAL_BILLING_HISTORY = [
-  {
-    id: "INV-2025-004",
-    date: "2025-04-01",
-    amount: 2499,
-    status: "PAID",
-    plan: "Growth Plan",
-    period: "Apr 01, 2025 - Apr 30, 2025",
-    method: "UPI (HDFC Bank ****4821)",
-  },
-  {
-    id: "INV-2025-003",
-    date: "2025-03-01",
-    amount: 2499,
-    status: "PAID",
-    plan: "Growth Plan",
-    period: "Mar 01, 2025 - Mar 31, 2025",
-    method: "Credit Card (Visa ****1092)",
-  },
-  {
-    id: "INV-2025-002",
-    date: "2025-02-01",
-    amount: 2499,
-    status: "PAID",
-    plan: "Growth Plan",
-    period: "Feb 01, 2025 - Feb 28, 2025",
-    method: "Credit Card (Visa ****1092)",
-  },
-  {
-    id: "INV-2025-001",
-    date: "2025-01-01",
-    amount: 2499,
-    status: "PAID",
-    plan: "Growth Plan",
-    period: "Jan 01, 2025 - Jan 31, 2025",
-    method: "Net Banking (ICICI)",
-  },
-];
+const INITIAL_BILLING_HISTORY: any[] = [];
 
 export default function SettingsBillingPage() {
   const store = useAcademicStore();
@@ -158,6 +122,7 @@ export default function SettingsBillingPage() {
   const [totalRevenueCollected, setTotalRevenueCollected] = useState(0);
   const [totalPendingFees, setTotalPendingFees] = useState(0);
   const [loadingMetrics, setLoadingMetrics] = useState(false);
+  const [feePaymentHistory, setFeePaymentHistory] = useState<any[]>([]);
 
   // Fetch real module cross-integration metrics from API / Store
   useEffect(() => {
@@ -183,8 +148,8 @@ export default function SettingsBillingPage() {
       .then(([rawStudents, rawBatches, rawInvoices]) => {
         if (!isMounted) return;
 
-        const sCount = Array.isArray(rawStudents) && rawStudents.length > 0 ? rawStudents.length : store.students.length || 24;
-        const bCount = Array.isArray(rawBatches) && rawBatches.length > 0 ? rawBatches.length : store.batches.length || 4;
+        const sCount = Array.isArray(rawStudents) ? rawStudents.length : store.students.length;
+        const bCount = Array.isArray(rawBatches) ? rawBatches.length : store.batches.length;
 
         setLiveStudentsCount(sCount);
         setLiveBatchesCount(bCount);
@@ -195,28 +160,38 @@ export default function SettingsBillingPage() {
           setTotalRevenueCollected(paid);
           setTotalPendingFees(Math.max(due, 0));
         } else {
-          // Fallback calculating from store feeRecords
           const paid = store.feeRecords.filter((f) => f.type === "CREDIT").reduce((acc, f) => acc + f.amount, 0);
           const pending = store.feeRecords.filter((f) => f.status === "PENDING").reduce((acc, f) => acc + f.amount, 0);
-          setTotalRevenueCollected(paid || 184000);
-          setTotalPendingFees(pending || 32000);
+          setTotalRevenueCollected(paid);
+          setTotalPendingFees(pending);
         }
       })
       .finally(() => {
         if (isMounted) setLoadingMetrics(false);
       });
 
+    // Fetch live fee payment history
+    fetch(`${API}/fees/payments/history`, { headers: authHeaders() })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (isMounted && json) {
+          const raw = json.data ?? json ?? [];
+          if (Array.isArray(raw)) setFeePaymentHistory(raw);
+        }
+      })
+      .catch(() => null);
+
     return () => {
       isMounted = false;
     };
   }, [store.students.length, store.batches.length, store.feeRecords]);
 
-  const currentPlan = useMemo(() => PLANS.find((p) => p.id === currentPlanId) || PLANS[1]!, [currentPlanId]);
+  const currentPlan = useMemo(() => PLANS.find((p) => p.id === currentPlanId) || PLANS[0]!, [currentPlanId]);
 
   // Quota Usage Calculations
-  const studentUsagePct = Math.min(Math.round((liveStudentsCount / currentPlan.maxStudents) * 100), 100);
-  const staffCount = Math.max(liveBatchesCount + 2, 4);
-  const staffUsagePct = Math.min(Math.round((staffCount / currentPlan.maxStaff) * 100), 100);
+  const studentUsagePct = currentPlan.maxStudents > 0 ? Math.min(Math.round((liveStudentsCount / currentPlan.maxStudents) * 100), 100) : 0;
+  const staffCount = liveBatchesCount;
+  const staffUsagePct = currentPlan.maxStaff > 0 ? Math.min(Math.round((staffCount / currentPlan.maxStaff) * 100), 100) : 0;
 
   function handleSelectPlan(planId: string) {
     if (planId === currentPlanId) return;
@@ -328,10 +303,10 @@ export default function SettingsBillingPage() {
               <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" /> AI Queries Used
               </span>
-              <span className="font-bold text-foreground">142 / {currentPlan.aiCredits}</span>
+              <span className="font-bold text-foreground">0 / {currentPlan.aiCredits}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: "28%" }} />
+              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: "0%" }} />
             </div>
             <p className="text-[10px] text-muted-foreground">Connected to AI Copilot &amp; Reports</p>
           </div>
@@ -342,10 +317,10 @@ export default function SettingsBillingPage() {
               <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
                 <BellRing className="h-3.5 w-3.5 text-emerald-600" /> Messaging Credits
               </span>
-              <span className="font-bold text-foreground">1,840 / {currentPlan.msgCredits.toLocaleString()}</span>
+              <span className="font-bold text-foreground">0 / {currentPlan.msgCredits.toLocaleString()}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: "36%" }} />
+              <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: "0%" }} />
             </div>
             <p className="text-[10px] text-muted-foreground">Connected to WhatsApp &amp; SMS Engine</p>
           </div>
@@ -393,7 +368,11 @@ export default function SettingsBillingPage() {
 
           <div className="rounded-xl bg-muted/40 border p-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Billing Health</p>
-            <p className="text-2xl font-black text-foreground mt-1">98.4%</p>
+            <p className="text-2xl font-black text-foreground mt-1">
+              {totalRevenueCollected + totalPendingFees > 0
+                ? `${Math.round((totalRevenueCollected / (totalRevenueCollected + totalPendingFees)) * 100)}%`
+                : "0%"}
+            </p>
             <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-emerald-500" /> Healthy collection rate
             </p>
@@ -402,11 +381,11 @@ export default function SettingsBillingPage() {
       </div>
 
       {/* 🧭 Tab Navigation Toolbar */}
-      <div className="border-b flex items-center gap-6 text-sm font-semibold">
+      <div className="border-b flex items-center gap-4 sm:gap-6 text-sm font-semibold overflow-x-auto no-scrollbar whitespace-nowrap">
         <button
           onClick={() => setActiveTab("overview")}
           className={cn(
-            "pb-3 border-b-2 transition-all flex items-center gap-2",
+            "pb-3 border-b-2 transition-all flex items-center gap-2 shrink-0",
             activeTab === "overview"
               ? "border-violet-600 text-violet-600"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -418,7 +397,7 @@ export default function SettingsBillingPage() {
         <button
           onClick={() => setActiveTab("plans")}
           className={cn(
-            "pb-3 border-b-2 transition-all flex items-center gap-2",
+            "pb-3 border-b-2 transition-all flex items-center gap-2 shrink-0",
             activeTab === "plans"
               ? "border-violet-600 text-violet-600"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -430,7 +409,7 @@ export default function SettingsBillingPage() {
         <button
           onClick={() => setActiveTab("history")}
           className={cn(
-            "pb-3 border-b-2 transition-all flex items-center gap-2",
+            "pb-3 border-b-2 transition-all flex items-center gap-2 shrink-0",
             activeTab === "history"
               ? "border-violet-600 text-violet-600"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -442,7 +421,7 @@ export default function SettingsBillingPage() {
         <button
           onClick={() => setActiveTab("methods")}
           className={cn(
-            "pb-3 border-b-2 transition-all flex items-center gap-2",
+            "pb-3 border-b-2 transition-all flex items-center gap-2 shrink-0",
             activeTab === "methods"
               ? "border-violet-600 text-violet-600"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -594,53 +573,73 @@ export default function SettingsBillingPage() {
         </div>
       )}
 
-      {/* 🏷️ TAB 3: SAAS BILLING INVOICE HISTORY */}
+      {/* 🏷️ TAB 3: SAAS BILLING & STUDENT FEE PAYMENT HISTORY */}
       {activeTab === "history" && (
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden fade-in">
-          <div className="border-b p-5 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm">Platform Subscription Invoices</h3>
-              <p className="text-xs text-muted-foreground">Historical SaaS billing statements and tax receipts</p>
+        <div className="space-y-6 fade-in">
+          {/* Live Student Fee Payments History Ledger */}
+          <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+            <div className="border-b p-5 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4 text-violet-600" /> Real-time Fee Payment History Ledger
+                </h3>
+                <p className="text-xs text-muted-foreground">Historical fee transactions across all modules saved in database</p>
+              </div>
+              <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-extrabold text-violet-600">
+                {feePaymentHistory.length} Transactions Recorded
+              </span>
             </div>
-          </div>
 
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground">
-                <th className="px-5 py-3.5">Invoice #</th>
-                <th className="px-5 py-3.5">Billing Date</th>
-                <th className="px-5 py-3.5">Description</th>
-                <th className="px-5 py-3.5">Payment Method</th>
-                <th className="px-5 py-3.5">Amount</th>
-                <th className="px-5 py-3.5 text-center">Status</th>
-                <th className="px-5 py-3.5 text-center">Tax Receipt</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y text-xs">
-              {INITIAL_BILLING_HISTORY.map((inv) => (
-                <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-5 py-3.5 font-mono font-bold text-foreground">{inv.id}</td>
-                  <td className="px-5 py-3.5 text-muted-foreground">{format(new Date(inv.date), "dd MMM yyyy")}</td>
-                  <td className="px-5 py-3.5 font-medium">{inv.plan} ({inv.period})</td>
-                  <td className="px-5 py-3.5 text-muted-foreground">{inv.method}</td>
-                  <td className="px-5 py-3.5 font-bold">₹{inv.amount.toLocaleString("en-IN")}</td>
-                  <td className="px-5 py-3.5 text-center">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-600 uppercase">
-                      <CheckCircle2 className="h-3 w-3" /> {inv.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-center">
-                    <button
-                      onClick={() => downloadReceipt(inv.id)}
-                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Receipt
-                    </button>
-                  </td>
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
+                  <th className="px-5 py-3.5">Day &amp; Date</th>
+                  <th className="px-5 py-3.5">Student Name</th>
+                  <th className="px-5 py-3.5">Invoice / Receipt #</th>
+                  <th className="px-5 py-3.5">Payment Mode</th>
+                  <th className="px-5 py-3.5">Amount Paid</th>
+                  <th className="px-5 py-3.5 text-center">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y text-xs">
+                {feePaymentHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground font-medium">
+                      No tuition fee payment transactions recorded in database yet.
+                    </td>
+                  </tr>
+                ) : (
+                  feePaymentHistory.map((pay) => (
+                    <tr key={pay.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-5 py-3.5 font-medium text-foreground">
+                        {pay.day_of_week}, <span className="text-muted-foreground">{pay.formatted_date}</span>
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-foreground">
+                        {pay.student_name}
+                        {pay.enrollment_no && <span className="text-[11px] font-mono text-muted-foreground block">({pay.enrollment_no})</span>}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-muted-foreground">
+                        {pay.invoice_no} ({pay.transaction_ref})
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-violet-600 uppercase">
+                          {pay.payment_mode}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-extrabold text-emerald-600 text-sm">
+                        ₹{Number(pay.amount).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-600 uppercase">
+                          <CheckCircle2 className="h-3 w-3" /> {pay.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -45,7 +45,13 @@ class Lead(Base):
 
     # ── relationships ────────────────────────────────────────────────────────
     tenant = relationship("Tenant", back_populates="leads")
-    activities = relationship("LeadActivity", back_populates="lead", cascade="all, delete-orphan")
+    activities = relationship(
+        "LeadActivity",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="desc(LeadActivity.created_at)",
+    )
     # batch = relationship("Batch", back_populates="leads", lazy="selectin")
 
 
@@ -64,3 +70,4 @@ class LeadActivity(Base):
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"))
 
     lead = relationship("Lead", back_populates="activities")
+    user = relationship("User", foreign_keys=[created_by], lazy="selectin")

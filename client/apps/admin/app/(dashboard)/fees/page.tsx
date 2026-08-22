@@ -17,11 +17,14 @@ import {
   FileSpreadsheet,
   Layers,
   Filter,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO, isValid } from "date-fns";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/lib/auth-headers";
+import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
 
 // ── API helpers ────────────────────────────────────────────────
 const API = "/api/proxy";
@@ -42,6 +45,7 @@ interface RawInvoice {
   student_name?: string;
   student?: { first_name?: string; last_name?: string; current_class?: string };
   payment_installment_schedule?: string | null;
+  payments?: any[];
 }
 
 interface Invoice {
@@ -50,6 +54,11 @@ interface Invoice {
   studentId: string;
   studentName: string;
   grade: string;
+  parentName?: string;
+  phone?: string;
+  email?: string;
+  batchName?: string;
+  boardName?: string;
   amountDue: number;
   amountPaid: number;
   discount: number;
@@ -59,6 +68,7 @@ interface Invoice {
   installmentMonths: string[];
   installmentSchedule: Array<{ number: number; amount: number; dueDate: string; paid: boolean }>;
   payment_installment_schedule?: string | null;
+  payments?: any[];
 }
 
 interface Summary {
@@ -72,12 +82,11 @@ function resolveInstallments(
   totalDue: number,
   totalPaid: number,
   invoiceDueDate: string,
-  paymentInstallmentSchedule?: string | object | null
+  paymentInstallmentSchedule?: string | object | null,
+  paymentsList: any[] = []
 ) {
+  // ── 1. Parse stored installment schedule ───────────────────────────────
   let rawSlots: any[] = [];
-  let numInstallments = 1;
-  let hasInstallments = false;
-  let schedAmountPaid = 0;
 
   if (paymentInstallmentSchedule) {
     try {
@@ -86,94 +95,106 @@ function resolveInstallments(
           ? JSON.parse(paymentInstallmentSchedule)
           : paymentInstallmentSchedule;
 
-      hasInstallments = Boolean(sched?.hasInstallments);
-      numInstallments = parseInt(sched?.numberOfInstallments) || 0;
-      schedAmountPaid = parseFloat(sched?.amountPaid) || 0;
-
       if (Array.isArray(sched?.installmentSchedule) && sched.installmentSchedule.length > 0) {
-        rawSlots = sched.installmentSchedule;
+        rawSlots = sched.installmentSchedule.map((s: any) => ({ ...s }));
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }
-
-  let slots: any[] = [];
-
-  if (rawSlots.length > 0) {
-    slots = rawSlots;
-  } else if (hasInstallments && numInstallments > 1) {
-    const base = Math.floor(totalDue / numInstallments);
-    const extra = totalDue - base * numInstallments;
-    const invDue = parseISO(invoiceDueDate ?? "");
-    const baseDate = isValid(invDue) ? invDue : new Date();
-
-    slots = Array.from({ length: numInstallments }, (_, i) => {
-      const date = new Date(baseDate);
-      date.setMonth(date.getMonth() + i);
-      return {
-        number: i + 1,
-        amount: i === 0 ? base + extra : base,
-        dueDate: format(date, "yyyy-MM-dd"),
-      };
-    });
-  } else {
-    slots = [
-      {
-        number: 1,
-        amount: totalDue,
-        dueDate: invoiceDueDate || format(new Date(), "yyyy-MM-dd"),
-      },
-    ];
-  }
-
-  // Calculate sum of slots to check if initial payment was deducted before schedule
-  const slotsSum = slots.reduce((acc: number, s: any) => acc + (parseFloat(s.amount) || 0), 0);
-
-  let initialPaid = 0;
-  if (slotsSum > 0 && slotsSum < totalDue) {
-    initialPaid = totalDue - slotsSum;
-  } else if (schedAmountPaid > 0 && schedAmountPaid < totalDue) {
-    initialPaid = schedAmountPaid;
-  }
-
-  // Payments allocated to installment slots AFTER initial payment
-  let remainingPaidPool = Math.max(0, totalPaid - initialPaid);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return slots.map((s: any, idx: number) => {
-    const instAmount = parseFloat(s.amount) || 0;
-    let paidAmount = 0;
-    let isPaid = false;
-    let isPartial = false;
+  // ── 2. Stored schedule — use paid flags as-is, keep scheduled amounts ──
+  if (rawSlots.length > 0) {
+    const scheduledTotal = rawSlots.reduce((a: number, s: any) => a + (parseFloat(s.amount) || 0), 0);
+    const paidSlotsTotal = rawSlots
+      .filter((s: any) => Boolean(s.paid))
+      .reduce((a: number, s: any) => a + (parseFloat(s.amount) || 0), 0);
 
-    if (remainingPaidPool >= instAmount && instAmount > 0) {
-      paidAmount = instAmount;
-      remainingPaidPool -= instAmount;
-      isPaid = true;
-    } else if (remainingPaidPool > 0) {
-      paidAmount = remainingPaidPool;
-      remainingPaidPool = 0;
-      isPartial = true;
+    const remainingForUnpaid = Math.max(0, scheduledTotal - paidSlotsTotal);
+    const unpaidCount = rawSlots.filter((s: any) => !Boolean(s.paid)).length;
+    const baseUnpaid = unpaidCount > 0 ? Math.floor(remainingForUnpaid / unpaidCount) : 0;
+    const extraUnpaid = unpaidCount > 0 ? remainingForUnpaid - baseUnpaid * unpaidCount : 0;
+
+    let uIdx = 0;
+    const finalSlots = rawSlots.map((s: any) => {
+      if (!Boolean(s.paid)) {
+        const amt = uIdx === 0 ? baseUnpaid + extraUnpaid : baseUnpaid;
+        uIdx++;
+        return { ...s, amount: amt, paid: false };
+      }
+      return { ...s, amount: parseFloat(s.amount) || 0, paid: true };
+    });
+
+    return finalSlots.map((s: any, idx: number) => {
+      const instAmount = parseFloat(s.amount) || 0;
+      const isPaid = Boolean(s.paid);
+      const dStr = s.dueDate ?? s.due_date ?? invoiceDueDate ?? "";
+      const dParsed = parseISO(dStr);
+      const isOverdue = !isPaid && isValid(dParsed) && dParsed < today;
+      const statusKey = isPaid ? "paid" : isOverdue ? "overdue" : "due";
+      return {
+        label: `Installment ${s.number ?? idx + 1}`,
+        number: s.number ?? idx + 1,
+        amount: instAmount,
+        dueDate: dStr,
+        status: statusKey.toUpperCase(),
+        paidAmount: isPaid ? instAmount : 0,
+      };
+    });
+  }
+
+  // ── 3. No stored schedule — build slots from payment history ──────────────
+  const sortedPayments = [...paymentsList].sort(
+    (a: any, b: any) => new Date(a.paid_at || a.created_at || 0).getTime() - new Date(b.paid_at || b.created_at || 0).getTime()
+  );
+
+  if (sortedPayments.length > 0) {
+    const paidTotal = sortedPayments.reduce((a: number, p: any) => a + (parseFloat(p.amount) || 0), 0);
+    const remainingAfterPayments = Math.max(0, totalDue - paidTotal);
+
+    const slots: any[] = sortedPayments.map((p: any, idx: number) => {
+      const amt = parseFloat(p.amount) || 0;
+      const dateStr = (p.paid_at || p.created_at || invoiceDueDate || format(new Date(), "yyyy-MM-dd")).substring(0, 10);
+      return {
+        label: `Installment ${idx + 1}`,
+        number: idx + 1,
+        amount: amt,
+        dueDate: dateStr,
+        status: "PAID",
+        paidAmount: amt,
+      };
+    });
+
+    if (remainingAfterPayments > 0) {
+      const nextDue = new Date(invoiceDueDate || new Date());
+      nextDue.setMonth(nextDue.getMonth() + sortedPayments.length);
+      const isOverdue = nextDue < today;
+      slots.push({
+        label: `Installment ${sortedPayments.length + 1}`,
+        number: sortedPayments.length + 1,
+        amount: remainingAfterPayments,
+        dueDate: format(nextDue, "yyyy-MM-dd"),
+        status: isOverdue ? "OVERDUE" : "DUE",
+        paidAmount: 0,
+      });
     }
+    return slots;
+  }
 
-    const dStr = s.dueDate ?? s.due_date ?? invoiceDueDate ?? "";
-    const dParsed = parseISO(dStr);
-    const isOverdue = !isPaid && isValid(dParsed) && dParsed < today;
-
-    const statusKey = isPaid ? "paid" : isPartial ? "partial" : isOverdue ? "overdue" : "due";
-
-    return {
-      label: `Installment ${s.number ?? idx + 1}`,
-      number: s.number ?? idx + 1,
-      amount: instAmount,
-      dueDate: dStr,
-      status: statusKey.toUpperCase(),
-      paidAmount,
-    };
-  });
+  // ── 4. No payments, no schedule — single slot from totalDue/totalPaid ──────────────
+  const dStr = invoiceDueDate || format(new Date(), "yyyy-MM-dd");
+  const dParsed = parseISO(dStr);
+  const isPaid = totalPaid >= totalDue && totalDue > 0;
+  const isOverdue = !isPaid && isValid(dParsed) && dParsed < today;
+  return [{
+    label: "Installment 1",
+    number: 1,
+    amount: totalDue,
+    dueDate: dStr,
+    status: isPaid ? "PAID" : isOverdue ? "OVERDUE" : "DUE",
+    paidAmount: Math.min(totalPaid, totalDue),
+  }];
 }
 
 function mapInvoice(r: RawInvoice): Invoice {
@@ -213,6 +234,11 @@ function mapInvoice(r: RawInvoice): Invoice {
     studentId: String(r.student_id),
     studentName: name,
     grade: r.student?.current_class ?? "",
+    parentName: (r.student as any)?.parent_name ?? (r as any).parent_name ?? "Parent / Guardian",
+    phone: (r.student as any)?.phone ?? (r as any).phone ?? "",
+    email: (r.student as any)?.email ?? (r as any).email ?? "",
+    batchName: (r.student as any)?.target_exam ?? (r.student as any)?.batch_name ?? (r as any).batch_name ?? "Standard Academic Batch",
+    boardName: (r.student as any)?.board_name ?? "CBSE",
     amountDue: parseFloat(String(r.amount_due)) || 0,
     amountPaid: parseFloat(String(r.amount_paid)) || 0,
     discount: parseFloat(String(r.discount)) || 0,
@@ -222,6 +248,7 @@ function mapInvoice(r: RawInvoice): Invoice {
     installmentMonths,
     installmentSchedule,
     payment_installment_schedule: r.payment_installment_schedule,
+    payments: r.payments ?? [],
   };
 }
 
@@ -276,8 +303,8 @@ export default function FeesPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const PAGE_SIZE = 10;
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [invRes, sumRes] = await Promise.all([
@@ -290,7 +317,7 @@ export default function FeesPage() {
         const raw: RawInvoice[] = Array.isArray(json) ? json : json.data ?? json.items ?? [];
         setInvoices(raw.map(mapInvoice));
       } else {
-        setError(`Failed to load invoices`);
+        if (!silent) setError(`Failed to load invoices`);
       }
 
       if (sumRes && sumRes.ok) {
@@ -298,15 +325,15 @@ export default function FeesPage() {
         setSummary(sJson.data ?? sJson);
       }
     } catch (e: any) {
-      setError(e.message ?? "Network error");
+      if (!silent) setError(e.message ?? "Network error");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Initial load
+  useEffect(() => { load(); }, [load]);
+
 
   const totalCollected = summary.total_collected ?? invoices.reduce((s, i) => s + i.amountPaid, 0);
   const totalOutstanding =
@@ -449,7 +476,7 @@ export default function FeesPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={load}
+            onClick={() => load()}
             disabled={loading}
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
             title="Refresh fee ledger"
@@ -466,7 +493,7 @@ export default function FeesPage() {
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={load} className="underline hover:text-destructive/80">
+          <button onClick={() => load()} className="underline hover:text-destructive/80">
             Retry Connection
           </button>
         </div>
@@ -555,7 +582,8 @@ export default function FeesPage() {
                   totalDue,
                   totalPaid,
                   inv.dueDate,
-                  inv.payment_installment_schedule
+                  inv.payment_installment_schedule,
+                  inv.payments
                 );
 
                 return (
@@ -596,12 +624,61 @@ export default function FeesPage() {
                             ₹{Math.max(0, totalDue - totalPaid).toLocaleString("en-IN")}
                           </p>
                         </div>
-                        <Link
-                          href={`/fees/${inv.id}`}
-                          className="rounded-xl bg-violet-600/10 text-violet-600 px-3.5 py-1.5 text-xs font-bold hover:bg-violet-600 hover:text-white transition-all"
-                        >
-                          View Invoice →
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              generateInvoicePDF({
+                                invoiceNo: inv.invoiceNo,
+                                date: inv.dueDate || inv.createdAt || format(new Date(), "yyyy-MM-dd"),
+                                studentName: inv.studentName,
+                                parentName: inv.parentName,
+                                phone: inv.phone,
+                                email: inv.email,
+                                grade: inv.grade || "10th",
+                                boardName: inv.boardName || "CBSE",
+                                batchName: inv.batchName || "Standard Academic Batch",
+                                totalFee: totalDue,
+                                feePaid: totalPaid,
+                                status: inv.status,
+                                installments: installments.map((inst, i) => ({
+                                  number: inst.number ?? i + 1,
+                                  amount: inst.amount,
+                                  dueDate: inst.dueDate,
+                                  paid: inst.status === "PAID",
+                                })),
+                                paymentHistory: (inv.payments && inv.payments.length > 0)
+                                  ? inv.payments.map((p, i) => ({
+                                      date: p.paid_at ? p.paid_at.substring(0, 10) : (p.created_at ? p.created_at.substring(0, 10) : format(new Date(), "yyyy-MM-dd")),
+                                      mode: p.payment_mode || "UPI",
+                                      amount: parseFloat(p.amount) || 0,
+                                      reference: p.transaction_ref || `REC-${inv.invoiceNo}-${i + 1}`,
+                                    }))
+                                  : totalPaid > 0
+                                  ? [
+                                      {
+                                        date: inv.dueDate || format(new Date(), "yyyy-MM-dd"),
+                                        mode: "UPI / DOWN PAYMENT",
+                                        amount: totalPaid,
+                                        reference: `REC-${inv.invoiceNo}`,
+                                      },
+                                    ]
+                                  : [],
+                              });
+                              toast.success("Downloading PDF invoice...");
+                            }}
+                            className="rounded-xl border bg-background px-3 py-1.5 text-xs font-bold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950 transition-all flex items-center gap-1 shadow-2xs"
+                            title="Direct Download PDF Invoice"
+                          >
+                            <Download className="h-3.5 w-3.5" /> PDF
+                          </button>
+                          <Link
+                            href={`/fees/${inv.id}`}
+                            className="rounded-xl bg-violet-600/10 text-violet-600 px-3.5 py-1.5 text-xs font-bold hover:bg-violet-600 hover:text-white transition-all"
+                          >
+                            View Invoice →
+                          </Link>
+                        </div>
                       </div>
                     </div>
 
@@ -618,7 +695,7 @@ export default function FeesPage() {
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3 pt-1">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-1">
                       {installments.map((inst, idx) => (
                         <div
                           key={idx}
@@ -754,8 +831,8 @@ export default function FeesPage() {
               <p className="font-semibold text-sm">No invoices match your query.</p>
             </div>
           ) : (
-            <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-              <table className="w-full text-xs">
+            <div className="rounded-2xl border bg-card shadow-sm overflow-x-auto min-w-full">
+              <table className="w-full text-xs whitespace-nowrap">
                 <thead>
                   <tr className="border-b bg-muted/40 font-bold uppercase tracking-wider text-muted-foreground">
                     {[
@@ -765,6 +842,7 @@ export default function FeesPage() {
                       { label: "Status", field: "status" as keyof Invoice },
                       { label: "Due Date", field: "dueDate" as keyof Invoice },
                       { label: "Installment Month", field: null },
+                      { label: "Actions", field: null },
                     ].map((col) => (
                       <th key={col.label} className="px-4 py-3 text-left">
                         {col.field ? (
@@ -851,6 +929,66 @@ export default function FeesPage() {
                                   .join(", ")
                               : "—"}
                           </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const insts = resolveInstallments(
+                                inv.amountDue,
+                                inv.amountPaid,
+                                inv.dueDate,
+                                inv.payment_installment_schedule,
+                                inv.payments
+                              );
+                              generateInvoicePDF({
+                                invoiceNo: inv.invoiceNo,
+                                date: inv.dueDate || inv.createdAt || format(new Date(), "yyyy-MM-dd"),
+                                studentName: inv.studentName,
+                                parentName: inv.parentName,
+                                phone: inv.phone,
+                                email: inv.email,
+                                grade: inv.grade || "10th",
+                                boardName: inv.boardName || "CBSE",
+                                batchName: inv.batchName || "Standard Academic Batch",
+                                totalFee: inv.amountDue,
+                                feePaid: inv.amountPaid,
+                                status: inv.status,
+                                installments: insts.map((inst, i) => ({
+                                  number: inst.number ?? i + 1,
+                                  amount: inst.amount,
+                                  dueDate: inst.dueDate,
+                                  paid: inst.status === "PAID",
+                                })),
+                                paymentHistory: (inv.payments && inv.payments.length > 0)
+                                  ? inv.payments.map((p, i) => ({
+                                      date: p.paid_at ? p.paid_at.substring(0, 10) : (p.created_at ? p.created_at.substring(0, 10) : format(new Date(), "yyyy-MM-dd")),
+                                      mode: p.payment_mode || "UPI",
+                                      amount: parseFloat(p.amount) || 0,
+                                      reference: p.transaction_ref || `REC-${inv.invoiceNo}-${i + 1}`,
+                                    }))
+                                  : inv.amountPaid > 0
+                                  ? [
+                                      {
+                                        date: inv.dueDate || format(new Date(), "yyyy-MM-dd"),
+                                        mode: "UPI / DOWN PAYMENT",
+                                        amount: inv.amountPaid,
+                                        reference: `REC-${inv.invoiceNo}`,
+                                      },
+                                    ]
+                                  : [],
+                              });
+                              toast.success("Downloading PDF invoice...");
+                            }}
+                            className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-[11px] font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950 transition-colors shadow-2xs"
+                            title="Direct Download PDF Invoice"
+                          >
+                            <Download className="h-3.5 w-3.5" /> PDF
+                          </button>
                         </td>
                       </tr>
                     );
