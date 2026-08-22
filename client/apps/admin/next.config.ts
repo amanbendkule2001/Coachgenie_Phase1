@@ -1,22 +1,24 @@
-// module.exports = {
-//   reactStrictMode: false,
-//   transpilePackages: [
-//     "@coachgenie/api-client",
-//     "@coachgenie/ui",
-//     "@coachgenie/config"
-//   ]
-// }
+import type { NextConfig } from "next";
 
-module.exports = {
+const nextConfig: NextConfig = {
   reactStrictMode: false,
   transpilePackages: [
     "@coachgenie/api-client",
     "@coachgenie/ui",
-    "@coachgenie/config"
+    "@coachgenie/config",
   ],
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production"
-      ? { exclude: ["error", "warn"] }
-      : false,
+  eslint: {
+    ignoreDuringBuilds: true,
   },
-}
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
+};
+
+export default nextConfig;

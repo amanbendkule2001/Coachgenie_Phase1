@@ -4,7 +4,7 @@
 import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, Calendar, BookOpen, X, FileText, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Users, Calendar, BookOpen, X, FileText, Plus, Trash2, Pencil, MapPin, GraduationCap } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
