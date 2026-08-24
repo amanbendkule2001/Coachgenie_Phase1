@@ -42,8 +42,11 @@ export function LanguageSwitcher() {
         title={`Language: ${currentLang.nativeName}`}
       >
         <span className="text-sm">{currentLang.flag}</span>
-        <span className="font-medium text-xs text-foreground/90">
+        <span className="hidden sm:inline-block font-medium text-xs text-foreground/90">
           {currentLang.nativeName}
+        </span>
+        <span className="inline-block sm:hidden font-medium text-xs text-foreground/90">
+          {currentLang.code.toUpperCase()}
         </span>
         <Globe className="h-3.5 w-3.5 text-muted-foreground ml-0.5" />
       </button>
