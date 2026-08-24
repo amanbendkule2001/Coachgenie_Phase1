@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAcademicStore } from "@/lib/stores/academic.store";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { authHeaders } from "@/lib/auth-headers";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ function formatCurrency(val: number) {
 }
 
 export function KpiCards() {
+  const { language, t } = useLanguage();
   const academicStore = useAcademicStore();
   const user = useAuthStore((s) => s.user);
   const storeRole = useAuthStore((s) => s.role);
@@ -136,7 +138,7 @@ export function KpiCards() {
           icon: IndianRupee,
           color: "text-emerald-600 dark:text-emerald-400",
           bg: "bg-emerald-500/10 border-emerald-500/20",
-          sub: calculatedPending > 0 ? `₹${calculatedPending.toLocaleString("en-IN")} pending dues` : "All student fees settled",
+          sub: calculatedPending > 0 ? `₹${calculatedPending.toLocaleString("en-IN")} ${t("pending dues")}` : t("All student fees settled"),
           link: "/fees",
         },
         {
@@ -246,7 +248,7 @@ export function KpiCards() {
     }
 
     return [];
-  }, [role, dashboardData, feeSummary, invoices, academicStore]);
+  }, [role, dashboardData, feeSummary, invoices, academicStore, language, t]);
 
   if (loading && !dashboardData && invoices.length === 0) {
     return (
@@ -273,7 +275,7 @@ export function KpiCards() {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{kpi.title}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t(kpi.title)}</p>
               <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground group-hover:text-primary transition-colors">
                 {kpi.value}
               </p>
@@ -284,9 +286,9 @@ export function KpiCards() {
           </div>
 
           <div className="flex items-center justify-between text-xs pt-2 border-t text-muted-foreground">
-            <span className="font-medium truncate">{kpi.sub}</span>
+            <span className="font-medium truncate">{t(kpi.sub)}</span>
             <span className="flex items-center gap-0.5 font-bold text-primary group-hover:underline shrink-0">
-              View <ArrowUpRight className="h-3 w-3" />
+              {t("View")} <ArrowUpRight className="h-3 w-3" />
             </span>
           </div>
         </Link>

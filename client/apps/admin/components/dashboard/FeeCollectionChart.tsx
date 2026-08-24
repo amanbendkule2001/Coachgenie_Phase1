@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { api } from "@/lib/api";
 import { IndianRupee, TrendingUp, Sparkles } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface MonthlyFee {
   month: string;
@@ -46,6 +47,7 @@ function formatExactCurrency(value: number | string | undefined) {
 }
 
 export function FeeCollectionChart() {
+  const { t } = useLanguage();
   const [data, setData] = useState<MonthlyFee[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,20 +86,20 @@ export function FeeCollectionChart() {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
         <div>
           <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
-            Fee Collection Trend
+            {t("Fee Collection Trend")}
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-              <IndianRupee className="h-3 w-3" /> Financial Ledger
+              <IndianRupee className="h-3 w-3" /> {t("Financial Ledger")}
             </span>
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Monthly revenue collection trends (academic year)
+            {t("Monthly revenue collection trends (academic year)")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-right">
             <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-              Total Collected
+              {t("Total Collected")}
             </p>
             <p className="text-sm font-extrabold text-emerald-600">
               {formatExactCurrency(totalCollected)}
@@ -108,7 +110,7 @@ export function FeeCollectionChart() {
 
       {loading && data.length === 0 ? (
         <div className="h-[240px] flex items-center justify-center text-xs font-semibold text-muted-foreground animate-pulse">
-          Loading financial trend chart…
+          {t("Loading financial trend chart…")}
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={240}>

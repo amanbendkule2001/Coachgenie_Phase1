@@ -6,6 +6,7 @@ import { format, eachDayOfInterval, startOfMonth, endOfMonth, getDay, isSameMont
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
 import type { AttendanceStatus } from "@/lib/types/academic";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const STATUS_STYLE: Record<AttendanceStatus, string> = {
   PRESENT: "bg-emerald-500 text-white",
@@ -16,6 +17,7 @@ const STATUS_STYLE: Record<AttendanceStatus, string> = {
 
 export default function StudentAttendancePage({ params }: { params: Promise<{ id: string }> }) {
   const { id }    = use(params);
+  const { language, t } = useLanguage();
   const store     = useAcademicStore();
   const student   = store.students.find(s => s.id === id);
   const [month, setMonth] = useState(new Date());
@@ -44,7 +46,7 @@ export default function StudentAttendancePage({ params }: { params: Promise<{ id
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold">{student?.name} — Attendance</h1>
+          <h1 className="text-xl font-bold">{t(student?.name || "") || student?.name || "Student"} — {t("Attendance")}</h1>
           <p className="text-sm text-muted-foreground">{student?.grade}</p>
         </div>
       </div>
@@ -52,9 +54,9 @@ export default function StudentAttendancePage({ params }: { params: Promise<{ id
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Present", value: present, color: "text-emerald-600" },
-          { label: "Absent",  value: absent,  color: "text-red-500" },
-          { label: "Rate",    value: `${pct}%`, color: pct >= 75 ? "text-emerald-600" : "text-red-500" },
+          { label: t("Present"), value: present, color: "text-emerald-600" },
+          { label: t("Absent"),  value: absent,  color: "text-red-500" },
+          { label: t("Rate"),    value: `${pct}%`, color: pct >= 75 ? "text-emerald-600" : "text-red-500" },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-xl border bg-card p-4 text-center">
             <p className={cn("text-2xl font-bold", color)}>{value}</p>
@@ -83,7 +85,7 @@ export default function StudentAttendancePage({ params }: { params: Promise<{ id
             const key    = format(day, "yyyy-MM-dd");
             const status = recordMap[key] as AttendanceStatus | undefined;
             return (
-              <div key={key} title={status ?? "No record"}
+              <div key={key} title={status ? t(status) : "No record"}
                 className={cn(
                   "aspect-square flex items-center justify-center rounded-full text-xs font-medium cursor-default",
                   status ? STATUS_STYLE[status] : "text-muted-foreground hover:bg-muted"
@@ -97,7 +99,7 @@ export default function StudentAttendancePage({ params }: { params: Promise<{ id
           {(["PRESENT","ABSENT","LATE","HOLIDAY"] as AttendanceStatus[]).map(s => (
             <span key={s} className="flex items-center gap-1.5">
               <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_STYLE[s])} />
-              {s.charAt(0) + s.slice(1).toLowerCase()}
+              {t(s.charAt(0) + s.slice(1).toLowerCase())}
             </span>
           ))}
         </div>

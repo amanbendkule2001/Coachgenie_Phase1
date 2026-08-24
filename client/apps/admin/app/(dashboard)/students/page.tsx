@@ -10,6 +10,7 @@ import { StudentForm, type StudentFormValues } from "@/components/students/Stude
 import type { Student } from "@/lib/types/academic";
 import { authHeaders } from "@/lib/auth-headers";
 import { generateStudentPerformancePDF } from "@/lib/utils/generate-report-pdf";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -62,6 +63,7 @@ function mapStudent(raw: any, fees?: { total: number; paid: number; due: number 
 const DEFAULT_SEED_STUDENTS: Student[] = [];
 
 export default function StudentsPage() {
+  const { language, t } = useLanguage();
   const students = useAcademicStore((s) => s.students);
   const setStudents = useAcademicStore((s) => s.setStudents);
   const addStudent = useAcademicStore((s) => s.addStudent);
@@ -223,10 +225,10 @@ export default function StudentsPage() {
         addStudent(newStu);
       }
 
-      toast.success("Student profile created successfully!");
+      toast.success(t("Student profile created successfully!"));
       setShowForm(false);
     } catch {
-      toast.success("Student profile created!");
+      toast.success(t("Student profile created successfully!"));
       setShowForm(false);
     }
   }
@@ -290,10 +292,10 @@ export default function StudentsPage() {
         gender: data.gender ?? editStudent.gender,
       });
 
-      toast.success("Student profile updated!");
+      toast.success(t("Student profile updated!"));
       setEditStudent(null);
     } catch {
-      toast.success("Student profile updated!");
+      toast.success(t("Student profile updated!"));
       setEditStudent(null);
     }
   }
@@ -306,7 +308,7 @@ export default function StudentsPage() {
       // quiet fallback
     }
     updateStudent(id, { status: "INACTIVE" });
-    toast.success("Student status set to Inactive");
+    toast.success(t("Student status set to Inactive"));
   }
 
   // Generate Student PDF Report
@@ -397,13 +399,13 @@ export default function StudentsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Student Roster &amp; Profiles
+            {t("Student Roster & Profiles")}
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
-              <Sparkles className="h-3 w-3" /> 360° Profile Hub
+              <Sparkles className="h-3 w-3" /> {t("360° Profile Hub")}
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage enrolled students, academic grades, assigned batches, attendance records, and tuition ledgers
+            {t("Manage enrolled students, academic grades, assigned batches, attendance records, and tuition ledgers")}
           </p>
         </div>
 
@@ -412,39 +414,37 @@ export default function StudentsPage() {
             onClick={fetchStudents}
             disabled={loading}
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
-            title="Refresh student roster"
+            title={t("Refresh student roster")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
-
-          
         </div>
       </div>
 
       {/* 📊 KPI Summary Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Enrolled</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Total Enrolled")}</span>
           <p className="text-3xl font-extrabold tracking-tight">{kpiStats.totalCount}</p>
-          <p className="text-xs text-muted-foreground">Student master roster</p>
+          <p className="text-xs text-muted-foreground">{t("Student master roster")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Students</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Active Students")}</span>
           <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">{kpiStats.activeCount}</p>
-          <p className="text-xs text-emerald-600 font-medium">Attending active batches</p>
+          <p className="text-xs text-emerald-600 font-medium">{t("Attending active batches")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Fees Collected</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Total Fees Collected")}</span>
           <p className="text-3xl font-extrabold text-blue-600 tracking-tight">₹{kpiStats.totalCollected.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-muted-foreground">Settled tuition revenue</p>
+          <p className="text-xs text-muted-foreground">{t("Settled tuition revenue")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Outstanding Dues</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Outstanding Dues")}</span>
           <p className="text-3xl font-extrabold text-amber-600 tracking-tight">₹{kpiStats.totalDue.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-muted-foreground">Pending student balances</p>
+          <p className="text-xs text-muted-foreground">{t("Pending student balances")}</p>
         </div>
       </div>
 
@@ -454,7 +454,7 @@ export default function StudentsPage() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search student name, phone, email, or grade..."
+            placeholder={t("Search student name, phone, email, or grade...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-9 w-full rounded-xl border bg-background pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
@@ -469,7 +469,7 @@ export default function StudentsPage() {
               statusFilter === "ALL" ? "bg-foreground text-background shadow-xs" : "hover:bg-accent text-muted-foreground"
             )}
           >
-            All Students ({students.length})
+            {t("All Students")} ({students.length})
           </button>
           {KNOWN_STATUSES.map((st) => {
             const count = students.filter((s) => s.status === st).length;
@@ -484,7 +484,7 @@ export default function StudentsPage() {
                     : "hover:bg-accent text-muted-foreground"
                 )}
               >
-                {st} ({count})
+                {t(st)} ({count})
               </button>
             );
           })}
@@ -501,7 +501,7 @@ export default function StudentsPage() {
       ) : filteredStudents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-2xl border border-dashed bg-card text-center">
           <Users className="h-8 w-8 text-muted-foreground/40" />
-          <p className="font-semibold text-sm">No student records match your query.</p>
+          <p className="font-semibold text-sm">{t("No student records match your query.")}</p>
         </div>
       ) : (
         <StudentTable
@@ -513,15 +513,13 @@ export default function StudentsPage() {
         />
       )}
 
-     
-
       {/* Edit Modal */}
       {editStudent && (
         <>
           <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs" onClick={() => setEditStudent(null)} />
           <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-2xl border bg-background shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b px-6 py-4">
-              <h2 className="text-base font-bold">Edit Student Profile</h2>
+              <h2 className="text-base font-bold">{t("Edit Student Profile")}</h2>
               <button onClick={() => setEditStudent(null)} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>
@@ -529,7 +527,7 @@ export default function StudentsPage() {
             <div className="px-6 py-5">
               <StudentForm
                 key={editStudent.id}
-                submitLabel="Update Student Profile"
+                submitLabel={t("Update Student Profile")}
                 onSubmit={handleUpdate}
                 onCancel={() => setEditStudent(null)}
                 defaultValues={{

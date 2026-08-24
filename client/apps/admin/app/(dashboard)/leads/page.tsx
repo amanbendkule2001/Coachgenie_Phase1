@@ -26,6 +26,7 @@ import { LeadForm, type LeadFormValues } from "@/components/leads/LeadForm";
 import type { Lead, LeadStage, LeadSource } from "@/lib/types/lead";
 import { STAGE_CONFIG, STAGES, SOURCE_LABELS } from "@/lib/constants/leads";
 import { authHeaders } from "@/lib/auth-headers";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 type View = "table" | "kanban";
@@ -73,6 +74,7 @@ export interface Batch {
 const DEFAULT_SEED_LEADS: Lead[] = [];
 
 export default function LeadsPage() {
+  const { t } = useLanguage();
   const { leads, setLeads, addLead, deleteLead, updateStage } = useLeadStore();
 
   const [view, setView] = useState<View>("table");
@@ -256,13 +258,13 @@ export default function LeadsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Leads &amp; Admissions Pipeline
+            {t("Leads & Admissions Pipeline")}
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
-              <Sparkles className="h-3 w-3" /> CRM Funnel
+              <Sparkles className="h-3 w-3" /> {t("CRM Funnel")}
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage student enquiries, demo session bookings, parent follow-ups, and admission conversions
+            {t("Manage student enquiries, demo session bookings, parent follow-ups, and admission conversions")}
           </p>
         </div>
 
@@ -272,7 +274,7 @@ export default function LeadsPage() {
             disabled={loading}
             aria-label="Refresh leads list"
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
-            title="Refresh list"
+            title={t("Refresh list")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
@@ -290,7 +292,7 @@ export default function LeadsPage() {
                 )}
               >
                 {v === "table" ? <List className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
-                {v}
+                {v === "table" ? t("Table") : t("Kanban")}
               </button>
             ))}
           </div>
@@ -301,7 +303,7 @@ export default function LeadsPage() {
             aria-label="Add new lead"
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
-            <Plus className="h-4 w-4" /> Add New Lead
+            <Plus className="h-4 w-4" /> {t("Add New Lead")}
           </button>
         </div>
       </div>
@@ -309,27 +311,27 @@ export default function LeadsPage() {
       {/* 📊 KPI Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Inquiries</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Total Inquiries")}</span>
           <p className="text-3xl font-extrabold text-foreground tracking-tight">{kpiStats.totalCount}</p>
-          <p className="text-xs text-muted-foreground">Total logged leads</p>
+          <p className="text-xs text-muted-foreground">{t("Total logged leads")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Pipeline</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Active Pipeline")}</span>
           <p className="text-3xl font-extrabold text-blue-600 tracking-tight">{kpiStats.activeCount}</p>
-          <p className="text-xs text-muted-foreground">Under active follow-up</p>
+          <p className="text-xs text-muted-foreground">{t("Under active follow-up")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Converted Admissions</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Converted Admissions")}</span>
           <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">{kpiStats.enrolledCount}</p>
-          <p className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Successfully enrolled</p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">{t("Successfully enrolled")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Conversion Rate</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Conversion Rate")}</span>
           <p className="text-3xl font-extrabold text-amber-600 tracking-tight">{kpiStats.conversionPct}%</p>
-          <p className="text-xs text-muted-foreground">Enquiry to Student ratio</p>
+          <p className="text-xs text-muted-foreground">{t("Enquiry to Student ratio")}</p>
         </div>
       </div>
 
@@ -341,7 +343,7 @@ export default function LeadsPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search lead name, phone, email, or school..."
+              placeholder={t("Search lead name, phone, email, or school...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search lead name, phone, email, or school"
@@ -351,7 +353,7 @@ export default function LeadsPage() {
 
           {/* Source Filter */}
           <div className="flex items-center gap-2">
-            <label htmlFor="lead-source-select" className="text-xs font-semibold text-muted-foreground">Source:</label>
+            <label htmlFor="lead-source-select" className="text-xs font-semibold text-muted-foreground">{t("Source:")}</label>
             <select
               id="lead-source-select"
               value={sourceFilter}
@@ -359,12 +361,12 @@ export default function LeadsPage() {
               aria-label="Filter leads by source"
               className="h-9 rounded-xl border bg-background px-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
             >
-              <option value="ALL">All Sources</option>
-              <option value="WEBSITE">Website</option>
-              <option value="REFERRAL">Referral</option>
-              <option value="SOCIAL_MEDIA">Social Media</option>
-              <option value="WALK_IN">Walk-in</option>
-              <option value="PHONE">Phone Call</option>
+              <option value="ALL">{t("All Sources")}</option>
+              <option value="WEBSITE">{t("Website")}</option>
+              <option value="REFERRAL">{t("Referral")}</option>
+              <option value="SOCIAL_MEDIA">{t("Social Media")}</option>
+              <option value="WALK_IN">{t("Walk-in")}</option>
+              <option value="PHONE">{t("Phone Call")}</option>
             </select>
           </div>
         </div>
@@ -378,7 +380,7 @@ export default function LeadsPage() {
               stageFilter === "ALL" ? "bg-foreground text-background shadow-xs" : "hover:bg-accent text-muted-foreground"
             )}
           >
-            All ({leads.length})
+            {t("All")} ({leads.length})
           </button>
           {STAGES.map((s) => {
             const count = leads.filter((l) => l.stage === s).length;
@@ -392,7 +394,7 @@ export default function LeadsPage() {
                   stageFilter === s ? `${cfg.color} ${cfg.bg} ${cfg.border} shadow-xs` : "hover:bg-accent text-muted-foreground"
                 )}
               >
-                {cfg.label} ({count})
+                {t(cfg.label)} ({count})
               </button>
             );
           })}
@@ -411,8 +413,8 @@ export default function LeadsPage() {
         filteredLeads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-2xl border border-dashed bg-card text-center">
             <Users className="h-8 w-8 text-muted-foreground/40" />
-            <p className="font-semibold text-sm">No leads match your filter selection.</p>
-            <p className="text-xs text-muted-foreground">Try adjusting your search term or stage filter.</p>
+            <p className="font-semibold text-sm">{t("No leads match your filter selection.")}</p>
+            <p className="text-xs text-muted-foreground">{t("Try adjusting your search term or stage filter.")}</p>
           </div>
         ) : view === "table" ? (
           <LeadTable leads={filteredLeads} onView={setSelectedLead} onDelete={handleDelete} />
@@ -437,7 +439,7 @@ export default function LeadsPage() {
           >
             <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
               <h2 id="add-lead-dialog-title" className="text-base font-bold">
-                Add New Student Inquiry / Lead
+                {t("Add New Student Inquiry / Lead")}
               </h2>
               <button onClick={() => setShowForm(false)} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground" aria-label="Close">
                 <X className="h-4 w-4" />

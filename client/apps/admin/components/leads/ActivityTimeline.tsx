@@ -4,6 +4,7 @@ import { Phone, MessageSquare, StickyNote, Mail, ArrowRight, Loader2, Plus, Cale
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/lib/types/lead";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
   CALL:                 { icon: Phone,          color: "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300",    label: "Call" },
@@ -34,6 +35,7 @@ function formatDateSafe(dateStr?: string): string {
 }
 
 export function ActivityTimeline({ activities = [], onAdd }: ActivityTimelineProps) {
+  const { t } = useLanguage();
   const [type, setType] = useState<ActivityType>("NOTE");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,16 +55,16 @@ export function ActivityTimeline({ activities = [], onAdd }: ActivityTimelinePro
     <div className="space-y-5">
       {/* Add activity form */}
       <div className="rounded-2xl border bg-card p-4 space-y-3 shadow-2xs">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Log New Interaction</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Log New Interaction")}</p>
         <div className="flex gap-2 flex-wrap">
-          {(["NOTE", "CALL", "MESSAGE", "EMAIL"] as ActivityType[]).map((t) => {
-            const cfg = TYPE_CONFIG[t] ?? TYPE_CONFIG.NOTE;
-            const isSelected = type === t;
+          {(["NOTE", "CALL", "MESSAGE", "EMAIL"] as ActivityType[]).map((tType) => {
+            const cfg = TYPE_CONFIG[tType] ?? TYPE_CONFIG.NOTE;
+            const isSelected = type === tType;
             return (
               <button
-                key={t}
+                key={tType}
                 type="button"
-                onClick={() => setType(t)}
+                onClick={() => setType(tType)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold border transition-all cursor-pointer",
                   isSelected
@@ -71,7 +73,7 @@ export function ActivityTimeline({ activities = [], onAdd }: ActivityTimelinePro
                 )}
               >
                 <cfg.icon className="h-3.5 w-3.5" />
-                {cfg.label}
+                {t(cfg.label)}
               </button>
             );
           })}
@@ -80,7 +82,7 @@ export function ActivityTimeline({ activities = [], onAdd }: ActivityTimelinePro
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={2}
-          placeholder={`Add details for this ${TYPE_CONFIG[type]?.label.toLowerCase() || "note"}...`}
+          placeholder={`${t("Add details for this")} ${t(TYPE_CONFIG[type]?.label || "note")}...`}
           className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
         />
         <div className="flex justify-end">
@@ -90,7 +92,7 @@ export function ActivityTimeline({ activities = [], onAdd }: ActivityTimelinePro
             className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer shadow-xs"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            Log Activity
+            {t("Log Activity")}
           </button>
         </div>
       </div>

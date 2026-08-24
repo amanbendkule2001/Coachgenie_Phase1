@@ -5,6 +5,7 @@ import { format, eachDayOfInterval, subDays, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { Calendar } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const LEVELS = [
   "bg-muted/60",
@@ -15,6 +16,7 @@ const LEVELS = [
 ];
 
 export function AttendanceHeatmap() {
+  const { t } = useLanguage();
   const [attendance, setAttendance] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -44,12 +46,12 @@ export function AttendanceHeatmap() {
       <div className="flex items-center justify-between border-b pb-3">
         <div>
           <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
-            Institute Attendance Activity Matrix
+            {t("Institute Attendance Activity Matrix")}
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold text-violet-600">
-              <Calendar className="h-3 w-3" /> Attendance Module
+              <Calendar className="h-3 w-3" /> {t("Attendance Module")}
             </span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Past 6-month daily session presence volume — darker cells indicate higher attendance</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("Past 6-month daily session presence volume — darker cells indicate higher attendance")}</p>
         </div>
       </div>
 
@@ -102,13 +104,13 @@ export function AttendanceHeatmap() {
 
       {/* Legend */}
       <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground pt-2 border-t">
-        <span>Session Volume Legend</span>
+        <span>{t("Session Volume Legend")}</span>
         <div className="flex items-center gap-1.5">
-          <span>Fewer</span>
+          <span>{t("Fewer")}</span>
           {LEVELS.map((l, i) => (
             <div key={i} className={cn("h-3 w-3 rounded-xs", l)} />
           ))}
-          <span>More</span>
+          <span>{t("More")}</span>
         </div>
       </div>
     </div>

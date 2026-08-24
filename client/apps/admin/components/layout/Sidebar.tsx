@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Brain } from "lucide-react";
 import { useAuthStore, type UserRole } from "@/lib/stores/auth.store";
 import { CoachGenieLogo } from "@/components/common/CoachGenieLogo";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Users, CalendarDays, CheckSquare,
@@ -63,6 +64,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const user = useAuthStore((state) => state.user);
   const storeRole = useAuthStore((state) => state.role);
 
@@ -90,7 +92,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className="flex h-[3.75rem] items-center gap-2.5 border-b px-4">
+      <div className="flex h-[3.75rem] items-center gap-2.5 border-b px-4" data-no-translate="true">
         <CoachGenieLogo size="md" plain />
         {!collapsed && (
           <span className="font-bold tracking-tight text-sm truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">CoachGenie</span>
@@ -101,6 +103,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         {visibleItems.map((item) => {
           const Icon = ICON_MAP[item.icon] ?? LayoutDashboard;
           const active = !item.external && item.href === activeItemHref;
+          const labelTranslated = t(item.label);
 
           const commonClass = cn(
             "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -116,13 +119,13 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? labelTranslated : undefined}
                 className={commonClass}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && (
                   <span className="truncate flex items-center gap-1">
-                    {item.label}
+                    {labelTranslated}
                     <ExternalLink className="h-3 w-3 opacity-50" />
                   </span>
                 )}
@@ -134,11 +137,11 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? labelTranslated : undefined}
               className={commonClass}
             >
               <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && <span className="truncate">{labelTranslated}</span>}
             </Link>
           );
         })}

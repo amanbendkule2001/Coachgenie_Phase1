@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { api } from "@/lib/api";
 import { UserPlus } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const COLORS = [
   "hsl(217 91% 60%)",
@@ -22,6 +23,7 @@ const DEFAULT_FUNNEL_DATA = [
 ];
 
 export function LeadFunnelChart() {
+  const { t } = useLanguage();
   const [data, setData] = useState<{ stage: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,31 +44,36 @@ export function LeadFunnelChart() {
       .finally(() => setLoading(false));
   }, []);
 
+  const chartData = data.map((item) => ({
+    ...item,
+    displayStage: t(item.stage),
+  }));
+
   return (
     <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4 fade-in">
       <div className="flex items-center justify-between border-b pb-3">
         <div>
           <h2 className="font-bold text-base tracking-tight flex items-center gap-2">
-            Admissions Conversion Funnel
+            {t("Admissions Conversion Funnel")}
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-              <UserPlus className="h-3 w-3" /> Leads Module
+              <UserPlus className="h-3 w-3" /> {t("Leads Module")}
             </span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Enquiry to active student admission stage metrics</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("Enquiry to active student admission stage metrics")}</p>
         </div>
       </div>
 
       {loading ? (
         <div className="h-[220px] flex items-center justify-center text-xs font-semibold text-muted-foreground animate-pulse">
-          Loading conversion funnel chart…
+          {t("Loading conversion funnel chart…")}
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} layout="vertical" margin={{ top: 0, right: 15, left: 10, bottom: 0 }}>
+          <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 15, left: 10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted/40" />
             <XAxis type="number" tick={{ fontSize: 11, fill: "currentColor" }} tickLine={false} axisLine={false} />
             <YAxis
-              dataKey="stage"
+              dataKey="displayStage"
               type="category"
               tick={{ fontSize: 11, fill: "currentColor" }}
               tickLine={false}

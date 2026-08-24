@@ -31,6 +31,7 @@ import { authHeaders } from "@/lib/auth-headers";
 import { useAcademicStore } from "@/lib/stores/academic.store";
 import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
 import { generateStudentPerformancePDF } from "@/lib/utils/generate-report-pdf";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -44,6 +45,7 @@ const STATUS_STYLE: Record<string, string> = {
 export default function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { language, t } = useLanguage();
   const academicStore = useAcademicStore();
 
   const storeStudent = academicStore.students.find((s) => s.id === id);
@@ -166,9 +168,9 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
   if (!student) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 rounded-2xl border bg-card p-8 text-center">
-        <p className="text-base font-bold">Student record not found.</p>
+        <p className="text-base font-bold">{t("Student record not found.")}</p>
         <button onClick={() => router.push("/students")} className="text-xs font-semibold text-primary hover:underline">
-          ← Return to Student Roster
+          {t("← Return to Student Roster")}
         </button>
       </div>
     );
@@ -182,6 +184,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           <button
             onClick={() => router.push("/students")}
             className="mt-1 rounded-xl p-2 hover:bg-accent text-muted-foreground transition-colors border shadow-xs"
+            title={t("← Return to Student Roster")}
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -192,14 +195,14 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                {student.name}
+                {t(student.name) || student.name}
                 <span className={cn("rounded-full border px-3 py-0.5 text-xs font-bold uppercase", STATUS_STYLE[student.status] ?? STATUS_STYLE.INACTIVE)}>
-                  {student.status}
+                  {t(student.status) || student.status}
                 </span>
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-                Grade: <span className="font-semibold text-foreground">{student.grade || "10th"}</span> • Target Exam:{" "}
-                <span className="font-semibold text-foreground">{student.targetExam || "CBSE Board"}</span>
+                {t("Grade")}: <span className="font-semibold text-foreground">{student.grade || "10th"}</span> • {t("Target Exam")}:{" "}
+                <span className="font-semibold text-foreground">{t(student.targetExam) || student.targetExam || "CBSE Board"}</span>
               </p>
             </div>
           </div>
@@ -280,21 +283,21 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
             }}
             className="flex items-center gap-1.5 rounded-xl border bg-background px-3.5 py-2 text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors shadow-xs"
           >
-            <FileText className="h-3.5 w-3.5" /> PDF Report
+            <FileText className="h-3.5 w-3.5" /> {t("PDF Report")}
           </button>
 
           <button
             onClick={() => setShowEnroll(true)}
             className="flex items-center gap-1.5 rounded-xl border bg-background px-3.5 py-2 text-xs font-semibold hover:bg-accent transition-colors shadow-xs"
           >
-            <Plus className="h-3.5 w-3.5 text-primary" /> Enroll in Batch
+            <Plus className="h-3.5 w-3.5 text-primary" /> {t("Enroll in Batch")}
           </button>
 
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
-            <Printer className="h-3.5 w-3.5" /> Print 360° Profile
+            <Printer className="h-3.5 w-3.5" /> {t("Print 360° Profile")}
           </button>
         </div>
       </div>
@@ -306,13 +309,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           className="rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group space-y-2"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attendance</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Attendance")}</span>
             <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-600">
               <Calendar className="h-4 w-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-emerald-600">94% Presence</p>
-          <p className="text-[11px] text-muted-foreground">View monthly logs →</p>
+          <p className="text-2xl font-extrabold text-emerald-600">94% {t("Presence")}</p>
+          <p className="text-[11px] text-muted-foreground">{t("View monthly logs →")}</p>
         </Link>
 
         <Link
@@ -320,13 +323,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           className="rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group space-y-2"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Exams &amp; Ranks</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Exams & Ranks")}</span>
             <div className="rounded-xl bg-blue-500/10 p-2 text-blue-600">
               <FileSpreadsheet className="h-4 w-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-blue-600">Rank #1 Batch</p>
-          <p className="text-[11px] text-muted-foreground">View report cards →</p>
+          <p className="text-2xl font-extrabold text-blue-600">{t("Rank #1 Batch")}</p>
+          <p className="text-[11px] text-muted-foreground">{t("View report cards →")}</p>
         </Link>
 
         <Link
@@ -334,13 +337,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           className="rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group space-y-2"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tuition Fee Ledger</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Tuition Fee Ledger")}</span>
             <div className="rounded-xl bg-violet-500/10 p-2 text-violet-600">
               <IndianRupee className="h-4 w-4" />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-violet-600">₹{fees.paid.toLocaleString("en-IN")}</p>
-          <p className="text-[11px] text-muted-foreground">Fees settled →</p>
+          <p className="text-[11px] text-muted-foreground">{t("Fees settled →")}</p>
         </Link>
 
         <Link
@@ -348,13 +351,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           className="rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group space-y-2"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI Growth Card</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("AI Growth Card")}</span>
             <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600">
               <Award className="h-4 w-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-amber-600">5/5 Stars</p>
-          <p className="text-[11px] text-muted-foreground">View transcript →</p>
+          <p className="text-2xl font-extrabold text-amber-600">5/5 {t("Stars")}</p>
+          <p className="text-[11px] text-muted-foreground">{t("View transcript →")}</p>
         </Link>
       </div>
 
@@ -364,16 +367,16 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <User className="h-4 w-4 text-violet-600" />
-              <span>Contact &amp; Guardian Info</span>
+              <span>{t("Contact & Guardian Info")}</span>
             </div>
 
             {[
-              { label: "Student Email", value: student.email },
-              { label: "Student Phone", value: student.phone },
-              { label: "Parent / Guardian", value: student.parentName },
-              { label: "Parent Phone", value: student.parentPhone },
-              { label: "Campus Address", value: student.address },
-              { label: "Date of Birth", value: student.dob },
+              { label: t("Student Email"), value: student.email },
+              { label: t("Student Phone"), value: student.phone },
+              { label: t("Parent / Guardian"), value: t(student.parentName) || student.parentName },
+              { label: t("Parent Phone"), value: student.parentPhone },
+              { label: t("Campus Address"), value: t(student.address) || student.address },
+              { label: t("Date of Birth"), value: student.dob },
             ].map(({ label, value }) =>
               value ? (
                 <div key={label} className="flex justify-between text-xs">
@@ -390,24 +393,24 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold tracking-tight flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-blue-600" /> Assigned Course Batches
+                <BookOpen className="h-4 w-4 text-blue-600" /> {t("Assigned Course Batches")}
               </h3>
               <button
                 onClick={() => setShowEnroll(true)}
                 className="text-xs font-bold text-primary hover:underline"
               >
-                + Assign Batch
+                + {t("Assign Batch")}
               </button>
             </div>
 
             {batches.length === 0 ? (
               <div className="rounded-xl border border-dashed p-8 text-center space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">No active batches assigned to this student yet.</p>
+                <p className="text-xs font-semibold text-muted-foreground">{t("No active batches assigned to this student yet.")}</p>
                 <button
                   onClick={() => setShowEnroll(true)}
                   className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Enroll in first batch
+                  <Plus className="h-3.5 w-3.5" /> {t("Enroll in first batch")}
                 </button>
               </div>
             ) : (
@@ -417,14 +420,14 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center justify-between">
                       <p className="font-bold text-xs text-foreground">{b.name}</p>
                       <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
-                        {b.status}
+                        {t(b.status) || b.status}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Tutor: <span className="font-semibold text-foreground">{b.teacher || "Rahul Verma"}</span>
+                      {t("Tutor")}: <span className="font-semibold text-foreground">{t(b.teacher) || b.teacher || "Rahul Verma"}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Room / Link: <span className="font-medium text-foreground">{b.room || "Room 101"}</span>
+                      {t("Room / Link")}: <span className="font-medium text-foreground">{t(b.room) || b.room || "Room 101"}</span>
                     </p>
                   </div>
                 ))}
@@ -437,15 +440,15 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
             <div className="flex items-center justify-between border-b pb-3">
               <div>
                 <h3 className="text-sm font-bold tracking-tight flex items-center gap-2">
-                  <IndianRupee className="h-4 w-4 text-violet-600" /> Tuition Fee &amp; Payment History Ledger
+                  <IndianRupee className="h-4 w-4 text-violet-600" /> {t("Tuition Fee & Payment History Ledger")}
                 </h3>
-                <p className="text-xs text-muted-foreground">Historical fee payments recorded in database for this student</p>
+                <p className="text-xs text-muted-foreground">{t("Historical fee payments recorded in database for this student")}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <span className="text-xs font-semibold text-muted-foreground">Total Paid: </span>
+                  <span className="text-xs font-semibold text-muted-foreground">{t("Total Paid")}: </span>
                   <span className="text-sm font-extrabold text-emerald-600">₹{fees.paid.toLocaleString("en-IN")}</span>
-                  <span className="text-xs font-semibold text-muted-foreground ml-3">Remaining Dues: </span>
+                  <span className="text-xs font-semibold text-muted-foreground ml-3">{t("Remaining Dues")}: </span>
                   <span className="text-sm font-extrabold text-amber-600">₹{fees.due.toLocaleString("en-IN")}</span>
                 </div>
                 <button
@@ -515,27 +518,27 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                     toast.success("Downloading PDF invoice...");
                   }}
                   className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors shadow-2xs shrink-0"
-                  title="Direct Download PDF Invoice"
+                  title={t("Direct Download PDF Invoice")}
                 >
-                  <Download className="h-3.5 w-3.5" /> PDF
+                  <Download className="h-3.5 w-3.5" /> {t("PDF")}
                 </button>
               </div>
             </div>
 
             {paymentHistory.length === 0 ? (
               <div className="rounded-xl border border-dashed p-6 text-center text-xs text-muted-foreground">
-                No fee payment records found for this student yet.
+                {t("No fee payment records found for this student yet.")}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b bg-muted/40 text-[11px] font-bold text-muted-foreground uppercase">
-                      <th className="px-3 py-2">Day &amp; Date</th>
-                      <th className="px-3 py-2">Invoice / Ref #</th>
-                      <th className="px-3 py-2">Payment Mode</th>
-                      <th className="px-3 py-2">Amount Paid</th>
-                      <th className="px-3 py-2 text-center">Status</th>
+                      <th className="px-3 py-2">{t("Day & Date")}</th>
+                      <th className="px-3 py-2">{t("Invoice / Ref #")}</th>
+                      <th className="px-3 py-2">{t("Payment Mode")}</th>
+                      <th className="px-3 py-2">{t("Amount Paid")}</th>
+                      <th className="px-3 py-2 text-center">{t("Status")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -549,7 +552,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                         </td>
                         <td className="px-3 py-2.5">
                           <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-extrabold text-violet-600 uppercase">
-                            {pay.payment_mode}
+                            {t(pay.payment_mode) || pay.payment_mode}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 font-extrabold text-emerald-600">
@@ -557,7 +560,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                         </td>
                         <td className="px-3 py-2.5 text-center">
                           <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-                            {pay.status}
+                            {t(pay.status) || pay.status}
                           </span>
                         </td>
                       </tr>

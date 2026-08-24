@@ -29,6 +29,8 @@ import type { Admission } from "@/lib/types/lead";
 import { authHeaders } from "@/lib/auth-headers";
 import { InvoicePDFModal, type InvoicePDFData } from "@/components/finance/InvoicePDFModal";
 import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
+import { BOARD_LABELS } from "@/lib/constants/leads";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import {
   createInitialInstallmentSchedule,
   rebalanceInstallmentSchedule,
@@ -36,6 +38,22 @@ import {
   removeInstallmentFromSchedule,
   type InstallmentItem,
 } from "@/lib/utils/installment-rebalancer";
+
+function formatAdmDate(dateStr: string, lang: string): string {
+  try {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const monthIdx = d.getMonth();
+    const yr = d.getFullYear().toString().slice(-2);
+    const mrMonths = ["जाने", "फेब्रु", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"];
+    const hiMonths = ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितं", "अक्तू", "नवं", "दिसं"];
+    if (lang === "mr") return `${day} ${mrMonths[monthIdx]} ${yr}`;
+    if (lang === "hi") return `${day} ${hiMonths[monthIdx]} ${yr}`;
+    return format(d, "dd MMM yy");
+  } catch {
+    return dateStr;
+  }
+}
 
 type PaymentMode = "upi" | "cash" | "bank" | "other";
 type PaymentStatus = "PENDING" | "PARTIAL" | "FULL";
@@ -180,6 +198,7 @@ interface AddAdmissionModalProps {
 }
 
 function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionModalProps) {
+  const { t } = useLanguage();
   const [form, setForm] = useState<AddFormState>(DEFAULT_FORM);
   const [customSchedule, setCustomSchedule] = useState<InstallmentItem[]>([]);
 
@@ -249,7 +268,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
   function handleSubmit() {
     if (!form.studentName.trim()) {
-      toast.error("Student name is required");
+      toast.error(t("Student Name") + " " + t("is required"));
       return;
     }
     onSave(form);
@@ -260,7 +279,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
       <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs" onClick={onClose} />
       <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] sm:w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border bg-background shadow-2xl">
         <div className="flex items-center justify-between border-b px-4 sm:px-6 py-4 shrink-0">
-          <h2 className="text-base font-bold">New Admission Application</h2>
+          <h2 className="text-base font-bold">{t("New Admission Application")}</h2>
           <button onClick={onClose} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground">
             <X className="h-4 w-4" />
           </button>
@@ -268,25 +287,25 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
         <div className="overflow-y-auto px-4 sm:px-6 py-5 flex-1 space-y-5 text-xs">
           {/* Student Information */}
-          <SectionDivider label="Student Profile & Academic Info" />
+          <SectionDivider label={t("Student Profile & Academic Info")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Field label="Student Name *">
+            <Field label={`${t("Student Name")} *`}>
               <input
                 value={form.studentName}
                 onChange={(e) => setForm((f) => ({ ...f, studentName: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. Arjun Verma"
+                placeholder={t("e.g. Arjun Verma")}
               />
             </Field>
-            <Field label="Grade / Class">
+            <Field label={t("Grade / Class")}>
               <input
                 value={form.grade}
                 onChange={(e) => setForm((f) => ({ ...f, grade: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. 10th"
+                placeholder={t("e.g. 10th")}
               />
             </Field>
-            <Field label="Educational Board">
+            <Field label={t("Educational Board")}>
               <select
                 value={form.boardName}
                 onChange={(e) => setForm((f) => ({ ...f, boardName: e.target.value }))}
@@ -294,20 +313,20 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
               >
                 {BOARDS.map((b) => (
                   <option key={b.value} value={b.value}>
-                    {b.label}
+                    {b.value ? t(b.label) : t("— Select Board —")}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label="Previous School Name">
+            <Field label={t("Previous School Name")}>
               <input
                 value={form.schoolName}
                 onChange={(e) => setForm((f) => ({ ...f, schoolName: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. Delhi Public School"
+                placeholder={t("e.g. Delhi Public School")}
               />
             </Field>
-            <Field label="Target Batch Allocation">
+            <Field label={t("Target Batch Allocation")}>
               <select
                 value={form.batchName}
                 onChange={(e) => {
@@ -318,7 +337,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
                 }}
                 className={inputCls()}
               >
-                <option value="">— Select Batch —</option>
+                <option value="">{t("— Select Batch —")}</option>
                 {batches.map((b) => (
                   <option key={b.id} value={b.name}>
                     {b.name}
@@ -329,47 +348,47 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
           </div>
 
           {/* Contact Information */}
-          <SectionDivider label="Contact Information" />
+          <SectionDivider label={t("Contact Information")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Field label="Student Phone">
+            <Field label={t("Student Phone")}>
               <input
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. 9876543210"
+                placeholder="+91 98765 43210"
               />
             </Field>
-            <Field label="Student Email">
+            <Field label={t("Student Email")}>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. arjun@example.com"
+                placeholder="student@example.com"
               />
             </Field>
-            <Field label="Parent / Guardian Name">
+            <Field label={t("Parent / Guardian Name")}>
               <input
                 value={form.parentName}
                 onChange={(e) => setForm((f) => ({ ...f, parentName: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. Ramesh Verma"
+                placeholder={t("Parent / Guardian Name")}
               />
             </Field>
-            <Field label="Parent Contact Number">
+            <Field label={t("Parent Contact Number")}>
               <input
                 value={form.parentPhone}
                 onChange={(e) => setForm((f) => ({ ...f, parentPhone: e.target.value }))}
                 className={inputCls()}
-                placeholder="e.g. 9876543211"
+                placeholder="+91 98765 43210"
               />
             </Field>
           </div>
 
           {/* Fee & Payment Ledger Details */}
-          <SectionDivider label="Initial Tuition Fee Payment" />
+          <SectionDivider label={t("Initial Tuition Fee Payment")} />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <Field label="Total Course Fee (₹)">
+            <Field label={`${t("Total Course Fee")} (₹)`}>
               <input
                 type="number"
                 min="0"
@@ -378,7 +397,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
                 className={inputCls()}
               />
             </Field>
-            <Field label="Initial Down Payment (₹)">
+            <Field label={`${t("Initial Down Payment")} (₹)`}>
               <input
                 type="number"
                 min="0"
@@ -387,7 +406,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
                 className={inputCls()}
               />
             </Field>
-            <Field label="Remaining Balance (₹)">
+            <Field label={`${t("Remaining Balance")} (₹)`}>
               <div className={cn(inputCls(), "bg-muted font-bold text-foreground select-none flex items-center")}>
                 {remaining > 0 ? `₹${remaining.toLocaleString("en-IN")}` : "₹0"}
               </div>
@@ -395,7 +414,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Field label="Payment Date">
+            <Field label={t("Payment Date")}>
               <input
                 type="date"
                 value={form.dateOfPayment}
@@ -403,22 +422,22 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
                 className={inputCls()}
               />
             </Field>
-            <Field label="Payment Channel">
+            <Field label={t("Payment Channel")}>
               <select
                 value={form.modeOfPayment}
                 onChange={(e) => setForm((f) => ({ ...f, modeOfPayment: e.target.value as PaymentMode }))}
                 className={inputCls()}
               >
-                <option value="upi">UPI Direct / QR</option>
-                <option value="bank">Netbanking / Wire</option>
-                <option value="cash">Cash Collection</option>
-                <option value="other">Other</option>
+                <option value="upi">{t("UPI Direct / QR")}</option>
+                <option value="bank">{t("Netbanking / Wire")}</option>
+                <option value="cash">{t("Cash Collection")}</option>
+                <option value="other">{t("Other")}</option>
               </select>
             </Field>
           </div>
 
           {/* Document Verification Checkboxes */}
-          <SectionDivider label="Required Document Verification" />
+          <SectionDivider label={t("Required Document Verification")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {REQUIRED_DOCUMENTS.map((doc) => {
               const isSelected = form.selectedDocs.includes(doc.id);
@@ -436,14 +455,14 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
                     onChange={() => toggleDoc(doc.id)}
                     className="h-4 w-4 rounded text-primary focus:ring-primary shrink-0"
                   />
-                  <span className="text-xs font-semibold flex-1">{doc.label}</span>
+                  <span className="text-xs font-semibold flex-1">{t(doc.label)}</span>
                   {doc.required ? (
                     <span className="text-[10px] font-extrabold text-destructive border border-destructive/30 rounded-full px-2 py-0.5 shrink-0 uppercase">
-                      Mandatory
+                      {t("Mandatory")}
                     </span>
                   ) : (
                     <span className="text-[10px] text-muted-foreground border rounded-full px-2 py-0.5 shrink-0 uppercase">
-                      Optional
+                      {t("Optional")}
                     </span>
                   )}
                 </label>
@@ -454,14 +473,14 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 
         <div className="flex items-center justify-end gap-2 border-t px-6 py-4 shrink-0">
           <button onClick={onClose} disabled={isSaving} className="rounded-xl border px-4 py-2 text-xs font-semibold hover:bg-accent">
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
             className="rounded-xl bg-violet-600 px-5 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50 transition-all shadow-sm"
           >
-            {isSaving ? "Saving Application…" : "Save Admission Application"}
+            {isSaving ? t("Saving Application…") : t("Save Admission Application")}
           </button>
         </div>
       </div>
@@ -470,6 +489,7 @@ function AddAdmissionModal({ onClose, onSave, isSaving, batches }: AddAdmissionM
 }
 
 export default function AdmissionsPage() {
+  const { language, t } = useLanguage();
   const storeAdmissions = useLeadStore((s) => s.admissions) as AdmissionWithPayment[];
   const addAdmission = useLeadStore((s) => s.addAdmission);
   const setAdmissions = useLeadStore((s) => s.setAdmissions);
@@ -625,10 +645,10 @@ export default function AdmissionsPage() {
         addAdmission(newAdm);
       }
 
-      toast.success("Admission application saved successfully!");
+      toast.success(t("Admission application saved successfully!"));
       setShowForm(false);
     } catch {
-      toast.success("Admission recorded!");
+      toast.success(t("Admission application saved successfully!"));
       setShowForm(false);
     } finally {
       setSaving(false);
@@ -641,13 +661,13 @@ export default function AdmissionsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Admissions &amp; Enrolments
+            {t("Admissions & Enrolments")}
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-600">
-              <Sparkles className="h-3 w-3" /> Document &amp; Fee Ledger
+              <Sparkles className="h-3 w-3" /> {t("Document & Fee Ledger")}
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Process student enrollment applications, verify documents, and track down-payment invoices
+            {t("Process student enrollment applications, verify documents, and track down-payment invoices")}
           </p>
         </div>
 
@@ -656,7 +676,7 @@ export default function AdmissionsPage() {
             onClick={loadAdmissions}
             disabled={loading}
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
-            title="Refresh list"
+            title={t("Refresh list")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
@@ -666,7 +686,7 @@ export default function AdmissionsPage() {
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
-            <Plus className="h-4 w-4" /> Add Admission Application
+            <Plus className="h-4 w-4" /> {t("Add Admission Application")}
           </button>
         </div>
       </div>
@@ -674,27 +694,27 @@ export default function AdmissionsPage() {
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Applications</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Total Applications")}</span>
           <p className="text-3xl font-extrabold tracking-tight">{kpiStats.totalCount}</p>
-          <p className="text-xs text-muted-foreground">Recorded in portal</p>
+          <p className="text-xs text-muted-foreground">{t("Recorded in portal")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Verification</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Pending Verification")}</span>
           <p className="text-3xl font-extrabold text-amber-600 tracking-tight">{kpiStats.pendingDocsCount}</p>
-          <p className="text-xs text-muted-foreground">Awaiting mandatory docs</p>
+          <p className="text-xs text-muted-foreground">{t("Awaiting mandatory docs")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmed Admissions</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Confirmed Admissions")}</span>
           <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">{kpiStats.confirmedCount}</p>
-          <p className="text-xs text-emerald-600 font-medium">Enrolled in batches</p>
+          <p className="text-xs text-emerald-600 font-medium">{t("Enrolled in batches")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Initial Down Payment</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Initial Down Payment")}</span>
           <p className="text-3xl font-extrabold text-violet-600 tracking-tight">₹{kpiStats.totalCollected.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-muted-foreground">Tuition revenue collected</p>
+          <p className="text-xs text-muted-foreground">{t("Tuition revenue collected")}</p>
         </div>
       </div>
 
@@ -704,7 +724,7 @@ export default function AdmissionsPage() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by student name, phone, or board..."
+            placeholder={t("Search by student name, phone, or board...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-9 w-full rounded-xl border bg-background pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
@@ -719,7 +739,7 @@ export default function AdmissionsPage() {
               filter === "ALL" ? "bg-foreground text-background shadow-xs" : "hover:bg-accent text-muted-foreground"
             )}
           >
-            All Applications ({storeAdmissions.length})
+            {t("All Applications")} ({storeAdmissions.length})
           </button>
           {(Object.keys(STATUS_CONFIG) as Admission["status"][]).map((s) => {
             const cfg = STATUS_CONFIG[s];
@@ -733,7 +753,7 @@ export default function AdmissionsPage() {
                   filter === s ? `${cfg.color} ${cfg.bg} ${cfg.border} shadow-xs` : "hover:bg-accent text-muted-foreground"
                 )}
               >
-                {cfg.label} ({count})
+                {t(cfg.label)} ({count})
               </button>
             );
           })}
@@ -752,7 +772,7 @@ export default function AdmissionsPage() {
           {filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-2xl border border-dashed bg-card text-center">
               <Users className="h-8 w-8 text-muted-foreground/40" />
-              <p className="font-semibold text-sm">No admissions match your filter.</p>
+              <p className="font-semibold text-sm">{t("No admissions match your filter.")}</p>
             </div>
           )}
           {filtered.map((adm) => {
@@ -763,6 +783,8 @@ export default function AdmissionsPage() {
             const StatusIcon = cfg.icon || Clock;
             const docsTotal = adm.documents?.filter((d) => d.required).length ?? 0;
             const docsOk = adm.documents?.filter((d) => d.required && d.submitted).length ?? 0;
+
+            const studentDisplayName = adm.studentName ?? (adm as any).student_name;
 
             return (
               <Link
@@ -776,10 +798,10 @@ export default function AdmissionsPage() {
                     <StatusIcon className={cn("h-5 w-5", cfg.color)} />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-foreground truncate">{adm.studentName ?? (adm as any).student_name ?? "—"}</p>
+                    <p className="font-bold text-sm text-foreground truncate">{studentDisplayName ? (t(studentDisplayName) || studentDisplayName) : "—"}</p>
                     <p className="text-xs text-muted-foreground font-medium truncate">
                       {[
-                        (adm as any).board_name || adm.boardName,
+                        t(BOARD_LABELS[(adm as any).board_name || adm.boardName] || (adm as any).board_name || adm.boardName),
                         (adm.subjects ?? []).filter((s: string) => s && s !== "N/A").join(", "),
                       ]
                         .filter(Boolean)
@@ -790,16 +812,16 @@ export default function AdmissionsPage() {
 
                 <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                   <div className="hidden sm:flex flex-col items-end gap-0.5 text-xs">
-                    <span className={cn("font-bold text-xs", cfg.color)}>{cfg.label}</span>
+                    <span className={cn("font-bold text-xs", cfg.color)}>{t(cfg.label)}</span>
                     <span className="text-muted-foreground font-medium">
-                      {docsTotal > 0 && `Docs: ${docsOk}/${docsTotal} · `}
+                      {docsTotal > 0 && `${t("Docs")}: ${docsOk}/${docsTotal} · `}
                       ₹{(adm.feePaid ?? (adm as any).fee_paid ?? 0).toLocaleString("en-IN")} / ₹
                       {(adm.feeAmount ?? (adm as any).fee_amount ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
 
                   <div className="hidden md:block text-xs font-medium text-muted-foreground">
-                    {adm.createdAt ? format(new Date(adm.createdAt), "dd MMM yyyy") : "—"}
+                    {adm.createdAt ? formatAdmDate(adm.createdAt, language) : "—"}
                   </div>
 
                   <button
@@ -882,12 +904,12 @@ export default function AdmissionsPage() {
                         paymentHistory: paymentHistoryList,
                       };
                       generateInvoicePDF(invData);
-                      toast.success("Downloading PDF invoice...");
+                      toast.success(t("Downloading PDF invoice..."));
                     }}
                     className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-[11px] font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors shadow-2xs shrink-0"
-                    title="Direct Download PDF Invoice"
+                    title={t("Direct Download PDF Invoice")}
                   >
-                    <Download className="h-3.5 w-3.5" /> PDF
+                    <Download className="h-3.5 w-3.5" /> {t("PDF")}
                   </button>
 
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />

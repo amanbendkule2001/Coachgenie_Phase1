@@ -23,3 +23,13 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   PHONE:        "Phone",
   OTHER:        "Other",
 };
+
+export const BOARD_LABELS: Record<string, string> = {
+  CBSE:  "CBSE",
+  ICSE:  "ICSE / ISC",
+  STATE: "State Board",
+  IB:    "IB",
+  IGCSE: "IGCSE / Cambridge",
+  NIOS:  "NIOS",
+  OTHER: "Other",
+};

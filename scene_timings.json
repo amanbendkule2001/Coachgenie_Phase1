@@ -1,0 +1,90 @@
+[
+  {
+    "id": "scene_01_login",
+    "title": "\ud83d\udd10 Step 1: Secure Institute Authentication",
+    "url": "http://localhost:3000/login",
+    "text": "Welcome to CoachGenie, the all-in-one coaching institute management ERP. We begin with secure institute authentication, entering our institute code 'demo' and signing in with administrative credentials.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_01_login.mp3",
+    "duration": 13.78
+  },
+  {
+    "id": "scene_02_dashboard",
+    "title": "\ud83d\udcca Step 2: Executive Dashboard & Live Metrics",
+    "url": "http://localhost:3000/dashboard",
+    "text": "Welcome to the Executive Dashboard. Here, institute leaders get a real-time overview of key metrics, including active students, inquiry funnels, batch counts, and monthly revenue, supported by live interactive charts and attendance heatmaps.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_02_dashboard.mp3",
+    "duration": 16.78
+  },
+  {
+    "id": "scene_03_leads",
+    "title": "\ud83c\udfaf Step 3: Leads & Student Inquiry Pipeline",
+    "url": "http://localhost:3000/leads",
+    "text": "In the Leads and CRM module, coaching centers can track incoming student inquiries, manage follow-ups, qualify prospective students, and streamline conversion workflows seamlessly.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_03_leads.mp3",
+    "duration": 12.41
+  },
+  {
+    "id": "scene_04_admissions",
+    "title": "\ud83d\udcdd Step 4: Enrolments & Admission Processing",
+    "url": "http://localhost:3000/admissions",
+    "text": "Once leads are qualified, the Admissions module manages student onboarding, application reviews, document verification, and enrolment status updates with full audit trails.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_04_admissions.mp3",
+    "duration": 11.879999999999999
+  },
+  {
+    "id": "scene_05_students",
+    "title": "\ud83c\udf93 Step 5: Student Directory & Comprehensive Profiles",
+    "url": "http://localhost:3000/students",
+    "text": "The Students Directory maintains unified student profiles, containing academic records, contact info, batch assignments, and individualized growth progress in one centralized place.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_05_students.mp3",
+    "duration": 12.979999999999999
+  },
+  {
+    "id": "scene_06_batches",
+    "title": "\ud83d\udcc5 Step 6: Batches, Timetables & Class Scheduling",
+    "url": "http://localhost:3000/batches",
+    "text": "In the Batches and Scheduling module, administrators can organize course batches, allocate expert faculty, and configure weekly session timetables effortlessly.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_06_batches.mp3",
+    "duration": 11.28
+  },
+  {
+    "id": "scene_07_attendance",
+    "title": "\ud83d\udccb Step 7: Real-Time Attendance Management",
+    "url": "http://localhost:3000/attendance",
+    "text": "Daily operations are simplified through the Attendance module, allowing real-time student check-ins, automated absentee tracking, and monthly attendance logs.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_07_attendance.mp3",
+    "duration": 10.729999999999999
+  },
+  {
+    "id": "scene_08_exams",
+    "title": "\ud83c\udfc6 Step 8: Exams, Assessments & AI Growth Cards",
+    "url": "http://localhost:3000/exams",
+    "text": "The Exams and Assessments module tracks test schedules, calculates scorecards, and leverages AI intelligence to generate personalized performance growth trajectories for every student.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_08_exams.mp3",
+    "duration": 12.19
+  },
+  {
+    "id": "scene_09_fees",
+    "title": "\ud83d\udcb3 Step 9: Fee Collections, Invoicing & Financial Records",
+    "url": "http://localhost:3000/fees",
+    "text": "The Fees and Billing engine handles structured fee plans, tracks upcoming installments, records instant payment receipts, and provides transparent financial revenue analytics.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_09_fees.mp3",
+    "duration": 11.739999999999998
+  },
+  {
+    "id": "scene_10_ai_analytics",
+    "title": "\ud83e\udd16 Step 10: AI Intelligence & Predictive Analytics",
+    "url": "http://localhost:3000/ai/analytics",
+    "text": "Finally, CoachGenie features advanced AI Analytics to deliver predictive admission conversions, batch health tracking, dropout risk detection, and revenue forecasting.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_10_ai_analytics.mp3",
+    "duration": 11.62
+  },
+  {
+    "id": "scene_11_outro",
+    "title": "\u2728 CoachGenie ERP: Complete All-in-One Coaching System",
+    "url": "http://localhost:3000/dashboard",
+    "text": "CoachGenie: empowering modern coaching institutes with intelligent, seamless management. Thank you for watching.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_tracks\\scene_11_outro.mp3",
+    "duration": 9.07
+  }
+]

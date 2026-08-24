@@ -6,6 +6,7 @@ import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { Loader2, X } from "lucide-react";
 import type { Batch } from "@/app/(dashboard)/leads/page";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const schema = z.object({
@@ -96,6 +97,7 @@ interface LeadFormProps {
 export function LeadForm({
   onSubmit, onCancel, batches = [], batchesLoading = false, defaultValues,
 }: LeadFormProps) {
+  const { t } = useLanguage();
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(
     defaultValues?.subjects ?? []
   );
@@ -191,47 +193,47 @@ export function LeadForm({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5" noValidate>
 
       {/* ── Student Info ─────────────────────────────────────────────────── */}
-      <SectionTitle>Student Information</SectionTitle>
+      <SectionTitle>{t("Student Information")}</SectionTitle>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Full Name" required error={errors.name?.message}>
-          <input data-testid="lead-name" {...register("name")} placeholder="Student's full name" className={inputCls(!!errors.name)} />
+        <Field label={t("Full Name")} required error={errors.name?.message}>
+          <input data-testid="lead-name" {...register("name")} placeholder={t("Student's full name")} className={inputCls(!!errors.name)} />
         </Field>
 
-        <Field label="Email" error={errors.email?.message}>
-          <input data-testid="lead-email" {...register("email")}  type="email"  placeholder="student@example.com" className={inputCls(!!errors.email)} />
+        <Field label={t("Email")} error={errors.email?.message}>
+          <input data-testid="lead-email" {...register("email")} type="email" placeholder="student@example.com" className={inputCls(!!errors.email)} />
         </Field>
 
-        <Field label="Phone" required error={errors.phone?.message}>
+        <Field label={t("Phone")} required error={errors.phone?.message}>
           <input data-testid="lead-phone" {...register("phone")} placeholder="+91 98765 43210" className={inputCls(!!errors.phone)} />
         </Field>
 
-        <Field label="Grade" error={errors.grade?.message}>
+        <Field label={t("Grade")} error={errors.grade?.message}>
           <input data-testid="lead-grade" {...register("grade")} placeholder="e.g. 10, 11, 12" className={inputCls(!!errors.grade)} />
         </Field>
 
-        <Field label="Board Name" error={errors.boardName?.message}>
+        <Field label={t("Board Name")} error={errors.boardName?.message}>
           <select {...register("boardName")} className={inputCls(!!errors.boardName)}>
-            <option value="">— Select Board —</option>
+            <option value="">{t("— Select Board —")}</option>
             {BOARDS.map((b) => (
-              <option key={b.value} value={b.value}>{b.label}</option>
+              <option key={b.value} value={b.value}>{t(b.label)}</option>
             ))}
           </select>
         </Field>
       </div>
 
       {/* ── Academic & Batch ─────────────────────────────────────────────── */}
-      <SectionTitle>Academic & Batch</SectionTitle>
+      <SectionTitle>{t("Academic & Batch")}</SectionTitle>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Interested Course" required error={errors.subject?.message}>
+        <Field label={t("Interested Course")} required error={errors.subject?.message}>
           <input {...register("subject")} placeholder="e.g. JEE Mains, NEET, Foundation" className={inputCls(!!errors.subject)} />
         </Field>
 
-        <Field label="Batch Name" error={errors.batchId?.message}>
+        <Field label={t("Batch Name")} error={errors.batchId?.message}>
           <div className="relative">
             <select {...register("batchId")} disabled={batchesLoading} className={inputCls(!!errors.batchId)}>
-              <option value="">{batchesLoading ? "Loading batches…" : "— Select Batch —"}</option>
+              <option value="">{batchesLoading ? t("Loading batches…") : t("— Select Batch —")}</option>
               {batches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
@@ -242,56 +244,27 @@ export function LeadForm({
           </div>
         </Field>
 
-        <Field label="Source" required error={errors.source?.message}>
+        <Field label={t("Source")} required error={errors.source?.message}>
           <select {...register("source")} className={inputCls(!!errors.source)}>
             {SOURCES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>{t(s.label)}</option>
             ))}
           </select>
         </Field>
 
-        <Field label="School Name" error={errors.schoolName?.message}>
-          <input {...register("schoolName")} placeholder="School / college name" className={inputCls(!!errors.schoolName)} />
+        <Field label={t("School Name")} error={errors.schoolName?.message}>
+          <input {...register("schoolName")} placeholder={t("School / college name")} className={inputCls(!!errors.schoolName)} />
         </Field>
       </div>
 
-      {/* ── Subjects (multi-select checkboxes) ─────────────────────────────
-      <Field label="Subjects">
-        <div className="flex flex-wrap gap-2 rounded-lg border bg-background p-3">
-          {SUBJECT_OPTIONS.map((subject) => (
-            <label
-              key={subject}
-              className={cn(
-                "flex items-center gap-1.5 cursor-pointer rounded-md border px-2.5 py-1.5 text-sm transition-colors",
-                selectedSubjects.includes(subject)
-                  ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border hover:bg-accent"
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={selectedSubjects.includes(subject)}
-                onChange={() => toggleSubject(subject)}
-                className="h-3.5 w-3.5 rounded accent-primary"
-              />
-              {subject}
-            </label>
-          ))}
-        </div>
-        {selectedSubjects.length > 0 && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? "s" : ""} selected
-          </p>
-        )}
-      </Field> */}
-      {/* ── Subjects (multi-select checkboxes) ───────────────────────────── */}
-      <Field label="Subjects">
+      {/* ── Subjects ────────────────────────────────────────────────────── */}
+      <Field label={t("Subjects")}>
         <div className="flex gap-2">
           <input
             value={subjectInput}
             onChange={e => setSubjectInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSubject(); } }}
-            placeholder={selectedBatchId ? "Add more subjects…" : "e.g. Physics, Maths…"}
+            placeholder={selectedBatchId ? t("Add more subjects…") : t("e.g. Physics, Maths…")}
             className={inputCls()}
           />
           <button
@@ -299,7 +272,7 @@ export function LeadForm({
             onClick={addSubject}
             className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-accent transition-colors shrink-0"
           >
-            Add
+            {t("Add")}
           </button>
         </div>
         {selectedSubjects.length > 0 ? (
@@ -318,31 +291,31 @@ export function LeadForm({
         ) : (
           <p className="text-xs text-muted-foreground pt-1">
             {selectedBatchId
-              ? "No subjects in this batch — add them above"
-              : "Select a batch to auto-fill subjects, or add manually"}
+              ? t("No subjects in this batch — add them above")
+              : t("Select a batch to auto-fill subjects, or add manually")}
           </p>
         )}
       </Field>
 
       {/* ── Parent Info ───────────────────────────────────────────────────── */}
-      <SectionTitle>Parent / Guardian</SectionTitle>
+      <SectionTitle>{t("Parent / Guardian")}</SectionTitle>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Parent Name" error={errors.parentName?.message}>
-          <input {...register("parentName")} placeholder="Parent / guardian name" className={inputCls(!!errors.parentName)} />
+        <Field label={t("Parent Name")} error={errors.parentName?.message}>
+          <input {...register("parentName")} placeholder={t("Parent / guardian name")} className={inputCls(!!errors.parentName)} />
         </Field>
 
-        <Field label="Parent Contact" error={errors.parentContactNumber?.message}>
+        <Field label={t("Parent Contact")} error={errors.parentContactNumber?.message}>
           <input {...register("parentContactNumber")} placeholder="+91 98765 43210" className={inputCls(!!errors.parentContactNumber)} />
         </Field>
       </div>
 
       {/* ── Notes ────────────────────────────────────────────────────────── */}
-      <Field label="Notes" error={errors.notes?.message}>
+      <Field label={t("Notes")} error={errors.notes?.message}>
         <textarea
           {...register("notes")}
           rows={3}
-          placeholder="Any additional notes…"
+          placeholder={t("Any additional notes…")}
           className={cn(inputCls(!!errors.notes), "resize-none")}
         />
       </Field>
@@ -356,7 +329,7 @@ export function LeadForm({
           data-testid="lead-form-cancel"
           className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="submit"
@@ -365,7 +338,7 @@ export function LeadForm({
           className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
         >
           {isSubmitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {isSubmitting ? "Saving…" : "Create Lead"}
+          {isSubmitting ? t("Saving…") : t("Create Lead")}
         </button>
       </div>
     </form>

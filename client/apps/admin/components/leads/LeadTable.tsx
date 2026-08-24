@@ -10,7 +10,24 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@/lib/types/lead";
 import { StageBadge } from "./StageBadge";
-import { SOURCE_LABELS } from "@/lib/constants/leads";
+import { SOURCE_LABELS, BOARD_LABELS } from "@/lib/constants/leads";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+
+function formatLeadDate(dateStr: string, lang: string): string {
+  try {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const monthIdx = d.getMonth();
+    const yr = d.getFullYear().toString().slice(-2);
+    const mrMonths = ["जाने", "फेब्रु", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"];
+    const hiMonths = ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितं", "अक्तू", "नवं", "दिसं"];
+    if (lang === "mr") return `${day} ${mrMonths[monthIdx]} ${yr}`;
+    if (lang === "hi") return `${day} ${hiMonths[monthIdx]} ${yr}`;
+    return format(d, "dd MMM yy");
+  } catch {
+    return dateStr;
+  }
+}
 
 interface LeadTableProps {
   leads:    Lead[];
@@ -19,6 +36,7 @@ interface LeadTableProps {
 }
 
 export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
+  const { language, t } = useLanguage();
   const [sorting,      setSorting]      = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
@@ -31,7 +49,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           className="flex items-center gap-1 hover:text-foreground transition-colors"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Student <ArrowUpDown className="h-3.5 w-3.5" />
+          {t("Student")} <ArrowUpDown className="h-3.5 w-3.5" />
         </button>
       ),
       cell: ({ row }) => (
@@ -45,7 +63,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
     // ── Phone ──────────────────────────────────────────────────────────────
     {
       accessorKey: "phone",
-      header: "Phone",
+      header: () => <span>{t("Phone")}</span>,
       cell: ({ getValue }) => (
         <span className="text-sm font-mono">{getValue<string>()}</span>
       ),
@@ -54,22 +72,21 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
     // ── Grade ──────────────────────────────────────────────────────────────
     {
       accessorKey: "grade",
-      header: "Grade",
+      header: () => <span>{t("Grade")}</span>,
       cell: ({ getValue }) => (
         <span className="text-sm">{getValue<string>() || "—"}</span>
       ),
     },
 
- 
     // ── Board (NEW) ────────────────────────────────────────────────────────
     {
       accessorKey: "boardName",
-      header: "Board",
+      header: () => <span>{t("Board")}</span>,
       cell: ({ getValue }) => {
         const val = getValue<string>();
         return val ? (
           <span className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium">
-            {val}
+            {t(BOARD_LABELS[val] || val)}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -80,7 +97,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
     // ── Batch (NEW) ────────────────────────────────────────────────────────
     {
       accessorKey: "batchName",
-      header: "Batch",
+      header: () => <span>{t("Batch")}</span>,
       cell: ({ row }) => {
         const name = row.original.batchName;
         return name ? (
@@ -93,52 +110,34 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
       },
     },
 
-    // ── Subject ────────────────────────────────────────────────────────────
+    // ── Subject ────────────────────────────────────────────────────
     {
       accessorKey: "subject",
-      header: "Course",
+      header: () => <span>{t("Course")}</span>,
       cell: ({ getValue }) => (
         <span className="text-sm">{getValue<string>() || "—"}</span>
       ),
     },
 
-    // ── Source ─────────────────────────────────────────────────────────────
+    // ── Source ─────────────────────────────────────────────────────
     {
       accessorKey: "source",
-      header: "Source",
+      header: () => <span>{t("Source")}</span>,
       cell: ({ getValue }) => (
         <span className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium">
-          {SOURCE_LABELS[getValue<Lead["source"]>()]}
+          {t(SOURCE_LABELS[getValue<Lead["source"]>()] || getValue<string>() || "Other")}
         </span>
       ),
     },
 
-    // ── Stage ──────────────────────────────────────────────────────────────
+    // ── Stage ──────────────────────────────────────────────────────
     {
       accessorKey: "stage",
-      header: "Stage",
+      header: () => <span>{t("Stage")}</span>,
       cell: ({ getValue }) => <StageBadge stage={getValue<Lead["stage"]>()} />,
     },
 
-    // ── Assigned ───────────────────────────────────────────────────────────
-    // {
-    //   accessorKey: "assignedTo",
-    //   header: "Assigned",
-    //   cell: ({ getValue }) => {
-    //     const val = getValue<string>();
-    //     if (!val) return <span className="text-xs text-muted-foreground">—</span>;
-    //     return (
-    //       <div className="flex items-center gap-1.5">
-    //         <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary shrink-0">
-    //           {val.split(" ").map((n) => n[0]).join("")}
-    //         </div>
-    //         <span className="text-xs text-muted-foreground truncate max-w-[80px]">{val}</span>
-    //       </div>
-    //     );
-    //   },
-    // },
-
-    // ── Date ───────────────────────────────────────────────────────────────
+    // ── Date ───────────────────────────────────────────────────────
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
@@ -146,25 +145,27 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           className="flex items-center gap-1 hover:text-foreground transition-colors"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Date <ArrowUpDown className="h-3.5 w-3.5" />
+          {t("Date")} <ArrowUpDown className="h-3.5 w-3.5" />
         </button>
       ),
       cell: ({ getValue }) => (
         <span className="text-xs text-muted-foreground">
-          {format(new Date(getValue<string>()), "dd MMM yy")}
+          {formatLeadDate(getValue<string>(), language)}
         </span>
       ),
     },
 
-    // ── Actions ────────────────────────────────────────────────────────────
+    // ── Actions ────────────────────────────────────────────────────
     {
       id: "actions",
+      header: () => <span>{t("Actions")}</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
           <button
             onClick={() => onView(row.original)}
             data-testid={`lead-view-${row.original.id}`}
-            aria-label={`View lead ${row.original.name}`}
+            aria-label={`${t("View Profile")}: ${row.original.name}`}
+            title={t("View Profile")}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <Eye className="h-3.5 w-3.5" />
@@ -172,7 +173,8 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           <button
             onClick={() => onDelete(row.original.id)}
             data-testid={`lead-delete-${row.original.id}`}
-            aria-label={`Delete lead ${row.original.name}`}
+            aria-label={`${t("Delete")}: ${row.original.name}`}
+            title={t("Delete")}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -180,7 +182,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
         </div>
       ),
     },
-  ], [onView, onDelete]);
+  ], [onView, onDelete, language, t]);
 
   const table = useReactTable({
     data:                   leads,
@@ -205,7 +207,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
           data-testid="lead-search"
-          placeholder="Search leads…"
+          placeholder={t("Search leads…")}
           aria-label="Search leads"
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
@@ -249,7 +251,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
                   colSpan={columns.length}
                   className="h-32 text-center text-sm text-muted-foreground"
                 >
-                  No leads found.
+                  {t("No leads found.")}
                 </td>
               </tr>
             )}
@@ -260,8 +262,7 @@ export function LeadTable({ leads, onView, onDelete }: LeadTableProps) {
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm">
         <p className="text-muted-foreground text-xs">
-          {table.getFilteredRowModel().rows.length} lead
-          {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
+          {table.getFilteredRowModel().rows.length} {table.getFilteredRowModel().rows.length === 1 ? t("lead") : t("leads")}
         </p>
         <div className="flex items-center gap-2">
           <button

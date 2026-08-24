@@ -5,9 +5,11 @@ import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export default function StudentFeesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }    = use(params);
+  const { language, t } = useLanguage();
   const store     = useAcademicStore();
   const student   = store.students.find(s => s.id === id);
   const records   = store.feeRecords.filter(r => r.studentId === id);
@@ -23,8 +25,8 @@ export default function StudentFeesPage({ params }: { params: Promise<{ id: stri
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold">{student?.name} — Fee Ledger</h1>
-          <p className="text-sm text-muted-foreground">{records.length} transactions</p>
+          <h1 className="text-xl font-bold">{t(student?.name || "") || student?.name || "Student"} — {t("Fee Ledger")}</h1>
+          <p className="text-sm text-muted-foreground">{records.length} {t("transactions")}</p>
         </div>
       </div>
 
@@ -32,9 +34,9 @@ export default function StudentFeesPage({ params }: { params: Promise<{ id: stri
       {student && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label:"Total Fee",  value:`₹${student.fees.total.toLocaleString("en-IN")}`, color:"" },
-            { label:"Paid",       value:`₹${student.fees.paid.toLocaleString("en-IN")}`,  color:"text-emerald-600" },
-            { label:"Due",        value:`₹${student.fees.due.toLocaleString("en-IN")}`,   color:student.fees.due>0?"text-red-500":"text-emerald-600" },
+            { label: t("Total Fee"),  value: `₹${student.fees.total.toLocaleString("en-IN")}`, color: "" },
+            { label: t("Paid"),       value: `₹${student.fees.paid.toLocaleString("en-IN")}`,  color: "text-emerald-600" },
+            { label: t("Due"),        value: `₹${student.fees.due.toLocaleString("en-IN")}`,   color: student.fees.due > 0 ? "text-red-500" : "text-emerald-600" },
           ].map(({ label, value, color }) => (
             <div key={label} className="rounded-xl border bg-card p-4">
               <p className="text-xs text-muted-foreground">{label}</p>
@@ -47,16 +49,16 @@ export default function StudentFeesPage({ params }: { params: Promise<{ id: stri
       {/* Ledger */}
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="border-b px-5 py-3">
-          <h3 className="text-sm font-semibold">Transaction History</h3>
+          <h3 className="text-sm font-semibold">{t("Transaction History")}</h3>
         </div>
         {records.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">No transactions.</div>
+          <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">{t("No transactions.")}</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
-                {["Date","Description","Method","Amount","Status"].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{h}</th>
+                {["Date", "Description", "Method", "Amount", "Status"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t(h)}</th>
                 ))}
               </tr>
             </thead>
@@ -66,8 +68,8 @@ export default function StudentFeesPage({ params }: { params: Promise<{ id: stri
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {format(new Date(rec.date), "dd MMM yyyy")}
                   </td>
-                  <td className="px-4 py-3 font-medium">{rec.description}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{rec.method ?? "—"}</td>
+                  <td className="px-4 py-3 font-medium">{t(rec.description) || rec.description}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{rec.method ? (t(rec.method) || rec.method) : "—"}</td>
                   <td className="px-4 py-3">
                     <span className={cn("flex items-center gap-1 font-semibold",
                       rec.type==="CREDIT"?"text-emerald-600":"text-foreground"
@@ -84,7 +86,7 @@ export default function StudentFeesPage({ params }: { params: Promise<{ id: stri
                       rec.status==="PENDING"?"bg-amber-50 text-amber-700 border-amber-200":
                       "bg-red-50 text-red-600 border-red-200"
                     )}>
-                      {rec.status}
+                      {t(rec.status) || rec.status}
                     </span>
                   </td>
                 </tr>

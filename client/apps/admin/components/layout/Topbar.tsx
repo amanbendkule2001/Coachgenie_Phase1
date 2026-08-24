@@ -10,6 +10,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { api } from "@/lib/api";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -100,6 +102,7 @@ interface TopbarProps {
 export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const [menuOpen,        setMenuOpen]        = useState(false);
   const [notifOpen,       setNotifOpen]       = useState(false);
@@ -773,8 +776,11 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
         )}
       </div>
 
-      {/* Right Actions (Notifications & User Avatar) */}
-      <div className="ml-auto flex items-center gap-1.5">
+      {/* Right Actions (Language Switcher, Notifications & User Avatar) */}
+      <div className="ml-auto flex items-center gap-2">
+
+        {/* Multilingual Language Switcher */}
+        <LanguageSwitcher />
 
         {/* Notifications Dropdown */}
         <div className="relative">
@@ -910,7 +916,7 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
                     )}
                   >
                     <User className="h-4 w-4 shrink-0" />
-                    <span>My Profile</span>
+                    <span>{t("My Profile")}</span>
                   </button>
 
                   <button
@@ -923,7 +929,7 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
                     )}
                   >
                     <Settings className="h-4 w-4 shrink-0" />
-                    <span>Institute Settings</span>
+                    <span>{t("Institute Settings")}</span>
                   </button>
                 </div>
 
@@ -934,7 +940,7 @@ export function Topbar({ sidebarCollapsed: _ }: TopbarProps) {
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="h-4 w-4 shrink-0" />
-                  <span>Sign out</span>
+                  <span>{t("Sign out")}</span>
                 </button>
               </div>
             </>

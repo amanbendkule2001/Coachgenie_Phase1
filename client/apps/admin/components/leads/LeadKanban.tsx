@@ -12,11 +12,28 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Lead, LeadStage } from "@/lib/types/lead";
 import { STAGE_CONFIG, STAGES } from "@/lib/constants/leads";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+
+function formatKanbanDate(dateStr: string, lang: string): string {
+  try {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const monthIdx = d.getMonth();
+    const mrMonths = ["जाने", "फेब्रु", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"];
+    const hiMonths = ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितं", "अक्तू", "नवं", "दिसं"];
+    if (lang === "mr") return `${day} ${mrMonths[monthIdx]}`;
+    if (lang === "hi") return `${day} ${hiMonths[monthIdx]}`;
+    return format(d, "dd MMM");
+  } catch {
+    return dateStr;
+  }
+}
 
 // ── Kanban Card ────────────────────────────────────────────────
 function KanbanCard({
   lead, onClick, overlay = false,
 }: { lead: Lead; onClick: () => void; overlay?: boolean }) {
+  const { language } = useLanguage();
   const {
     attributes, listeners, setNodeRef,
     transform, transition, isDragging,
@@ -61,7 +78,7 @@ function KanbanCard({
       )}
       <div className="flex items-center gap-1 mt-2 text-[10px] text-muted-foreground">
         <Clock className="h-2.5 w-2.5" />
-        {format(new Date(lead.updatedAt), "dd MMM")}
+        {formatKanbanDate(lead.updatedAt, language)}
       </div>
     </div>
   );
@@ -71,6 +88,7 @@ function KanbanCard({
 function KanbanColumn({
   stage, leads, onCardClick,
 }: { stage: LeadStage; leads: Lead[]; onCardClick: (lead: Lead) => void }) {
+  const { t } = useLanguage();
   const cfg = STAGE_CONFIG[stage];
 
   // ← KEY FIX: the column itself is a droppable with id = stage string
@@ -81,7 +99,7 @@ function KanbanColumn({
       <div className={cn("flex items-center justify-between rounded-t-xl px-4 py-3 border-b", cfg.bg)}>
         <div className="flex items-center gap-2">
           <span className={cn("h-2 w-2 rounded-full", cfg.color.replace("text-", "bg-"))} />
-          <span className={cn("text-xs font-semibold", cfg.color)}>{cfg.label}</span>
+          <span className={cn("text-xs font-semibold", cfg.color)}>{t(cfg.label)}</span>
         </div>
         <span className={cn(
           "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
@@ -109,7 +127,7 @@ function KanbanColumn({
               "flex items-center justify-center h-24 rounded-lg border-2 border-dashed text-xs text-muted-foreground transition-colors",
               isOver && "border-primary/40 text-primary bg-primary/5"
             )}>
-              Drop here
+              {t("Drop here")}
             </div>
           )}
         </div>

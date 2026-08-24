@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, CheckCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy"
 
@@ -30,6 +31,7 @@ interface EnrollmentDialogProps {
 }
 
 export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollmentChange }: EnrollmentDialogProps) {
+  const { language, t } = useLanguage();
   const [batches,        setBatches]        = useState<any[]>([]);
   const [enrolledIds,    setEnrolledIds]    = useState<Set<string>>(new Set());
   const [loading,        setLoading]        = useState(true);
@@ -54,13 +56,13 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
         const enrolled: any[] = eJson.data ?? [];
         setEnrolledIds(new Set(enrolled.map((b: any) => String(b.id))));
       } catch (err) {
-        toast.error("Failed to load batches");
+        toast.error(t("Failed to load batches"));
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [studentId]);
+  }, [studentId, t]);
 
   async function handleToggle(batchId: string) {
     const isEnrolled = enrolledIds.has(batchId);
@@ -92,7 +94,7 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
         })
       );
       onEnrollmentChange?.();
-      toast.success(isEnrolled ? "Removed from batch" : "Enrolled in batch");
+      toast.success(isEnrolled ? t("Removed from batch") : t("Enrolled in batch"));
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -116,8 +118,8 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
-            <h2 className="font-semibold">Manage Batches</h2>
-            <p className="text-sm text-muted-foreground">{studentName}</p>
+            <h2 className="font-semibold">{t("Manage Batches")}</h2>
+            <p className="text-sm text-muted-foreground">{t(studentName) || studentName}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
             <X className="h-4 w-4" />
@@ -133,7 +135,7 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
           )}
 
           {!loading && batches.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">No batches found.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t("No batches found.")}</p>
           )}
 
           {!loading && batches.map(batch => {
@@ -159,16 +161,16 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
                     </div>
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{batch.name}</p>
+                  <p className="text-sm font-medium">{t(batch.name) || batch.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[batch.tutor_name, batch.academic_year, batch.room_or_link].filter(Boolean).join(" · ")}
+                    {[t(batch.tutor_name) || batch.tutor_name, batch.academic_year, t(batch.room_or_link) || batch.room_or_link].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-medium">
                     {getBatchStudentCount(batch)}/{batch.capacity ?? "∞"}
                   </p>
-                  <p className="text-xs text-muted-foreground">students</p>
+                  <p className="text-xs text-muted-foreground">{t("students")}</p>
                 </div>
               </button>
             );
@@ -181,7 +183,7 @@ export function EnrollmentDialog({ studentId, studentName, onClose, onEnrollment
             onClick={onClose}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            Done
+            {t("Done")}
           </button>
         </div>
       </div>

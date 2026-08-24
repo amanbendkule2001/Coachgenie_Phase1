@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import type { Student } from "@/lib/types/academic";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const schema = z.object({
   name:        z.string().min(2, "Name must be at least 2 characters"),
@@ -55,6 +56,7 @@ const Field = ({ label, error, className, children }: { label: string; error?: s
 );
 
 export function StudentForm({ defaultValues, onSubmit, onCancel, submitLabel = "Create Student" }: StudentFormProps) {
+  const { language, t } = useLanguage();
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<StudentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -97,58 +99,58 @@ export function StudentForm({ defaultValues, onSubmit, onCancel, submitLabel = "
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Student Name" error={errors.name?.message}>
+        <Field label={t("Student Name")} error={errors.name?.message}>
           <input {...register("name")} placeholder="Aarav Sharma" className={inputCls} />
         </Field>
-        <Field label="Date of Birth" error={errors.dob?.message}>
+        <Field label={t("Date of Birth")} error={errors.dob?.message}>
           <input {...register("dob")} type="date" className={inputCls} />
         </Field>
-        <Field label="Email" error={errors.email?.message}>
+        <Field label={t("Email")} error={errors.email?.message}>
           <input {...register("email")} type="email" placeholder="aarav@gmail.com" className={inputCls} />
         </Field>
-        <Field label="Phone" error={errors.phone?.message}>
+        <Field label={t("Phone")} error={errors.phone?.message}>
           <input {...register("phone")} placeholder="9876543210" className={inputCls} />
         </Field>
-        <Field label="Parent Name" error={errors.parentName?.message}>
+        <Field label={t("Parent Name")} error={errors.parentName?.message}>
           <input {...register("parentName")} placeholder="Suresh Sharma" className={inputCls} />
         </Field>
-        <Field label="Parent Phone" error={errors.parentPhone?.message}>
+        <Field label={t("Parent Phone")} error={errors.parentPhone?.message}>
           <input {...register("parentPhone")} placeholder="9876543200" className={inputCls} />
         </Field>
-        <Field label="Grade" error={errors.grade?.message}>
+        <Field label={t("Grade")} error={errors.grade?.message}>
           <select {...register("grade")} className={inputCls}>
-            <option value="">Select Grade</option>
+            <option value="">{t("Select Grade")}</option>
             {["8th", "9th", "10th", "11th", "12th", "Dropper"].map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
           </select>
         </Field>
-        <Field label="Status" error={errors.status?.message}>
+        <Field label={t("Status")} error={errors.status?.message}>
           <select {...register("status")} className={inputCls}>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="GRADUATED">Graduated</option>
+            <option value="ACTIVE">{t("Active")}</option>
+            <option value="INACTIVE">{t("Inactive")}</option>
+            <option value="SUSPENDED">{t("Suspended")}</option>
+            <option value="GRADUATED">{t("Graduated")}</option>
           </select>
         </Field>
-        <Field label="Subjects (comma separated)" error={errors.subjects?.message}>
+        <Field label={t("Subjects (comma separated)")} error={errors.subjects?.message}>
           <input {...register("subjects")} placeholder="Mathematics, Physics" className={inputCls} />
         </Field>
-        <Field label="Target Exam" error={errors.targetExam?.message}>
+        <Field label={t("Target Exam")} error={errors.targetExam?.message}>
           <input {...register("targetExam")} placeholder="JEE, NEET, Boards" className={inputCls} />
         </Field>
-        <Field label="School Name" error={errors.schoolName?.message}>
+        <Field label={t("School Name")} error={errors.schoolName?.message}>
           <input {...register("schoolName")} placeholder="Delhi Public School" className={inputCls} />
         </Field>
-        <Field label="Gender" error={errors.gender?.message}>
+        <Field label={t("Gender")} error={errors.gender?.message}>
           <select {...register("gender")} className={inputCls}>
-            <option value="">Select</option>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-            <option value="OTHER">Other</option>
+            <option value="">{t("Select")}</option>
+            <option value="MALE">{t("Male")}</option>
+            <option value="FEMALE">{t("Female")}</option>
+            <option value="OTHER">{t("Other")}</option>
           </select>
         </Field>
-        <Field label="Address" error={errors.address?.message} className="col-span-1 sm:col-span-2">
+        <Field label={t("Address")} error={errors.address?.message} className="col-span-1 sm:col-span-2">
           <input {...register("address")} placeholder="Shivajinagar, Pune" className={inputCls} />
         </Field>
       </div>
@@ -158,7 +160,7 @@ export function StudentForm({ defaultValues, onSubmit, onCancel, submitLabel = "
           onClick={onCancel}
           className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="submit"

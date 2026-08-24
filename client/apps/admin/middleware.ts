@@ -14,6 +14,10 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/api/auth",
   "/api/chat",
+  "/offline",
+  "/sw.js",
+  "/manifest.webmanifest",
+  "/manifest.json",
 ];
 
 function getSecret(): Uint8Array {
@@ -176,5 +180,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|images).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|images|sw.js|manifest.webmanifest|manifest.json).*)"],
 };

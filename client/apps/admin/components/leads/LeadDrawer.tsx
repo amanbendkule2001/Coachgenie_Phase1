@@ -6,10 +6,11 @@ import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Lead, LeadActivity, LeadStage } from "@/lib/types/lead";
 import { StageBadge } from "./StageBadge"; 
-import { STAGE_CONFIG, STAGES } from "@/lib/constants/leads";
+import { STAGE_CONFIG, STAGES, BOARD_LABELS } from "@/lib/constants/leads";
 import { useLeadStore } from "@/lib/stores/leads.store";
 import { authHeaders } from "@/lib/auth-headers";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -19,6 +20,7 @@ interface LeadDrawerProps {
 }
 
 export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
+  const { t } = useLanguage();
   const router      = useRouter();
   const updateStage = useLeadStore((s) => s.updateStage);
   const [activities, setActivities] = useState<LeadActivity[]>(lead.activities || []);
@@ -105,14 +107,12 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
               <X className="h-4 w-4" />
             </button>
           </div>
-        </div>
-
-        {/* Body */}
+        </div>        {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
           {/* Stage pills */}
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Pipeline Stage</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{t("Pipeline Stage")}</p>
             <div className="flex flex-wrap gap-1.5">
               {STAGES.filter((s) => s !== "LOST").map((s) => {
                 const cfg    = STAGE_CONFIG[s];
@@ -128,7 +128,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
                         : "hover:bg-accent text-muted-foreground"
                     )}
                   >
-                    {cfg.label}
+                    {t(cfg.label)}
                   </button>
                 );
               })}
@@ -136,26 +136,26 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
           </div>
 
           {/* -- Contact Info ----------------------------------------------- */}
-          <Section title="Contact">
+          <Section title={t("Contact")}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <InfoCard icon={Mail}          label="Email"          value={lead.email} />
-              <InfoCard icon={Phone}         label="Phone"          value={lead.phone} />
-              <InfoCard icon={User}          label="Parent"         value={lead.parentName} />
-              <InfoCard icon={Phone}         label="Parent Contact" value={lead.parentContactNumber} />
-              <InfoCard icon={Building2}     label="School"         value={lead.schoolName} className="col-span-1 sm:col-span-2" />
+              <InfoCard icon={Mail}          label={t("Email")}          value={lead.email} />
+              <InfoCard icon={Phone}         label={t("Phone")}          value={lead.phone} />
+              <InfoCard icon={User}          label={t("Parent Name")}    value={lead.parentName} />
+              <InfoCard icon={Phone}         label={t("Parent Contact")} value={lead.parentContactNumber} />
+              <InfoCard icon={Building2}     label={t("School Name")}    value={lead.schoolName} className="col-span-1 sm:col-span-2" />
             </div>
           </Section>
 
           {/* -- Academic Info ----------------------------------------- */}
-          <Section title="Academic Details">
+          <Section title={t("Academic Details")}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <InfoCard icon={GraduationCap} label="Grade"  value={lead.grade} />
-              <InfoCard icon={BookOpen}      label="Board"  value={lead.boardName} />
-              <InfoCard icon={GraduationCap} label="Source" value={lead.source?.replace(/_/g, " ")} />
+              <InfoCard icon={GraduationCap} label={t("Grade")}  value={lead.grade} />
+              <InfoCard icon={BookOpen}      label={t("Board")}  value={lead.boardName ? t(BOARD_LABELS[lead.boardName] || lead.boardName) : undefined} />
+              <InfoCard icon={GraduationCap} label={t("Source")} value={t(lead.source?.replace(/_/g, " ") || "Other")} />
               <InfoCard
                 icon={Layers}
-                label="Batch"
-                value={lead.batchName || (lead.batchId ? "Assigned" : undefined)}
+                label={t("Batch")}
+                value={lead.batchName || (lead.batchId ? t("Assigned") : undefined)}
                 className="col-span-1 sm:col-span-2"
               />
             </div>
@@ -163,7 +163,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
               const subjects = (Array.isArray(lead.subject) ? lead.subject : [lead.subject]).filter((s: string) => s && s !== "N/A");
               return subjects.length > 0 ? (
                 <div className="mt-3">
-                  <p className="text-xs text-muted-foreground mb-1.5">Subjects</p>
+                  <p className="text-xs text-muted-foreground mb-1.5">{t("Subjects")}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {subjects.map((s: string) => (
                       <span key={s}
@@ -191,7 +191,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
           {/* Notes */}
           {lead.notes && (
             <div className="rounded-lg border bg-card p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Notes</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{t("Notes")}</p>
               <p className="text-sm">{lead.notes}</p>
             </div>
           )}
@@ -199,13 +199,13 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
           {/* Recent activity */}
           {activities.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Recent Activity</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">{t("Recent Activity")}</p>
               <div className="space-y-2">
                 {activities.slice(0, 4).map((act) => (
                   <div key={act.id} className="rounded-xl border bg-card p-3 shadow-2xs hover:border-primary/20 transition-colors">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
-                        {act.type.replace(/_/g, " ")}
+                        {t(act.type.replace(/_/g, " "))}
                       </span>
                       <span className="text-[10px] text-muted-foreground font-medium">
                         {(() => {
@@ -229,7 +229,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
           )}
 
           <div className="text-xs text-muted-foreground">
-            Added {format(new Date(lead.createdAt), "dd MMM yyyy")} � Updated {format(new Date(lead.updatedAt), "dd MMM yyyy")}
+            Added {format(new Date(lead.createdAt), "dd MMM yyyy")} • Updated {format(new Date(lead.updatedAt), "dd MMM yyyy")}
           </div>
         </div>
 
@@ -239,7 +239,7 @@ export function LeadDrawer({ lead, onClose }: LeadDrawerProps) {
             onClick={() => { onClose(); router.push(`/leads/${lead.id}`); }}
             className="flex-1 rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            View Full Profile
+            {t("View Full Profile")}
           </button>
         </div>
       </div>

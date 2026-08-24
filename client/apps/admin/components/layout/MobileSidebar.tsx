@@ -10,6 +10,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore, type UserRole } from "@/lib/stores/auth.store";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { CoachGenieLogo } from "@/components/common/CoachGenieLogo";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Users, CalendarDays, CheckSquare,
@@ -56,6 +58,7 @@ const MODULE_ROLES: Record<string, UserRole[]> = {
 
 function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const role = useAuthStore((state) => state.role) ?? "owner";
 
   const visibleItems = NAV_ITEMS.filter(
@@ -87,7 +90,7 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
           "overflow-hidden"
         )}
       >
-        <div className="flex items-center justify-between border-b px-4 h-[3.75rem] shrink-0">
+        <div className="flex items-center justify-between border-b px-4 h-[3.75rem] shrink-0" data-no-translate="true">
           <div className="flex items-center gap-2.5 min-w-0">
             <CoachGenieLogo size="md" plain />
             <span className="font-bold tracking-tight text-sm truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">CoachGenie</span>
@@ -105,6 +108,7 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
           {visibleItems.map((item) => {
             const Icon = ICON_MAP[item.icon] ?? LayoutDashboard;
             const active = !item.external && item.href === activeItemHref;
+            const labelTranslated = t(item.label);
 
             const commonClass = cn(
               "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
@@ -125,7 +129,7 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="truncate flex items-center gap-1">
-                    {item.label}
+                    {labelTranslated}
                     <ExternalLink className="h-3 w-3 opacity-50" />
                   </span>
                 </a>
@@ -140,7 +144,7 @@ function MobileSidebarDrawer({ onClose }: { onClose: () => void }) {
                 className={commonClass}
               >
                 <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{labelTranslated}</span>
               </Link>
             );
           })}

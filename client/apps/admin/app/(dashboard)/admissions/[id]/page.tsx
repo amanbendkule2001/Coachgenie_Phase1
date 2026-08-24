@@ -35,6 +35,8 @@ import { useLeadStore } from "@/lib/stores/leads.store";
 import { authHeaders } from "@/lib/auth-headers";
 import { InvoicePDFModal, type InvoicePDFData } from "@/components/finance/InvoicePDFModal";
 import { generateInvoicePDF } from "@/lib/utils/generate-invoice-pdf";
+import { BOARD_LABELS } from "@/lib/constants/leads";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import {
   createInitialInstallmentSchedule,
   rebalanceInstallmentSchedule,
@@ -42,6 +44,22 @@ import {
   removeInstallmentFromSchedule,
   type InstallmentItem,
 } from "@/lib/utils/installment-rebalancer";
+
+function formatAdmDate(dateStr: string, lang: string): string {
+  try {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const monthIdx = d.getMonth();
+    const yr = d.getFullYear().toString().slice(-2);
+    const mrMonths = ["जाने", "फेब्रु", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"];
+    const hiMonths = ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितं", "अक्तू", "नवं", "दिसं"];
+    if (lang === "mr") return `${day} ${mrMonths[monthIdx]} ${yr}`;
+    if (lang === "hi") return `${day} ${hiMonths[monthIdx]} ${yr}`;
+    return format(d, "dd MMM yy");
+  } catch {
+    return dateStr;
+  }
+}
 
 type PaymentMode = "upi" | "cash" | "bank" | "other";
 type PaymentStatus = "PENDING" | "PARTIAL" | "FULL";
@@ -151,6 +169,7 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const router = useRouter();
   const store = useLeadStore();
+  const { language, t } = useLanguage();
 
   const storeAdmission = store.admissions.find((a) => a.id === id) as AdmissionDetail | undefined;
   const [admission, setAdmission] = useState<AdmissionDetail | null>(storeAdmission ?? null);
@@ -368,9 +387,9 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
   if (!admission) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 rounded-2xl border bg-card p-8 text-center">
-        <p className="text-base font-bold">Admission application not found.</p>
+        <p className="text-base font-bold">{t("Admission application not found.")}</p>
         <button onClick={() => router.push("/admissions")} className="text-xs font-semibold text-primary hover:underline">
-          ← Return to Admissions List
+          {t("← Return to Admissions List")}
         </button>
       </div>
     );
@@ -503,14 +522,14 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight">{name}</h1>
+              <h1 className="text-xl font-bold tracking-tight">{t(name) || name}</h1>
               <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold", statusCfg.bg, statusCfg.color, statusCfg.border)}>
                 <StatusIcon className="h-3 w-3" />
-                {statusCfg.label}
+                {t(statusCfg.label)}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-              ID: <span className="font-mono">{admission.admission_number || admission.id.slice(0, 8)}</span>
+              {t("ID")}: <span className="font-mono">{admission.admission_number || admission.id.slice(0, 8)}</span>
             </p>
           </div>
         </div>
@@ -521,14 +540,14 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
             onClick={handleDownloadPDF}
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
-            <Download className="h-3.5 w-3.5" /> Download PDF Invoice
+            <Download className="h-3.5 w-3.5" /> {t("Download PDF Invoice")}
           </button>
         </div>
       </div>
 
       {/* 🧭 Workflow Progress Tracker */}
       <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Admission Enrollment Lifecycle Step</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Admission Enrollment Lifecycle Step")}</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {STATUS_FLOW.map((s, idx) => {
@@ -546,10 +565,10 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase text-muted-foreground">Step 0{idx + 1}</span>
+                  <span className="text-[10px] font-extrabold uppercase text-muted-foreground">{t("Step")} 0{idx + 1}</span>
                   {isPassed && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                 </div>
-                <p className={cn("text-xs font-bold", isCurrent ? "text-primary" : "text-foreground")}>{cfg.label}</p>
+                <p className={cn("text-xs font-bold", isCurrent ? "text-primary" : "text-foreground")}>{t(cfg.label)}</p>
               </button>
             );
           })}
@@ -563,18 +582,18 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
           <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <User className="h-4 w-4 text-violet-600" />
-              <span>Student &amp; Parent Profile</span>
+              <span>{t("Student & Parent Profile")}</span>
             </div>
 
             {[
-              { label: "Student Name", value: name },
-              { label: "Phone", value: phone },
-              { label: "Email", value: admission.email },
-              { label: "Parent Name", value: parentName },
-              { label: "Parent Phone", value: parentPhone },
-              { label: "Previous School", value: school },
-              { label: "Educational Board", value: board },
-              { label: "Target Batch", value: batch },
+              { label: t("Student Name"), value: t(name) || name },
+              { label: t("Phone"), value: phone },
+              { label: t("Email"), value: admission.email },
+              { label: t("Parent Name"), value: t(parentName) || parentName },
+              { label: t("Parent Phone"), value: parentPhone },
+              { label: t("Previous School"), value: t(school) || school },
+              { label: t("Educational Board"), value: t(BOARD_LABELS[board] || board) },
+              { label: t("Target Batch"), value: batch },
             ].map(({ label, value }) =>
               value ? (
                 <div key={label} className="flex justify-between text-xs">
@@ -590,29 +609,29 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
             <div className="flex items-center justify-between border-b pb-2">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <IndianRupee className="h-4 w-4 text-emerald-600" />
-                <span>Financial Fee Ledger</span>
+                <span>{t("Financial Fee Ledger")}</span>
               </div>
               <button
                 type="button"
                 onClick={handleDownloadPDF}
                 className="text-[11px] font-semibold text-violet-600 hover:underline flex items-center gap-1"
-                title="Download Official PDF Invoice"
+                title={t("Download PDF Invoice")}
               >
-                <Download className="h-3 w-3" /> PDF Invoice
+                <Download className="h-3 w-3" /> {t("PDF Invoice")}
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground font-medium">Total Course Fee</span>
+                <span className="text-muted-foreground font-medium">{t("Total Course Fee")}</span>
                 <span className="font-bold text-foreground">{fmt(totalFee)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground font-medium">Total Amount Paid</span>
+                <span className="text-muted-foreground font-medium">{t("Total Amount Paid")}</span>
                 <span className="font-bold text-emerald-600">{fmt(paidFee)}</span>
               </div>
               <div className="flex justify-between border-t pt-1">
-                <span className="text-muted-foreground font-medium">Remaining Outstanding</span>
+                <span className="text-muted-foreground font-medium">{t("Remaining Outstanding")}</span>
                 <span className="font-extrabold text-red-500">{fmt(remainingFee)}</span>
               </div>
             </div>
@@ -620,7 +639,7 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
             {/* Progress bar */}
             <div className="space-y-1 pt-1">
               <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
-                <span>Fee Settlement Progress</span>
+                <span>{t("Fee Settlement Progress")}</span>
                 <span>{Math.round((paidFee / (totalFee || 1)) * 100)}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -642,10 +661,10 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="text-sm font-bold tracking-tight flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-violet-600" /> Dynamic Adjustable Installment Schedule
+                    <Clock className="h-4 w-4 text-violet-600" /> {t("Dynamic Adjustable Installment Schedule")}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Add, remove, edit any installment amount or mark as paid. Remaining balance automatically re-balances.
+                    {t("Add, remove, edit any installment amount or mark as paid. Remaining balance automatically re-balances.")}
                   </p>
                 </div>
                 <button
@@ -653,7 +672,7 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                   onClick={handleAddTerm}
                   className="flex items-center gap-1 text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-950/50 hover:bg-violet-100 dark:hover:bg-violet-900/60 px-3 py-1.5 rounded-lg border border-violet-200/60 transition-all shrink-0"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Term
+                  <Plus className="h-3.5 w-3.5" /> {t("Add Term")}
                 </button>
               </div>
 
@@ -674,18 +693,18 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                             "h-5 w-5 rounded-md border flex items-center justify-center text-white transition-colors shrink-0",
                             inst.paid ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground/40 hover:border-violet-500"
                           )}
-                          title={inst.paid ? "Mark as Unpaid" : "Mark as Paid"}
+                          title={inst.paid ? t("Mark as Unpaid") : t("Mark as Paid")}
                         >
                           {inst.paid && <CheckCircle2 className="h-3.5 w-3.5" />}
                         </button>
-                        <span className="font-bold text-foreground">Term #{inst.number}</span>
+                        <span className="font-bold text-foreground">{t("Term")} #{inst.number}</span>
                       </div>
                       {installments.length > 1 && !inst.paid && (
                         <button
                           type="button"
                           onClick={() => handleRemoveTerm(i)}
                           className="sm:hidden text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
-                          title="Remove installment term"
+                          title={t("Remove installment term")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -711,7 +730,7 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                         className="w-full rounded-lg border bg-background px-2.5 py-1 text-xs font-bold text-foreground outline-none focus:ring-1 focus:ring-violet-500"
                       />
                       <span className={cn("text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full shrink-0", inst.paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
-                        {inst.paid ? "Paid" : "Pending"}
+                        {inst.paid ? t("Paid") : t("Pending")}
                       </span>
                     </div>
 
@@ -721,7 +740,7 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                           type="button"
                           onClick={() => handleRemoveTerm(i)}
                           className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
-                          title="Remove installment term"
+                          title={t("Remove installment term")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -737,10 +756,10 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
           <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold tracking-tight flex items-center gap-2">
-                <FileCheck className="h-4 w-4 text-blue-600" /> Mandatory Document Verification Checklist
+                <FileCheck className="h-4 w-4 text-blue-600" /> {t("Mandatory Document Verification Checklist")}
               </h3>
               <span className="text-xs text-muted-foreground font-semibold">
-                {(admission.documents ?? []).filter((d) => d.submitted).length} / {(admission.documents ?? []).length} Verified
+                {(admission.documents ?? []).filter((d) => d.submitted).length} / {(admission.documents ?? []).length} {t("Verified")}
               </span>
             </div>
 
@@ -764,13 +783,13 @@ export default function AdmissionDetailPage({ params }: { params: Promise<{ id: 
                       {doc.submitted && <CheckCircle2 className="h-3.5 w-3.5" />}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-foreground">{doc.name}</p>
-                      <p className="text-[10px] text-muted-foreground font-medium">{doc.required ? "Mandatory Document" : "Optional Document"}</p>
+                      <p className="text-xs font-bold text-foreground">{t(doc.name) || doc.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">{doc.required ? t("Mandatory Document") : t("Optional Document")}</p>
                     </div>
                   </div>
 
                   <span className={cn("text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full", doc.submitted ? "bg-emerald-500/15 text-emerald-600" : "bg-amber-500/15 text-amber-600")}>
-                    {doc.submitted ? "Verified" : "Pending"}
+                    {doc.submitted ? t("Verified") : t("Pending")}
                   </span>
                 </div>
               ))}

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "scene_01_login",
+    "url": "http://localhost:3000/login",
+    "title": "🔐 Step 1: Secure Multi-Tenant Authentication",
+    "text": "Welcome to CoachGenie, the all-in-one Enterprise Coaching Management System. We begin with secure multi-tenant authentication. Simply enter your unique institute code 'demo', administrative email, and password to securely log into your dedicated portal.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_01_login.mp3",
+    "duration": 19.68
+  },
+  {
+    "id": "scene_02_dashboard",
+    "url": "http://localhost:3000/dashboard",
+    "title": "📊 Step 2: Executive Overview Dashboard",
+    "text": "This is the Executive Dashboard. Institute directors and branch managers get a high-level operational overview in real-time, showcasing active students, lead conversion funnels, running batches, monthly revenue statistics, dynamic fee collection charts, and classroom attendance heatmaps.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_02_dashboard.mp3",
+    "duration": 21.599999999999998
+  },
+  {
+    "id": "scene_03_leads",
+    "url": "http://localhost:3000/leads",
+    "title": "🎯 Step 3: Leads CRM & Inquiry Pipeline",
+    "text": "In the Leads and CRM module, coaching centers can track incoming student inquiries across multiple channels, manage counselor follow-ups, organize leads by pipeline status, filter by source, and convert prospective candidates into confirmed enrolments with one click.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_03_leads.mp3",
+    "duration": 19.32
+  },
+  {
+    "id": "scene_04_admissions",
+    "url": "http://localhost:3000/admissions",
+    "title": "📝 Step 4: Admissions & Enrolment Processing",
+    "text": "The Admissions module streamlines student onboarding. Staff can process new admission applications, verify student identity documents, assign roll numbers, allocate courses, and track the entire admission approval workflow transparently.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_04_admissions.mp3",
+    "duration": 18.529999999999998
+  },
+  {
+    "id": "scene_05_students",
+    "url": "http://localhost:3000/students",
+    "title": "🎓 Step 5: Student Directory & 360° Profiles",
+    "text": "The Students Directory maintains a 360-degree digital record of every enrolled student. It includes parent contact details, active batch enrollments, attendance history, past examination scores, fee installment status, and growth analytics.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_05_students.mp3",
+    "duration": 19.8
+  },
+  {
+    "id": "scene_06_batches",
+    "url": "http://localhost:3000/batches",
+    "title": "📅 Step 6: Batches & Course Management",
+    "text": "The Batches module allows administrators to configure academic batches, set maximum student capacities, assign expert faculty and subject mentors, define syllabus tracks, and manage student batch transitions effortlessly.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_06_batches.mp3",
+    "duration": 17.419999999999998
+  },
+  {
+    "id": "scene_07_sessions",
+    "url": "http://localhost:3000/sessions",
+    "title": "⏰ Step 7: Class Sessions & Lecture Scheduling",
+    "text": "Under Sessions and Timetables, institutes can plan daily and weekly lecture calendars, schedule recurring classroom or online sessions, avoid faculty timing conflicts, and notify students about upcoming classes.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_07_sessions.mp3",
+    "duration": 15.959999999999999
+  },
+  {
+    "id": "scene_08_attendance",
+    "url": "http://localhost:3000/attendance",
+    "title": "📋 Step 8: Daily Live Attendance",
+    "text": "The Attendance module facilitates fast and accurate daily student check-ins. Faculty can quickly mark Present, Absent, or Late with a single click, triggering instant automated SMS and WhatsApp alerts to parents.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_08_attendance.mp3",
+    "duration": 17.14
+  },
+  {
+    "id": "scene_09_attendance_reports",
+    "url": "http://localhost:3000/attendance/reports",
+    "title": "📈 Step 9: Attendance Reports & Analytics",
+    "text": "In Attendance Reports, coaching management can inspect monthly attendance percentages, detect chronic absenteeism patterns, export printable attendance registers, and monitor classroom engagement trends.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_09_attendance_reports.mp3",
+    "duration": 14.979999999999999
+  },
+  {
+    "id": "scene_10_exams",
+    "url": "http://localhost:3000/exams",
+    "title": "🏆 Step 10: Exams, Tests & Scorecard Management",
+    "text": "The Exams module manages chapter tests, weekly assessments, and mock entrance exams. Teachers can schedule test dates, record subject-wise marks, generate automated rank lists, and deliver downloadable report cards to parents.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_10_exams.mp3",
+    "duration": 18.41
+  },
+  {
+    "id": "scene_11_growth_cards",
+    "url": "http://localhost:3000/growth-cards",
+    "title": "✨ Step 11: AI Student Growth Cards",
+    "text": "AI Growth Cards leverage machine learning to analyze every student's assessment trajectory over time, highlighting strong topics, areas needing remedial attention, and predicting final exam readiness.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_11_growth_cards.mp3",
+    "duration": 15.1
+  },
+  {
+    "id": "scene_12_fees",
+    "url": "http://localhost:3000/fees",
+    "title": "💳 Step 12: Fees Management & Invoicing",
+    "text": "The Fees module provides a complete financial ledger for coaching institutes. Administrators can configure flexible fee structures, track upcoming and overdue installments, record cash or online payments, and generate branded GST invoices.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_12_fees.mp3",
+    "duration": 18.34
+  },
+  {
+    "id": "scene_13_billing",
+    "url": "http://localhost:3000/settings/billing",
+    "title": "💼 Step 13: Subscription & Billing Settings",
+    "text": "Under Billing and Subscription Settings, institute owners can monitor their software tier, review historical billing invoices, configure payment gateway credentials, and manage license scaling seamlessly.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_13_billing.mp3",
+    "duration": 14.66
+  },
+  {
+    "id": "scene_14_notifications",
+    "url": "http://localhost:3000/notifications",
+    "title": "🔔 Step 14: Broadcasts & Notification Center",
+    "text": "The Notifications Center allows administrators to broadcast critical announcements, emergency holiday alerts, exam schedules, and fee reminders across SMS, Email, and in-app feeds to students, parents, and staff.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_14_notifications.mp3",
+    "duration": 17.259999999999998
+  },
+  {
+    "id": "scene_15_ai_analytics",
+    "url": "http://localhost:3000/ai/analytics",
+    "title": "🤖 Step 15: AI Intelligence & Predictive Analytics",
+    "text": "CoachGenie's AI Analytics delivers next-generation intelligence: predicting admission conversion likelihood, calculating batch health scores, detecting early dropout risks, and providing actionable revenue forecasts.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_15_ai_analytics.mp3",
+    "duration": 16.37
+  },
+  {
+    "id": "scene_16_settings",
+    "url": "http://localhost:3000/settings/users",
+    "title": "⚙️ Step 16: Staff Management & Role Permissions",
+    "text": "In Settings and User Management, institute directors can onboard staff members, assign granular role permissions for Admins, Counselors, Tutors, and Coaches, and customize institute branding.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_16_settings.mp3",
+    "duration": 14.899999999999999
+  },
+  {
+    "id": "scene_17_docs",
+    "url": "http://localhost:3000/docs",
+    "title": "📖 Step 17: In-App Documentation & Guides",
+    "text": "The Documentation module contains step-by-step operating guidelines, standard operating procedures, and feature tutorials, helping institute personnel master the software with zero learning curve.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_17_docs.mp3",
+    "duration": 14.11
+  },
+  {
+    "id": "scene_18_outro",
+    "url": "http://localhost:3000/dashboard",
+    "title": "✨ Step 18: Summary & All-in-One Power of CoachGenie",
+    "text": "In conclusion, CoachGenie connects every facet of coaching operations: from inquiry to admission, batches to attendance, exams to fees, and AI analytics to growth. Elevate your coaching institute with CoachGenie today. Thank you for watching.",
+    "audio_file": "D:\\working\\Coachgenie_Phase1-main\\audio_en\\scene_18_outro.mp3",
+    "duration": 19.66
+  }
+]

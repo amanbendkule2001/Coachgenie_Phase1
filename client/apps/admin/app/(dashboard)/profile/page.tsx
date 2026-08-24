@@ -204,7 +204,7 @@ export default function ProfilePage() {
             });
             const updated = res.data ?? (res as any);
             if (user) {
-              setUser({ ...user, ...updated });
+              setUser({ ...user, ...updated, role: (updated.role || user.role) as any });
             }
             toast.success("Avatar photo updated!");
           } catch {
@@ -252,7 +252,7 @@ export default function ProfilePage() {
       const updated = res.data ?? (res as any);
       setProfile((prev) => (prev ? { ...prev, ...updated } : updated));
       if (user) {
-        setUser({ ...user, ...updated });
+        setUser({ ...user, ...updated, role: (updated.role || user.role) as any });
       }
       toast.success("Profile details updated successfully!");
     } catch (err: any) {

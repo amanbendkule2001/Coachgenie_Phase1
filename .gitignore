@@ -127,9 +127,29 @@ generated_reports/*
 !generated_reports/.gitkeep
 
 # ==========================================
-# 6. IDEs & OS Files
+# 6. Media, Audio & Video Recordings
+# ==========================================
+*.webm
+*.mp4
+*.wav
+*.mp3
+audio_en/
+audio_hi/
+audio_mr/
+audio_tracks/
+raw_output_en/
+raw_output_hi/
+raw_output_mr/
+timed_video_output/
+recorded_videos/
+multilingual_screenshots/
+multilingual_module_screens/
+
+# ==========================================
+# 7. IDEs & OS Files
 # ==========================================
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+

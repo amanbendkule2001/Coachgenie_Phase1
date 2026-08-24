@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 // Dynamically import heavy chart components to reduce initial main-thread JavaScript execution time & TBT
 const FeeCollectionChart = dynamic(
@@ -56,6 +57,7 @@ const ALL_MODULES = [
 ];
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const user = useAuthStore((s) => s.user);
   const storeRole = useAuthStore((s) => s.role);
 
@@ -73,18 +75,18 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            {role === "owner" && "Executive Command Center"}
-            {role === "admin" && "Operations Command Center"}
-            {(role === "tutor" || role === "coach") && "Faculty Teaching Portal"}
-            {role === "counselor" && "Admissions & Counseling Center"}
-            {role !== "owner" && role !== "admin" && role !== "tutor" && role !== "coach" && role !== "counselor" && "CoachGenie Dashboard"}
+            {role === "owner" && t("Executive Command Center")}
+            {role === "admin" && t("Operations Command Center")}
+            {(role === "tutor" || role === "coach") && t("Faculty Teaching Portal")}
+            {role === "counselor" && t("Admissions & Counseling Center")}
+            {role !== "owner" && role !== "admin" && role !== "tutor" && role !== "coach" && role !== "counselor" && t("CoachGenie Dashboard")}
 
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-600">
-              <Sparkles className="h-3 w-3" /> Live Feed
+              <Sparkles className="h-3 w-3" /> {t("Live Feed")}
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back, <span className="font-semibold text-foreground">{userName}</span>. Here is today's real-time summary.
+            {t("Welcome back,")} <span className="font-semibold text-foreground">{userName}</span>. {t("Here is today's real-time summary.")}
           </p>
         </div>
 
@@ -95,7 +97,7 @@ export default function DashboardPage() {
               href="/leads"
               className="flex items-center gap-1.5 rounded-xl border bg-background px-3.5 py-2 text-xs font-semibold hover:bg-accent transition-colors shadow-xs"
             >
-              <UserPlus className="h-3.5 w-3.5 text-blue-600" /> New Lead
+              <UserPlus className="h-3.5 w-3.5 text-blue-600" /> {t("New Lead")}
             </Link>
           )}
 
@@ -104,7 +106,7 @@ export default function DashboardPage() {
               href="/attendance"
               className="flex items-center gap-1.5 rounded-xl border bg-background px-3.5 py-2 text-xs font-semibold hover:bg-accent transition-colors shadow-xs"
             >
-              <CalendarCheck className="h-3.5 w-3.5 text-emerald-600" /> Mark Attendance
+              <CalendarCheck className="h-3.5 w-3.5 text-emerald-600" /> {t("Mark Attendance")}
             </Link>
           )}
 
@@ -113,7 +115,7 @@ export default function DashboardPage() {
               href="/exams"
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
             >
-              <ClipboardList className="h-3.5 w-3.5" /> Enter Exam Scores
+              <ClipboardList className="h-3.5 w-3.5" /> {t("Enter Exam Scores")}
             </Link>
           )}
 
@@ -122,7 +124,7 @@ export default function DashboardPage() {
               href="/fees"
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
             >
-              <Receipt className="h-3.5 w-3.5" /> Record Fee
+              <Receipt className="h-3.5 w-3.5" /> {t("Record Fee")}
             </Link>
           )}
 
@@ -131,7 +133,7 @@ export default function DashboardPage() {
               href="/admissions"
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
             >
-              <UserPlus className="h-3.5 w-3.5" /> Enroll Student
+              <UserPlus className="h-3.5 w-3.5" /> {t("Enroll Student")}
             </Link>
           )}
         </div>
@@ -146,16 +148,16 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
-                Institute Health Score: 98% • All Core Modules Active
+                {t("Institute Health Score: 98% • All Core Modules Active")}
               </p>
               <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
-                Multi-Tenant Security, Real-Time Database Sync &amp; AI Copilot Online
+                {t("Multi-Tenant Security, Real-Time Database Sync & AI Copilot Online")}
               </p>
             </div>
           </div>
 
           <Link href="/settings" className="text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:underline flex items-center gap-1">
-            Institute Settings →
+            {t("Institute Settings →")}
           </Link>
         </div>
       )}
@@ -183,12 +185,12 @@ export default function DashboardPage() {
         <AttendanceHeatmap />
       )}
 
-      {/* 🧭 Role-Filtered Quick Module Directory Grid */}
+      {/* 🧭 Role-Filtered Quick Module Directory Grid (Authorized Section) */}
       <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b pb-3">
           <div>
-            <h2 className="font-bold text-base tracking-tight">Your Authorized Modules</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Quick access to modules enabled for your role</p>
+            <h2 className="font-bold text-base tracking-tight">{t("Your Authorized Modules")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("Quick access to modules enabled for your role")}</p>
           </div>
         </div>
 
@@ -204,7 +206,7 @@ export default function DashboardPage() {
                   <mod.icon className={`h-4 w-4 ${mod.color}`} />
                 </div>
                 <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
-                  {mod.name}
+                  {t(mod.name)}
                 </span>
               </div>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />

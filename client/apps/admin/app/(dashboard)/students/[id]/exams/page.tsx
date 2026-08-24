@@ -5,9 +5,11 @@ import { ArrowLeft, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAcademicStore } from "@/lib/stores/academic.store";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export default function StudentExamsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }   = use(params);
+  const { language, t } = useLanguage();
   const store    = useAcademicStore();
   const student  = store.students.find(s => s.id === id);
 
@@ -22,14 +24,14 @@ export default function StudentExamsPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold">{student?.name} — Exam Results</h1>
-          <p className="text-sm text-muted-foreground">{examResults.length} exams taken</p>
+          <h1 className="text-xl font-bold">{t(student?.name || "") || student?.name || "Student"} — {t("Exam Results")}</h1>
+          <p className="text-sm text-muted-foreground">{examResults.length} {t("exams taken")}</p>
         </div>
       </div>
 
       {examResults.length === 0 ? (
         <div className="flex items-center justify-center h-40 rounded-xl border bg-card text-sm text-muted-foreground">
-          No exam results yet.
+          {t("No exam results yet.")}
         </div>
       ) : (
         <div className="space-y-3">
@@ -46,9 +48,9 @@ export default function StudentExamsPage({ params }: { params: Promise<{ id: str
               <div key={exam.id} className="rounded-xl border bg-card p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-semibold">{exam.name}</p>
+                    <p className="font-semibold">{t(exam.name) || exam.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {exam.subject} · {format(new Date(exam.date), "dd MMM yyyy")}
+                      {t(exam.subject) || exam.subject} · {format(new Date(exam.date), "dd MMM yyyy")}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
@@ -61,7 +63,7 @@ export default function StudentExamsPage({ params }: { params: Promise<{ id: str
                 <div className="mt-3 space-y-1.5">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{pct}%</span>
-                    {result!.rank && <span className="flex items-center gap-1"><Trophy className="h-3 w-3 text-amber-500" /> Rank {result!.rank}</span>}
+                    {result!.rank && <span className="flex items-center gap-1"><Trophy className="h-3 w-3 text-amber-500" /> {t("Rank")} {result!.rank}</span>}
                   </div>
                   <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                     <div className={cn("h-full rounded-full",

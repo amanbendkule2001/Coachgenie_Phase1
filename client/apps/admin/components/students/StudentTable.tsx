@@ -26,6 +26,25 @@ import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import type { Student } from "@/lib/types/academic";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+
+const MR_MONTHS = ["जाने", "फेब्रु", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टें", "ऑक्टो", "नोव्हें", "डिसें"];
+const HI_MONTHS = ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितं", "अक्तू", "नवंबर", "दिसंबर"];
+
+function formatAdmDate(dateStr: string, language: string) {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const monthIdx = d.getMonth();
+    const yr = String(d.getFullYear()).slice(-2);
+    if (language === "mr") return `${day} ${MR_MONTHS[monthIdx]} ${yr}`;
+    if (language === "hi") return `${day} ${HI_MONTHS[monthIdx]} ${yr}`;
+    return format(d, "dd MMM yy");
+  } catch {
+    return dateStr;
+  }
+}
 
 const STATUS_STYLE: Record<Student["status"], string> = {
   ACTIVE:
@@ -56,6 +75,7 @@ export function StudentTable({
   onGenerateReport,
   generatingReportId,
 }: StudentTableProps) {
+  const { language, t } = useLanguage();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -90,7 +110,7 @@ export function StudentTable({
       header: ({ column }) => (
         <button className="flex items-center gap-1 hover:text-foreground"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Student <ArrowUpDown className="h-3 w-3" />
+          {t("Student")} <ArrowUpDown className="h-3 w-3" />
         </button>
       ),
       cell: ({ row }) => (
@@ -99,7 +119,7 @@ export function StudentTable({
             {row.original.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
           </div>
           <div>
-            <p className="font-medium text-sm">{row.original.name}</p>
+            <p className="font-medium text-sm">{t(row.original.name) || row.original.name}</p>
             <p className="text-xs text-muted-foreground">{row.original.email}</p>
           </div>
         </div>
@@ -107,17 +127,17 @@ export function StudentTable({
     },
     {
       accessorKey: "phone",
-      header: "Phone",
+      header: t("Phone"),
       cell: ({ getValue }) => <span className="text-sm font-mono">{getValue<string>()}</span>,
     },
     {
       accessorKey: "grade",
-      header: "Grade",
+      header: t("Grade"),
       cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
     },
     {
       accessorKey: "subjects",
-      header: "Subjects",
+      header: t("Subjects"),
       cell: ({ getValue }) => {
         const subjects = (getValue<string[]>() ?? []).filter(s => s && s !== "N/A");
         if (!subjects.length) return <span className="text-xs text-muted-foreground">—</span>;
@@ -125,7 +145,7 @@ export function StudentTable({
           <div className="flex flex-wrap gap-1">
             {subjects.slice(0, 2).map(s => (
               <span key={s} className="rounded-full bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[10px] font-medium">
-                {s}
+                {t(s) || s}
               </span>
             ))}
             {subjects.length > 2 && (
@@ -139,18 +159,18 @@ export function StudentTable({
     },
     {
       accessorKey: "fees",
-      header: "Fee Status",
+      header: t("Fee Status"),
       cell: ({ row }) => {
         const { paid, total, due } = row.original.fees;
         if (!total && !paid) {
-          return <span className="text-xs text-muted-foreground">No Fees</span>;
+          return <span className="text-xs text-muted-foreground">{t("No Fees")}</span>;
         }
         const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 100;
         return (
           <div className="space-y-1 min-w-[120px]">
             <div className="flex justify-between text-xs">
               <span className="font-medium text-foreground">₹{paid.toLocaleString("en-IN")}</span>
-              <span className="text-muted-foreground">of ₹{total.toLocaleString("en-IN")}</span>
+              <span className="text-muted-foreground">{t("of")} ₹{total.toLocaleString("en-IN")}</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
               <div
@@ -160,7 +180,7 @@ export function StudentTable({
             </div>
             <div className="flex justify-between text-[10px]">
               <span className={cn("font-medium", due > 0 ? "text-red-500" : "text-emerald-600")}>
-                {due > 0 ? `Due: ₹${due.toLocaleString("en-IN")}` : "Paid in Full"}
+                {due > 0 ? `${t("Due")}: ₹${due.toLocaleString("en-IN")}` : t("Paid in Full")}
               </span>
               <span className="text-muted-foreground font-semibold">{pct}%</span>
             </div>
@@ -170,20 +190,23 @@ export function StudentTable({
     },
     {
       accessorKey: "status",
-      header: "Status",
-      cell: ({ getValue }) => (
-        <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-medium", STATUS_STYLE[getValue<Student["status"]>()])}>
-          {getValue<string>()}
-        </span>
-      ),
+      header: t("Status"),
+      cell: ({ getValue }) => {
+        const val = getValue<Student["status"]>();
+        return (
+          <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-medium", STATUS_STYLE[val])}>
+            {t(val) || val}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "joinedAt",
-      header: "Joined",
+      header: t("Joined"),
       cell: ({ getValue }) => {
         const val = getValue<string>();
         if (!val) return <span className="text-xs text-muted-foreground">—</span>;
-        return <span className="text-xs text-muted-foreground">{format(new Date(val), "dd MMM yy")}</span>;
+        return <span className="text-xs text-muted-foreground">{formatAdmDate(val, language)}</span>;
       },
     },
     {
@@ -196,7 +219,7 @@ export function StudentTable({
             <Link href={`/students/${row.original.id}`}
               aria-label={`View profile for ${row.original.name}`}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              title="View profile">
+              title={t("View profile")}>
               <Eye className="h-3.5 w-3.5" />
             </Link>
 
@@ -206,7 +229,7 @@ export function StudentTable({
                 onClick={() => onEdit(row.original)}
                 aria-label={`Edit student ${row.original.name}`}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                title="Edit student"
+                title={t("Edit student")}
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -219,7 +242,7 @@ export function StudentTable({
                 disabled={isGenerating}
                 aria-label={`Generate report for ${row.original.name}`}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
-                title="Generate report"
+                title={t("Generate report")}
               >
                 {isGenerating ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -234,7 +257,7 @@ export function StudentTable({
               onClick={() => onDelete(row.original.id)}
               aria-label={`Deactivate student ${row.original.name}`}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title="Deactivate student"
+              title={t("Deactivate student")}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -242,11 +265,10 @@ export function StudentTable({
         );
       },
     },
-  ], [onDelete, onEdit, onGenerateReport, generatingReportId]);
+  ], [onDelete, onEdit, onGenerateReport, generatingReportId, t, language]);
 
   const tableData = useMemo(() => [...filtered], [filtered]);
   const table = useReactTable({
-    // data: filtered,
     data: tableData,
     columns,
 
@@ -261,30 +283,12 @@ export function StudentTable({
 
     autoResetAll: false,
   });
-  console.log({
-    selected: statusFilter,
-    filtered: filtered.length,
-    rows: table.getRowModel().rows.length,
-  });
 
-
-  // const headerGroups = useMemo(
-  //   () => table.getHeaderGroups(),
-  //   [table]
-  // );
-
-  // const rows = useMemo(
-  //   () => table.getRowModel().rows,
-  //   [table]
-  // );
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
 
-
   return (
     <div className="space-y-3">
-      
-
       {/* Table */}
       <div className="rounded-xl border overflow-x-auto min-w-full">
         <table className="w-full text-sm">
@@ -306,7 +310,7 @@ export function StudentTable({
                   colSpan={columns.length}
                   className="h-32 text-center text-sm text-muted-foreground"
                 >
-                  No students found.
+                  {t("No students found.")}
                 </td>
               </tr>
             ) : (
@@ -342,7 +346,7 @@ export function StudentTable({
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm">
         <p className="text-xs text-muted-foreground">
-          {filtered.length} students
+          {filtered.length} {t("students")}
         </p>
       </div>
     </div>

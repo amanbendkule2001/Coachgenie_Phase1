@@ -1,9 +1,7 @@
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-
 import enCommon from "../locales/en/common.json";
 import hiCommon from "../locales/hi/common.json";
 import mrCommon from "../locales/mr/common.json";
+import { type SupportedLanguage, TRANSLATIONS, translate } from "./translations";
 
 export const defaultNS = "common";
 export const resources = {
@@ -12,13 +10,33 @@ export const resources = {
   mr: { common: mrCommon },
 } as const;
 
-void i18n.use(initReactI18next).init({
-  lng: "en",
-  fallbackLng: "en",
-  defaultNS,
-  resources,
-  interpolation: { escapeValue: false },
-});
+class I18nManager {
+  private currentLanguage: SupportedLanguage = "en";
+  private listeners: Array<(lang: SupportedLanguage) => void> = [];
 
+  get language(): SupportedLanguage {
+    return this.currentLanguage;
+  }
+
+  changeLanguage(lang: SupportedLanguage): Promise<void> {
+    this.currentLanguage = lang;
+    this.listeners.forEach((fn) => fn(lang));
+    return Promise.resolve();
+  }
+
+  t(key: string): string {
+    return translate(key, this.currentLanguage);
+  }
+
+  onLanguageChanged(fn: (lang: SupportedLanguage) => void): () => void {
+    this.listeners.push(fn);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== fn);
+    };
+  }
+}
+
+export const i18n = new I18nManager();
 export default i18n;
-export * from "react-i18next";
+
+export * from "./translations";

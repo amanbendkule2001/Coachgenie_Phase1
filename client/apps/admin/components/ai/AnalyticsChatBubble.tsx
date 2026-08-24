@@ -9,8 +9,10 @@ import { ConsentGate }           from "./ConsentGate";
 import { MessageBubble }         from "./MessageBubble";
 import { SuggestedPrompts }      from "./SuggestedPrompts";
 import { ChatInput }             from "./ChatInput";
+import { useLanguage }           from "@/components/providers/LanguageProvider";
 
 export function AnalyticsChatBubble() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const bottomRef       = useRef<HTMLDivElement>(null);
 
@@ -29,7 +31,7 @@ export function AnalyticsChatBubble() {
 
   return (
     <div className="rounded-2xl border bg-card shadow-sm overflow-hidden fade-in">
-      {/* Header � always visible */}
+      {/* Header — always visible */}
       <button
         onClick={() => setOpen(v => !v)}
         className="flex w-full items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors"
@@ -39,8 +41,8 @@ export function AnalyticsChatBubble() {
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-semibold">AI Copilot</p>
-            <p className="text-xs text-muted-foreground">Ask anything about your institute</p>
+            <p className="text-sm font-semibold">{t("AI Copilot")}</p>
+            <p className="text-xs text-muted-foreground">{t("Ask anything about your institute")}</p>
           </div>
         </div>
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -55,7 +57,7 @@ export function AnalyticsChatBubble() {
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
                     <Sparkles className="h-8 w-8 text-primary/40" />
-                    <p className="text-sm text-muted-foreground">What would you like to know?</p>
+                    <p className="text-sm text-muted-foreground">{t("What would you like to know?")}</p>
                   </div>
                 ) : (
                   messages.map((m: any, i: number) => (
