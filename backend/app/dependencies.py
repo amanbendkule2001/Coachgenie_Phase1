@@ -162,61 +162,45 @@ async def get_tenant(
     raw = x_tenant_subdomain or x_tenant_id
 
     if not raw or not raw.strip():
-        if not request.headers.get("authorization") and not request.headers.get("Authorization"):
-            raise TenantNotFoundError("X-Tenant-Subdomain header is missing")
-        raw = "demo"
+        # Check if auth token has tenant_id before failing
+        auth_hdr = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth_hdr and auth_hdr.startswith("Bearer "):
+            try:
+                token = auth_hdr.split(" ")[1]
+                payload = decode_access_token(token)
+                tid = payload.get("tenant_id") or payload.get("tenantId")
+                if tid:
+                    raw = str(tid)
+            except Exception:
+                pass
+
+        if not raw or not raw.strip():
+            raise TenantNotFoundError("Institute code (X-Tenant-Subdomain) is required.")
 
     sub_clean = raw.strip().lower()
 
     try:
-        uuid.UUID(sub_clean)
-        stmt = select(Tenant).where(Tenant.id == sub_clean)
+        uuid_val = uuid.UUID(sub_clean)
+        stmt = select(Tenant).where(Tenant.id == uuid_val)
     except ValueError:
         stmt = select(Tenant).where(func.lower(Tenant.subdomain) == sub_clean)
 
     result = await db.execute(stmt)
     tenant = result.scalar_one_or_none()
 
-    if not tenant:
-        # Fallback to demo tenant if requested subdomain not found
-        stmt_demo = select(Tenant).where(Tenant.subdomain == "demo")
-        tenant = (await db.execute(stmt_demo)).scalar_one_or_none()
-
-    if not tenant:
-        # On-demand auto-provisioning of demo tenant + owner user
+    # Only provision demo if the user specifically requested "demo"
+    if not tenant and sub_clean == "demo":
         try:
-            tenant = Tenant(
-                name="Demo Coaching Institute",
-                subdomain="demo",
-                plan="pro",
-                is_active=True,
-                settings={"theme": "blue", "locale": "en-IN"},
-            )
-            db.add(tenant)
-            await db.flush()
-
-            from app.utils.security import hash_password
-            res_user = await db.execute(select(User).where(User.email == "owner@demo.com"))
-            if not res_user.scalar_one_or_none():
-                user = User(
-                    tenant_id=tenant.id,
-                    email="owner@demo.com",
-                    password_hash=hash_password("Admin@1234"),
-                    first_name="Demo",
-                    last_name="Owner",
-                    role="owner",
-                    is_active=True,
-                )
-                db.add(user)
-            await db.commit()
-            logger.info("Auto-created demo tenant and owner@demo.com user in database.")
+            from app.services.tenant_provisioning import ensure_demo_tenant
+            await ensure_demo_tenant()
+            stmt_demo = select(Tenant).where(Tenant.subdomain == "demo")
+            tenant = (await db.execute(stmt_demo)).scalar_one_or_none()
         except Exception as err:
-            logger.warning(f"On-demand demo tenant creation exception: {err}")
-            await db.rollback()
+            logger.warning(f"Demo tenant on-demand provisioning note: {err}")
 
     if not tenant or not tenant.is_active:
-        logger.warning(f"Tenant resolution failed for header raw='{raw}'")
-        raise TenantNotFoundError(f"Tenant '{raw}' not found or inactive")
+        logger.warning(f"Tenant resolution failed for institute code: '{raw}'")
+        raise TenantNotFoundError(f"Institute code '{raw}' is invalid or does not exist.")
 
     return tenant
 

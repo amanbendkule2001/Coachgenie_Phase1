@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { CheckCircle2, Circle, Clock, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -36,6 +37,7 @@ type TopicStatus = keyof typeof STATUS_CONFIG;
 
 // ─── Page ─────────────────────────────────────────────────────
 export default function BatchSyllabusPage() {
+  const { language, t } = useLanguage();
   const params  = useParams();
   const batchId = params?.id as string;
 
@@ -51,47 +53,6 @@ export default function BatchSyllabusPage() {
   const [adding,          setAdding]          = useState(false);
   const [subjectError,    setSubjectError]    = useState<string | null>(null);
   const [topicError,      setTopicError]      = useState<string | null>(null);
-
-  // Step 1: fetch batch → then fetch all subjects → filter by batch subjects
-  // useEffect(() => {
-  //   if (!batchId) return;
-  //   (async () => {
-  //     setLoadingSubjects(true);
-  //     setSubjectError(null);
-  //     try {
-  //       const [batchRes, subjectsRes] = await Promise.all([
-  //         fetch(`${API}/batches/${batchId}`,  { headers: { "Content-Type": "application/json" } }),
-  //         fetch(`${API}/batches/subjects`,    { headers: { "Content-Type": "application/json" } }),
-  //       ]);
-
-  //       if (!batchRes.ok)    throw new Error(`Failed to load batch (HTTP ${batchRes.status})`);
-  //       if (!subjectsRes.ok) throw new Error(`Failed to load subjects (HTTP ${subjectsRes.status})`);
-
-  //       const batchJson    = await batchRes.json();
-  //       const subjectsJson = await subjectsRes.json();
-
-  //       const batch: { subjects?: string[] } = batchJson.data ?? batchJson;
-  //       const allSubjects: Subject[]         = subjectsJson.data ?? subjectsJson ?? [];
-
-  //       // batch.subjects is string[] of names — match to get IDs
-  //       const batchSubjectNames = new Set(
-  //         (batch.subjects ?? []).map((s: string) => s.toLowerCase().trim())
-  //       );
-
-  //       const matched = allSubjects.filter(
-  //         (s) => batchSubjectNames.has(s.name.toLowerCase().trim())
-  //       );
-
-  //       setSubjects(matched);
-  //       if (matched.length > 0) setActiveSubject(matched[0]);
-
-  //     } catch (e: any) {
-  //       setSubjectError(e.message ?? "Failed to load subjects");
-  //     } finally {
-  //       setLoadingSubjects(false);
-  //     }
-  //   })();
-  // }, [batchId]);
 
 useEffect(() => {
   if (!batchId) return;
@@ -212,9 +173,9 @@ useEffect(() => {
       setTopics((prev) =>
         prev.map((t) => t.id === topic.id ? { ...t, status } : t)
       );
-      toast.success(`Marked as ${STATUS_CONFIG[status].label}`);
+      toast.success(`${t("Marked as")} ${t(STATUS_CONFIG[status].label)}`);
     } catch {
-      toast.error("Failed to update progress");
+      toast.error(t("Failed to update progress"));
     } finally {
       setUpdatingId(null);
     }
@@ -236,13 +197,13 @@ useEffect(() => {
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Topic added");
+      toast.success(t("Topic added"));
       setNewTitle("");
       setNewDesc("");
       setShowAddTopic(false);
       fetchTopics(activeSubject.id);
     } catch {
-      toast.error("Failed to add topic");
+      toast.error(t("Failed to add topic"));
     } finally {
       setAdding(false);
     }
@@ -258,7 +219,7 @@ useEffect(() => {
   if (loadingSubjects) {
     return (
       <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
-        Loading subjects…
+        {t("Loading subjects…")}
       </div>
     );
   }
@@ -274,7 +235,7 @@ useEffect(() => {
   if (subjects.length === 0) {
     return (
       <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
-        No subjects found for this batch.
+        {t("No subjects found for this batch.")}
       </div>
     );
   }
@@ -284,13 +245,13 @@ useEffect(() => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Syllabus</h1>
+        <h1 className="text-xl font-semibold">{t("Syllabus")}</h1>
         {activeSubject && (
           <button
             onClick={() => setShowAddTopic(true)}
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            <Plus className="h-3.5 w-3.5" /> Add Topic
+            <Plus className="h-3.5 w-3.5" /> {t("Add Topic")}
           </button>
         )}
       </div>
@@ -308,7 +269,7 @@ useEffect(() => {
                 : "hover:bg-accent"
             )}
           >
-            {s.name}
+            {t(s.name) || s.name}
           </button>
         ))}
       </div>
@@ -317,8 +278,8 @@ useEffect(() => {
       {total > 0 && (
         <div className="rounded-xl border bg-card p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-medium">{activeSubject?.name} Progress</span>
-            <span className="text-muted-foreground">{completed}/{total} topics · {pct}%</span>
+            <span className="font-medium">{t(activeSubject?.name || "") || activeSubject?.name} {t("Progress")}</span>
+            <span className="text-muted-foreground">{completed}/{total} {t("topics")} · {pct}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
             <div
@@ -329,9 +290,9 @@ useEffect(() => {
             />
           </div>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <span className="text-emerald-600">{completed} completed</span>
-            <span className="text-amber-600">{inProg} in progress</span>
-            <span>{total - completed - inProg} not started</span>
+            <span className="text-emerald-600">{completed} {t("completed")}</span>
+            <span className="text-amber-600">{inProg} {t("in progress")}</span>
+            <span>{total - completed - inProg} {t("not started")}</span>
           </div>
         </div>
       )}
@@ -347,8 +308,8 @@ useEffect(() => {
         <div className="text-destructive text-sm py-8 text-center">{topicError}</div>
       ) : topics.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed text-center gap-2">
-          <p className="text-sm font-medium">No topics yet</p>
-          <p className="text-xs text-muted-foreground">Add your first syllabus topic above</p>
+          <p className="text-sm font-medium">{t("No topics yet")}</p>
+          <p className="text-xs text-muted-foreground">{t("Add your first syllabus topic above")}</p>
         </div>
       ) : (
         <ol className="space-y-3">
@@ -362,9 +323,9 @@ useEffect(() => {
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{topic.title}</p>
+                  <p className="font-medium text-sm">{t(topic.title) || topic.title}</p>
                   {topic.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{topic.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(topic.description) || topic.description}</p>
                   )}
                   {topic.notes && (
                     <p className="text-xs italic text-muted-foreground mt-1">"{topic.notes}"</p>
@@ -381,9 +342,9 @@ useEffect(() => {
                       cfg.bg, cfg.color
                     )}
                   >
-                    <option value="not_started">Not Started</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
+                    <option value="not_started">{t("Not Started")}</option>
+                    <option value="in_progress">{t("In Progress")}</option>
+                    <option value="completed">{t("Completed")}</option>
                   </select>
                   <Icon className={cn("h-4 w-4 shrink-0", cfg.color)} />
                 </div>
@@ -399,14 +360,14 @@ useEffect(() => {
           <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setShowAddTopic(false)} />
           <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl border bg-background shadow-2xl">
             <div className="flex items-center justify-between border-b px-5 py-4">
-              <h2 className="font-semibold">Add Topic — {activeSubject?.name}</h2>
+              <h2 className="font-semibold">{t("Add Topic —")} {t(activeSubject?.name || "") || activeSubject?.name}</h2>
               <button onClick={() => setShowAddTopic(false)} className="rounded-lg p-1.5 hover:bg-accent">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="px-5 py-4 space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Title *</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("Title *")}</label>
                 <input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
@@ -416,24 +377,24 @@ useEffect(() => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("Description")}</label>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                   rows={3}
-                  placeholder="Optional description…"
+                  placeholder={t("Optional description…")}
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 border-t px-5 py-4">
-              <button onClick={() => setShowAddTopic(false)} className="rounded-lg border px-4 py-2 text-sm hover:bg-accent">Cancel</button>
+              <button onClick={() => setShowAddTopic(false)} className="rounded-lg border px-4 py-2 text-sm hover:bg-accent">{t("Cancel")}</button>
               <button
                 onClick={handleAddTopic}
                 disabled={!newTitle.trim() || adding}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                {adding ? "Adding…" : "Add Topic"}
+                {adding ? t("Adding…") : t("Add Topic")}
               </button>
             </div>
           </div>

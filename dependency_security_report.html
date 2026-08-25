@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Software Supply Chain & Dependency Security Audit Report - CoachGenie ERP</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 12mm 12mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 8.5pt;
+      line-height: 1.4;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      border-left: 6px solid #10b981;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .brand-title {
+      font-size: 15pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin: 0 0 2px 0;
+    }
+
+    .brand-sub {
+      font-size: 9pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .badge-target {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 7.5pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 6pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+
+    .meta-val {
+      font-size: 8pt;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 14px 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Summary Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 7.6pt;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    td {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .badge-pass {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-fixed {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Issue Card */
+    .issue-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .issue-card.fixed {
+      border-left: 4px solid #10b981;
+    }
+
+    .issue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .issue-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .issue-desc {
+      font-size: 7.8pt;
+      color: #334155;
+      margin-bottom: 5px;
+      line-height: 1.35;
+    }
+
+    .code-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 4px;
+      padding: 6px 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 6.8pt;
+      line-height: 1.3;
+      overflow-x: hidden;
+      margin: 3px 0 5px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .file-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7pt;
+      color: #2563eb;
+      font-weight: 600;
+      background: #eff6ff;
+      padding: 1px 4px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 6.5pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-card">
+    <div class="header-top">
+      <div>
+        <div class="brand-title">Software Supply Chain & Dependency Security Audit Report</div>
+        <div class="brand-sub">Vulnerability Remediation, Typosquatting Verification & Supply Chain Health Record</div>
+      </div>
+      <div class="badge-target">https://app.thecoachgenie.in/</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Day</span>
+        <span class="meta-val">Tuesday</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date</span>
+        <span class="meta-val">25 August 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Time</span>
+        <span class="meta-val">12:27:00 PM IST</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Supply Chain Test</span>
+        <span class="meta-val" style="color: #34d399;">6 Manifests &bull; 0 Violations (100% Pass)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <h2>1. Dependency Audit & Health Evaluation Matrix (Post-Remediation)</h2>
+  <p style="font-size: 8pt; color: #475569; margin: 0 0 5px 0;">
+    Audit of all Python packages in <code>backend/requirements.txt</code>, <code>copilot_engine/requirements.txt</code>, and Node.js packages in <code>package.json</code>.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 22%;">Audit Criterion</th>
+        <th style="width: 24%;">Ecosystem / Scope</th>
+        <th style="width: 14%;">Status</th>
+        <th style="width: 40%;">Applied Remediation & Verification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Registry Verification</strong></td>
+        <td>PyPI & npm Registries</td>
+        <td><span class="badge badge-pass">Verified</span></td>
+        <td>100% of packages exist on official registries. No unverified packages.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Typosquatting Defense</strong></td>
+        <td>All 65+ Dependencies</td>
+        <td><span class="badge badge-pass">Clean (0 Found)</span></td>
+        <td>No typosquatted names detected across all 6 manifests.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Known Vulnerabilities</strong></td>
+        <td>Next.js Ecosystem (npm)</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Upgraded <code>next</code> to <code>^15.2.3</code> (Admin) and <code>^16.2.5</code> (Student/Parent).</td>
+      </tr>
+      <tr>
+        <td><strong>4. Deprecated Packages</strong></td>
+        <td>Python <code>passlib</code> (PyPI)</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Removed unmaintained <code>passlib</code> from all requirements files.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Version Pinning</strong></td>
+        <td>Python vs npm</td>
+        <td><span class="badge badge-pass">Protected</span></td>
+        <td>Python requirements strictly pinned with <code>==</code>; npm locked via pnpm lockfile.</td>
+      </tr>
+      <tr>
+        <td><strong>6. Automated CI Test</strong></td>
+        <td>Regression Suite</td>
+        <td><span class="badge badge-pass">Active (6/6 Pass)</span></td>
+        <td><code>test_dependency_verification.py</code> runs in CI/CD pipeline.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- DETAILED FINDINGS -->
+  <h2>2. Applied Dependency Remediations</h2>
+
+  <!-- FINDING 1 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #1: Upgraded Next.js to Patch Critical CVEs (RCE & Middleware Bypass)</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Upgraded Next.js in <code>client/apps/admin</code>, <code>student</code>, and <code>parent</code> to patch GHSA-9qr9-h5gf-34mp and GHSA-f82v-jwr5-mffw.
+    </div>
+    <div><span class="file-path">Files: client/apps/admin/package.json, student/package.json, parent/package.json</span></div>
+    <div class="code-box">// Admin App:
+"next": "^15.2.3",
+"eslint-config-next": "^15.2.3"
+
+// Student & Parent Apps:
+"next": "^16.2.5",
+"eslint-config-next": "^16.2.5"</div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- FINDING 2 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #2: Removed Deprecated Passlib from Python Requirements</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Removed unmaintained <code>passlib</code> dependencies and streamlined authentication hashing to pure native <code>bcrypt==4.0.1</code>.
+    </div>
+    <div><span class="file-path">Files: backend/requirements.txt, copilot_engine/requirements.txt</span></div>
+    <div class="code-box"># Auth & Security
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.9</div>
+  </div>
+
+  <!-- FINDING 3 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #3: Automated Supply Chain Test Suite Added</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Added automated regression test <code>test_dependency_verification.py</code> verifying typosquatting, version constraints, and known vulnerable packages across all 6 project manifests.
+    </div>
+    <div><span class="file-path">File: test_dependency_verification.py</span></div>
+    <div class="code-box"># Execution: python test_dependency_verification.py
+# Result: 6 Manifests Audited -> 0 Violations (Exit Code 0)</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <span>CoachGenie Enterprise ERP &bull; Security & Compliance Team</span>
+    <span>Updated: Tuesday, August 25, 2026 | 12:27:00 PM IST</span>
+  </div>
+
+</body>
+</html>

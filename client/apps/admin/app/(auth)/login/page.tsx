@@ -116,7 +116,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="rounded-2xl border bg-card shadow-xl shadow-black/5 p-8 space-y-6 fade-in">
+    <div
+      data-no-translate
+      lang="en"
+      className="rounded-2xl border bg-card shadow-xl shadow-black/5 p-8 space-y-6 fade-in"
+    >
       <div className="flex flex-col items-center gap-2 text-center">
         <CoachGenieLogo size="xl" className="shadow-lg shadow-violet-500/20" />
 

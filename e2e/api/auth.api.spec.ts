@@ -127,9 +127,9 @@ import { test, request, expect } from "@playwright/test";
 
 const BASE_URL = "http://127.0.0.1:8000/api/v1";
 
-const TENANT = "visionacademy";
-const EMAIL = "rahul.sharma@visionacademy.com";
-const PASSWORD = "Lokesh@1234";
+const TENANT = process.env.TEST_INSTITUTE ?? "visionacademy";
+const EMAIL = process.env.TEST_EMAIL ?? "rahul.sharma@visionacademy.com";
+const PASSWORD = process.env.TEST_PASSWORD ?? "Admin@1234";
 
 test.describe("Authentication API Debug", () => {
   test("Debug login endpoint", async () => {

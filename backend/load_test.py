@@ -14,10 +14,12 @@ import time
 import statistics
 import httpx
 
-BASE_URL = "http://127.0.0.1:8000/api/v1"
-TENANT = "demo"
-EMAIL = "owner@demo.com"
-PASSWORD = "Admin@1234"
+import os
+
+BASE_URL = os.getenv("LOADTEST_BASE_URL", "http://127.0.0.1:8000/api/v1")
+TENANT = os.getenv("LOADTEST_TENANT", "demo")
+EMAIL = os.getenv("LOADTEST_EMAIL", "owner@demo.com")
+PASSWORD = os.getenv("LOADTEST_PASSWORD", "Admin@1234")
 
 ENDPOINTS = [
     "/dashboard/owner",

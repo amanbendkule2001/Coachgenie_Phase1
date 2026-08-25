@@ -1,9 +1,8 @@
-// app/api/auth/session/route.ts
-// Receives tokens from the FastAPI backend (forwarded by login page),
-// sets them as HttpOnly cookies — tokens NEVER accessible to JavaScript after this point.
-
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
+const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 const ACCESS_TOKEN_MAX_AGE  = 60 * 15;        // 15 minutes
 const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -60,8 +59,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Called by useLogout — clears both cookies server-side
+// Called by useLogout — revokes token on backend and clears both cookies server-side
 export async function DELETE() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("cg_refresh_token")?.value;
+
+  if (refreshToken) {
+    try {
+      await fetch(`${BACKEND}/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+    } catch (err) {
+      console.error("Backend token revocation failed:", err);
+    }
+  }
+
   const response = NextResponse.json({ ok: true });
 
   response.cookies.set("cg_access_token", "", {

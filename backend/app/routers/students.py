@@ -29,6 +29,10 @@ async def list_students(
 
 
 
+from app.models.student import Student
+from sqlalchemy import select, and_
+from fastapi import HTTPException
+
 @router.get("/{student_id}")
 async def get_student(
     student_id: str,
@@ -36,6 +40,25 @@ async def get_student(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor", "tutor", "parent", "student")),
 ):
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role == "parent":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
     student = await student_service.get_student(db, str(tenant.id), student_id)
     return {"success": True, "data": StudentOut.model_validate(student)}
 

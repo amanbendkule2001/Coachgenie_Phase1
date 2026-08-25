@@ -20,8 +20,6 @@ class Settings(BaseSettings):
 
     # origins_list (first definition removed) — the canonical one is below at the class level.
 
-    # DATABASE_URL: str = "postgresql+asyncpg://postgres:Aman%40319@localhost:5432/erp"
-    # DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
     DATABASE_URL: str
 
     SECRET_KEY: str

@@ -4,9 +4,15 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from passlib.context import CryptContext
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-NEON_URL = "postgresql+asyncpg://neondb_owner:npg_NGBUAye5nr2I@ep-soft-sea-aok3ljdv-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
+NEON_URL = os.getenv("DATABASE_URL")
+if not NEON_URL:
+    raise ValueError("DATABASE_URL environment variable is required to run this script.")
 
 OPERATIONAL_TABLES = [
     "fee_payments",

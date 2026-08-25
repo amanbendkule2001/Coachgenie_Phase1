@@ -84,7 +84,7 @@ async def login_user(db: AsyncSession, tenant_id: str, email: str, password: str
             f"Login failed for email='{email}' on tenant_id='{tenant_id}'. "
             f"(User found: {user is not None}, Active: {getattr(user, 'is_active', False)}, Password match: {password_ok})"
         )
-        raise UnauthorizedError("Invalid email or password.")
+        raise UnauthorizedError("Invalid email or password for this institute.")
 
     payload = {
         "sub": str(user.id),

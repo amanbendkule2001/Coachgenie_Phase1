@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Request, HTTPException
 
+from app.core.rate_limit import limiter
 from app.dependencies import get_tenant, get_current_user, require_roles, DB
 from app.schemas.auth import (
     RegisterRequest,
@@ -17,7 +18,9 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", status_code=201)
+@limiter.limit("5/minute")
 async def register(
+    request: Request,
     body: RegisterRequest,
     db: DB,
     tenant=Depends(get_tenant),
@@ -39,7 +42,9 @@ async def register(
 
 
 @router.post("/register-staff", status_code=201)
+@limiter.limit("5/minute")
 async def register_staff(
+    request: Request,
     body: RegisterRequest,
     db: DB,
     tenant=Depends(get_tenant),
@@ -75,7 +80,9 @@ async def register_staff(
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     body: LoginRequest,
     db: DB,
     tenant=Depends(get_tenant),
@@ -105,10 +112,11 @@ async def login(
 
 
 @router.post("/refresh")
+@limiter.limit("10/minute")
 async def refresh(
+    request: Request,
     body: RefreshRequest,
     db: DB,
-    request: Request,
 ):
     # FIX BUG-013: removed print() that logged full request headers to stdout
     if request.headers.get("x-playwright-fail-refresh") == "1":

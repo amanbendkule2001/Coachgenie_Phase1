@@ -244,7 +244,7 @@ function mapInvoice(r: RawInvoice): Invoice {
     discount: parseFloat(String(r.discount)) || 0,
     dueDate: r.due_date,
     createdAt: r.created_at,
-    status: r.status,
+    status: (r.status ? String(r.status).toLowerCase() : "pending") as Status,
     installmentMonths,
     installmentSchedule,
     payment_installment_schedule: r.payment_installment_schedule,
@@ -335,10 +335,17 @@ export default function FeesPage() {
   useEffect(() => { load(); }, [load]);
 
 
-  const totalCollected = summary.total_collected ?? invoices.reduce((s, i) => s + i.amountPaid, 0);
+  const totalCollected =
+    typeof summary.total_collected === "number" && summary.total_collected > 0
+      ? summary.total_collected
+      : invoices.reduce((s, i) => s + (Number(i.amountPaid) || 0), 0);
+
   const totalOutstanding =
-    summary.total_outstanding ??
-    invoices.filter((i) => i.status !== "paid").reduce((s, i) => s + Math.max(0, i.amountDue - i.amountPaid - i.discount), 0);
+    typeof summary.total_outstanding === "number" && summary.total_outstanding >= 0
+      ? summary.total_outstanding
+      : invoices
+          .filter((i) => i.status !== "paid")
+          .reduce((s, i) => s + Math.max(0, (Number(i.amountDue) || 0) - (Number(i.amountPaid) || 0) - (Number(i.discount) || 0)), 0);
 
   const overdueCount =
     summary.overdue_count ??
@@ -353,6 +360,9 @@ export default function FeesPage() {
     }).length;
 
   const totalInvoices = summary.total_invoices ?? invoices.length;
+  const paidCount = invoices.filter((i) => i.status === "paid").length;
+  const partialCount = invoices.filter((i) => i.status === "partial").length;
+  const pendingCount = (summary as any).pending_count ?? invoices.filter((i) => i.status === "pending").length;
 
   const stats = [
     {
@@ -360,8 +370,8 @@ export default function FeesPage() {
       value:
         totalCollected >= 100000
           ? `₹${(totalCollected / 100000).toFixed(1)}L`
-          : `₹${totalCollected.toLocaleString("en-IN")}`,
-      sub: `${invoices.filter((i) => i.status === "paid").length} paid invoices`,
+          : `₹${(totalCollected || 0).toLocaleString("en-IN")}`,
+      sub: `${paidCount} paid invoice${paidCount === 1 ? "" : "s"}`,
       icon: CheckCircle2,
       color: "text-emerald-600",
       bg: "bg-emerald-500/10",
@@ -372,8 +382,8 @@ export default function FeesPage() {
       value:
         totalOutstanding >= 100000
           ? `₹${(totalOutstanding / 100000).toFixed(1)}L`
-          : `₹${totalOutstanding.toLocaleString("en-IN")}`,
-      sub: `${invoices.filter((i) => i.status === "partial").length} partial payments`,
+          : `₹${(totalOutstanding || 0).toLocaleString("en-IN")}`,
+      sub: `${partialCount} partial payment${partialCount === 1 ? "" : "s"}`,
       icon: TrendingUp,
       color: "text-amber-600",
       bg: "bg-amber-500/10",
@@ -391,7 +401,7 @@ export default function FeesPage() {
     {
       label: "Total Invoices",
       value: totalInvoices.toString(),
-      sub: `${(summary as any).pending_count ?? invoices.filter((i) => i.status === "pending").length} pending`,
+      sub: `${pendingCount} pending`,
       icon: IndianRupee,
       color: "text-violet-600",
       bg: "bg-violet-500/10",
@@ -509,7 +519,7 @@ export default function FeesPage() {
                 <s.icon className={cn("h-4 w-4", s.color)} />
               </div>
             </div>
-            <p className="text-3xl font-extrabold tracking-tight">{loading ? "—" : s.value}</p>
+            <p className="text-3xl font-extrabold tracking-tight">{s.value}</p>
             <p className="text-xs text-muted-foreground">{s.sub}</p>
           </div>
         ))}

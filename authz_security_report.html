@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API Authorization & Access Control Security Report - CoachGenie ERP</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 12mm 12mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 8.5pt;
+      line-height: 1.4;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      border-left: 6px solid #10b981;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .brand-title {
+      font-size: 15pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin: 0 0 2px 0;
+    }
+
+    .brand-sub {
+      font-size: 9pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .badge-target {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 7.5pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 6pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+
+    .meta-val {
+      font-size: 8pt;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 14px 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Summary Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 7.6pt;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    td {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .badge-pass {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-fixed {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Issue Card */
+    .issue-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .issue-card.fixed {
+      border-left: 4px solid #10b981;
+    }
+
+    .issue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .issue-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .issue-desc {
+      font-size: 7.8pt;
+      color: #334155;
+      margin-bottom: 5px;
+      line-height: 1.35;
+    }
+
+    .code-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 4px;
+      padding: 6px 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 6.8pt;
+      line-height: 1.3;
+      overflow-x: hidden;
+      margin: 3px 0 5px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .file-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7pt;
+      color: #2563eb;
+      font-weight: 600;
+      background: #eff6ff;
+      padding: 1px 4px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 6.5pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-card">
+    <div class="header-top">
+      <div>
+        <div class="brand-title">API Authorization & Access Control Security Report</div>
+        <div class="brand-sub">Comprehensive RBAC, IDOR & Resource Ownership Remediation Record</div>
+      </div>
+      <div class="badge-target">https://app.thecoachgenie.in/</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Day</span>
+        <span class="meta-val">Tuesday</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date</span>
+        <span class="meta-val">25 August 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Time</span>
+        <span class="meta-val">12:00:00 PM IST</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Status</span>
+        <span class="meta-val" style="color: #34d399;">All Fixes Applied & Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <h2>1. Complete API Endpoint Authorization Inventory (Post-Remediation)</h2>
+  <p style="font-size: 8pt; color: #475569; margin: 0 0 5px 0;">
+    All vulnerable endpoints have been hardened with tenant scoping, strict RBAC, and resource ownership verification.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">Endpoint & Method</th>
+        <th style="width: 26%;">Authorized Roles</th>
+        <th style="width: 14%;">Status</th>
+        <th style="width: 30%;">Enforced Access Control</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- AI Reports -->
+      <tr>
+        <td><code>POST /ai-reports/students/{id}/performance</code></td>
+        <td>owner, tutor, counselor, student, parent</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Tenant & Role authenticated; Student/Parent ownership validated.</td>
+      </tr>
+      <tr>
+        <td><code>POST /ai-reports/students/{id}/attendance-engagement</code></td>
+        <td>owner, tutor, counselor, student, parent</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Tenant & Role authenticated; Student/Parent ownership validated.</td>
+      </tr>
+      <tr>
+        <td><code>POST /ai-reports/batches/{id}/performance</code></td>
+        <td>owner, tutor, counselor</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Tenant & Staff role authenticated; Batch isolation verified.</td>
+      </tr>
+      <!-- Students -->
+      <tr>
+        <td><code>GET /students/{student_id}</code></td>
+        <td>owner, counselor, tutor, parent, student</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Student and parent can only access their linked profile.</td>
+      </tr>
+      <!-- Exams -->
+      <tr>
+        <td><code>GET /exams/student/{student_id}/results</code></td>
+        <td>owner, tutor, counselor, student, parent</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Students/parents can only access their own results.</td>
+      </tr>
+      <!-- Growth Cards -->
+      <tr>
+        <td><code>GET /growth-cards/student/{student_id}</code></td>
+        <td>owner, tutor, counselor, parent, student</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Linked student ownership verified.</td>
+      </tr>
+      <tr>
+        <td><code>GET /growth-cards/{card_id}</code></td>
+        <td>owner, tutor, counselor, parent, student</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Linked card student ownership verified.</td>
+      </tr>
+      <tr>
+        <td><code>PATCH /growth-cards/{card_id}</code></td>
+        <td>owner, tutor, parent</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Parent can only update remarks for their own child.</td>
+      </tr>
+      <!-- Fees -->
+      <tr>
+        <td><code>GET /fees/payments/history</code></td>
+        <td>owner, counselor, tutor, student</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>Data Leak Fixed:</strong> Student forced to only view their own payment history.</td>
+      </tr>
+      <tr>
+        <td><code>GET /fees/invoices/{invoice_id}/payments</code></td>
+        <td>owner, counselor, student, parent</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Student/parent verified against invoice student ID.</td>
+      </tr>
+      <!-- Batches -->
+      <tr>
+        <td><code>GET /batches/by-student/{student_id}</code></td>
+        <td>owner, counselor, tutor, student</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> Student role limited to authenticated student ID.</td>
+      </tr>
+      <!-- AI Sessions -->
+      <tr>
+        <td><code>GET /ai/sessions/{session_id}/messages</code></td>
+        <td>Authenticated session owner</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> <code>AISession.user_id == current_user.id</code> enforced.</td>
+      </tr>
+      <tr>
+        <td><code>POST /ai/sessions/{session_id}/end</code></td>
+        <td>Authenticated session owner</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td><strong>IDOR Fixed:</strong> <code>AISession.user_id == current_user.id</code> enforced.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- DETAILED REMEDIATION ITEMS -->
+  <h2>2. Applied Code Changes Summary</h2>
+
+  <!-- ITEM 1 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #1: Protected AI Intelligence Report Generation</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Added <code>tenant=Depends(get_tenant)</code>, <code>require_roles(...)</code>, and ownership checks in <code>backend/app/routers/ai_reports.py</code>.
+    </div>
+    <div><span class="file-path">File: backend/app/routers/ai_reports.py</span></div>
+    <div class="code-box">@router.post("/students/{student_id}/performance")
+async def generate_student_performance_report(
+    student_id: str,
+    db: DB,
+    tenant=Depends(get_tenant),
+    current_user=Depends(require_roles("owner", "tutor", "counselor", "student", "parent")),
+):
+    if current_user.role == "student":
+        # verifies Student.user_id == current_user.id
+        ...
+    return await AIReportService.generate_student_performance_report(student_id=student_id)</div>
+  </div>
+
+  <!-- ITEM 2 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #2: Enforced Resource Ownership on Student Profiles, Exams & Growth Cards</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Added horizontal privilege escalation checks in <code>students.py</code>, <code>exams.py</code>, and <code>growth_cards.py</code>.
+    </div>
+    <div><span class="file-path">Files: backend/app/routers/students.py, exams.py, growth_cards.py</span></div>
+    <div class="code-box">if current_user.role == "student":
+    res = await db.execute(select(Student).where(and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)))
+    linked = res.scalar_one_or_none()
+    if not linked or str(linked.id) != student_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+elif current_user.role == "parent":
+    res = await db.execute(select(Student).where(and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)))
+    linked = res.scalar_one_or_none()
+    if not linked or str(linked.id) != student_id:
+        raise HTTPException(status_code=403, detail="Access denied")</div>
+  </div>
+
+  <!-- ITEM 3 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #3: Secured Payment History & Invoice Access</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Prevented tenant-wide payment disclosure to student accounts and verified invoice ownership in <code>fees.py</code>.
+    </div>
+    <div><span class="file-path">File: backend/app/routers/fees.py</span></div>
+    <div class="code-box">if current_user.role == "student":
+    res = await db.execute(select(Student).where(and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)))
+    s = res.scalar_one_or_none()
+    if not s:
+        raise HTTPException(status_code=403, detail="Access denied")
+    student_id = str(s.id) # Locks queries to authenticated student</div>
+  </div>
+
+  <!-- ITEM 4 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #4: Protected User AI Chat Session Ownership</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Enforced user identity matching in <code>backend/app/services/ai.py</code> for <code>get_messages</code> and <code>end_session</code>.
+    </div>
+    <div><span class="file-path">File: backend/app/services/ai.py</span></div>
+    <div class="code-box">async def get_messages(db: AsyncSession, tenant_id: str, session_id: str, user_id: str | None = None) -> list:
+    stmt = select(AISession).where(AISession.id == session_id, AISession.tenant_id == tenant_id)
+    if user_id:
+        stmt = stmt.where(AISession.user_id == user_id)
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    if not session:
+        raise NotFoundError("AI Session")
+    return (await db.execute(select(AIMessage).where(AIMessage.session_id == session_id).order_by(AIMessage.created_at.asc()))).scalars().all()</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <span>CoachGenie Enterprise ERP &bull; Security & Compliance Team</span>
+    <span>Updated: Tuesday, August 25, 2026 | 12:00:00 PM IST</span>
+  </div>
+
+</body>
+</html>

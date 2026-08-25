@@ -64,6 +64,10 @@ async def get_results(
     results = await exam_service.get_results(db, str(tenant.id), exam_id)
     return {"success": True, "data": [ExamResultOut.model_validate(r) for r in results]}
 
+from app.models.student import Student
+from sqlalchemy import select, and_
+from fastapi import HTTPException
+
 @router.get("/student/{student_id}/results")
 async def get_student_exam_results(
     student_id: str,
@@ -71,5 +75,24 @@ async def get_student_exam_results(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor", "student", "parent")),
 ):
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role == "parent":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
     results = await exam_service.get_results_for_student(db, str(tenant.id), student_id)
     return {"success": True, "data": [ExamResultOut.model_validate(r) for r in results]}

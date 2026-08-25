@@ -134,7 +134,7 @@ async def end_session(
     tenant=Depends(get_tenant),
     current_user=Depends(get_current_user),
 ):
-    await ai_service.end_session(db, str(tenant.id), session_id)
+    await ai_service.end_session(db, str(tenant.id), session_id, str(current_user.id))
     return {"success": True, "message": "Session ended."}
 
 
@@ -155,7 +155,7 @@ async def get_messages(
     tenant=Depends(get_tenant),
     current_user=Depends(get_current_user),
 ):
-    messages = await ai_service.get_messages(db, str(tenant.id), session_id)
+    messages = await ai_service.get_messages(db, str(tenant.id), session_id, str(current_user.id))
     return {"success": True, "data": [MessageOut.model_validate(m) for m in messages]}
 
 

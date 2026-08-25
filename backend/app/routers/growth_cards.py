@@ -46,6 +46,10 @@ async def create_growth_card(
     return {"success": True, "data": GrowthCardOut.model_validate(card)}
 
 
+from app.models.student import Student
+from sqlalchemy import select, and_
+from fastapi import HTTPException
+
 @router.get("/student/{student_id}")
 async def student_growth_cards(
     student_id: str,
@@ -53,6 +57,25 @@ async def student_growth_cards(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "counselor", "parent", "student")),
 ):
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role == "parent":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
     cards = await gc_service.get_student_growth_cards(db, str(tenant.id), student_id)
     return {"success": True, "data": [GrowthCardOut.model_validate(c) for c in cards]}
 
@@ -65,6 +88,28 @@ async def get_growth_card(
     current_user=Depends(require_roles("owner", "tutor", "counselor", "parent", "student")),
 ):
     card = await gc_service.get_growth_card(db, str(tenant.id), card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Growth card not found")
+
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != str(card.student_id):
+            raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role == "parent":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != str(card.student_id):
+            raise HTTPException(status_code=403, detail="Access denied")
+
     return {"success": True, "data": GrowthCardOut.model_validate(card)}
 
 
@@ -76,6 +121,20 @@ async def update_growth_card(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "tutor", "parent")),
 ):
+    card_check = await gc_service.get_growth_card(db, str(tenant.id), card_id)
+    if not card_check:
+        raise HTTPException(status_code=404, detail="Growth card not found")
+
+    if current_user.role == "parent":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != str(card_check.student_id):
+            raise HTTPException(status_code=403, detail="Access denied")
+
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     card = await gc_service.update_growth_card(db, str(tenant.id), card_id, data)
     return {"success": True, "data": GrowthCardOut.model_validate(card)}

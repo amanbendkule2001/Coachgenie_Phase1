@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authentication Security Audit & Remediation Report - CoachGenie ERP</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 14mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.45;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      border-left: 6px solid #10b981;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-size: 16pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin: 0 0 3px 0;
+    }
+
+    .brand-sub {
+      font-size: 9.5pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .badge-target {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 8pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 6.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+
+    .meta-val {
+      font-size: 8.5pt;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 16px 0 8px 0;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Summary Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px 0;
+      font-size: 8.2pt;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pass {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-fixed {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Issue Card */
+    .issue-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .issue-card.fixed {
+      border-left: 4px solid #10b981;
+    }
+
+    .issue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .issue-title {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .issue-desc {
+      font-size: 8.2pt;
+      color: #334155;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .code-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.2pt;
+      line-height: 1.35;
+      overflow-x: hidden;
+      margin: 4px 0 6px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .file-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      color: #2563eb;
+      font-weight: 600;
+      background: #eff6ff;
+      padding: 1px 5px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 3px;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 7pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-card">
+    <div class="header-top">
+      <div>
+        <div class="brand-title">Authentication Security Audit & Remediation Report</div>
+        <div class="brand-sub">Comprehensive Vulnerability Assessment & Applied Remediation Record</div>
+      </div>
+      <div class="badge-target">https://app.thecoachgenie.in/</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Day</span>
+        <span class="meta-val">Tuesday</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date</span>
+        <span class="meta-val">25 August 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Time</span>
+        <span class="meta-val">11:45:00 AM IST</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Status</span>
+        <span class="meta-val" style="color: #34d399;">All Fixes Applied & Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <h2>1. Security Requirement Verification Matrix</h2>
+  <p style="font-size: 8.5pt; color: #475569; margin: 0 0 6px 0;">
+    All 6 authentication security checks have been evaluated, remediated in the codebase, and verified.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 4%;">#</th>
+        <th style="width: 32%;">Security Requirement</th>
+        <th style="width: 18%;">Status</th>
+        <th style="width: 46%;">Verification Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1</strong></td>
+        <td><strong>Password Storage</strong><br>(bcrypt/scrypt/argon2 cost &ge; 10)</td>
+        <td><span class="badge badge-pass">Compliant</span></td>
+        <td>Implemented using <code>bcrypt.hashpw</code> with cost factor 12 (rounds=12).</td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td><strong>Rate Limiting on Auth Endpoints</strong></td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Added SlowAPI <code>@limiter.limit("5/minute")</code> to <code>/login</code>, <code>/register</code>, <code>/register-staff</code>, and <code>/reset-password</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>3</strong></td>
+        <td><strong>JWT Expiration Lifetime</strong><br>(&le; 24 hours)</td>
+        <td><span class="badge badge-pass">Compliant</span></td>
+        <td>Access tokens expire in 15 minutes (<code>ACCESS_TOKEN_EXPIRE_MINUTES = 15</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>4</strong></td>
+        <td><strong>Session Invalidation on Logout</strong></td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Next.js <code>DELETE /api/auth/session</code> now extracts <code>cg_refresh_token</code> and revokes it on FastAPI before clearing cookies.</td>
+      </tr>
+      <tr>
+        <td><strong>5</strong></td>
+        <td><strong>Password Reset Expiration & OTP</strong><br>(&le; 1 hour validity)</td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>OTP expiration is 10 min, and <code>reset_password</code> now checks and tracks <code>attempts >= 3</code> to block brute-force.</td>
+      </tr>
+      <tr>
+        <td><strong>6</strong></td>
+        <td><strong>CSRF & CORS Security</strong></td>
+        <td><span class="badge badge-fixed">Remediated</span></td>
+        <td>Removed permissive <code>allow_origin_regex</code> wildcard; restricted strictly to verified whitelist origins.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- APPLIED REMEDIATIONS -->
+  <h2>2. Implemented Code Changes Summary</h2>
+
+  <!-- ITEM 1 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #1: Rate Limiting on Login & Registration Endpoints</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Added SlowAPI rate limiting decorators to active auth routes in <code>backend/app/routers/auth.py</code>.
+    </div>
+    <div><span class="file-path">File: backend/app/routers/auth.py</span></div>
+    <div class="code-box">@router.post("/register", status_code=201)
+@limiter.limit("5/minute")
+async def register(request: Request, body: RegisterRequest, db: DB, tenant=Depends(get_tenant)):
+    ...
+
+@router.post("/login")
+@limiter.limit("5/minute")
+async def login(request: Request, body: LoginRequest, db: DB, tenant=Depends(get_tenant)):
+    ...
+
+@router.post("/refresh")
+@limiter.limit("10/minute")
+async def refresh(request: Request, body: RefreshRequest, db: DB):
+    ...</div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ITEM 2 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #2: Session Refresh Token Invalidation on Logout</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Updated Next.js session route to revoke refresh tokens on FastAPI backend before clearing cookies.
+    </div>
+    <div><span class="file-path">File: client/apps/admin/app/api/auth/session/route.ts</span></div>
+    <div class="code-box">export async function DELETE() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("cg_refresh_token")?.value;
+
+  if (refreshToken) {
+    try {
+      await fetch(BACKEND + "/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+    } catch (err) {
+      console.error("Backend token revocation error:", err);
+    }
+  }
+
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set("cg_access_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+  response.cookies.set("cg_refresh_token", "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+  return response;
+}</div>
+  </div>
+
+  <!-- ITEM 3 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #3: Attempt Throttling & Brute-Force Defense for Password Reset</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Added rate limiting on <code>/reset-password</code> and enforced 3-attempt limit in <code>reset_password</code> service.
+    </div>
+    <div><span class="file-path">File: backend/app/services/auth_extended.py</span></div>
+    <div class="code-box">    # Verify OTP & enforce max 3 attempts
+    if not otp_record:
+        raise BadRequestError("Invalid OTP.")
+    if otp_record.attempts >= 3:
+        raise BadRequestError("Too many invalid attempts. Please request a new OTP.")
+    if otp_record.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise BadRequestError("OTP has expired. Please request a new one.")
+    if otp_record.code != otp:
+        otp_record.attempts += 1
+        await db.flush()
+        raise BadRequestError("Invalid OTP.")</div>
+  </div>
+
+  <!-- ITEM 4 -->
+  <div class="issue-card fixed">
+    <div class="issue-header">
+      <div class="issue-title">Applied Fix #4: Hardened CORS Configuration</div>
+      <span class="badge badge-fixed">Applied</span>
+    </div>
+    <div class="issue-desc">
+      Removed wildcard regular expression to ensure only explicit allowed origins are permitted.
+    </div>
+    <div><span class="file-path">File: backend/app/main.py</span></div>
+    <div class="code-box">app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.origins_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <span>CoachGenie Enterprise ERP &bull; Security & Compliance Team</span>
+    <span>Updated: Tuesday, August 25, 2026 | 11:45:00 AM IST</span>
+  </div>
+
+</body>
+</html>

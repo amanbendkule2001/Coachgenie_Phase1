@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import type { Batch, BatchStatus } from "@/lib/types/academic";
 import { authHeaders } from "@/lib/auth-headers";
 import { generateBatchPerformancePDF } from "@/lib/utils/generate-report-pdf";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy"
 
@@ -96,6 +97,7 @@ function ClassesTab({
   onMarkDone: (id: string) => void;
   batch: any;
 }) {
+  const { language, t } = useLanguage();
   const [showForm,   setShowForm]   = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -138,7 +140,7 @@ function ClassesTab({
       setClasses(prev => [...prev, json.data ?? json]);
       setForm({ title: "", scheduled_at: "", duration_min: "60", room_or_link: "", subject_id: "" });
       setShowForm(false);
-      toast.success("Class scheduled");
+      toast.success(t("Class scheduled"));
     } catch (err: any) {
       toast.error(err.message ?? "Failed to schedule class");
     } finally {
@@ -149,54 +151,54 @@ function ClassesTab({
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Classes ({classes.length})</h3>
+        <h3 className="text-sm font-semibold">{t("Classes")} ({classes.length})</h3>
         <button onClick={() => setShowForm(v => !v)}
           className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Schedule Class
+          <Plus className="h-3.5 w-3.5" /> {t("Schedule Class")}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSchedule} className="rounded-xl border bg-muted/30 p-4 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">New Class</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("New Class")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Title *</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Title *")}</label>
               <input required value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="e.g. Kinematics — Class 1"
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Date & Time *</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Date & Time *")}</label>
               <input required type="datetime-local" value={form.scheduled_at}
                 onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Subject *</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Subject *")}</label>
               <select required value={form.subject_id}
                 onChange={e => setForm(f => ({ ...f, subject_id: e.target.value }))}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary">
-                <option value="">Select subject...</option>
+                <option value="">{t("Select subject...")}</option>
                 {subjects.map((s: { id: string; name: string }, i: number) => (
   <option key={`${s.name}-${i}`} value={s.name}>
-    {s.name}
+    {t(s.name) || s.name}
   </option>
 ))}
               </select>
               {subjects.length === 0 && (
-                <p className="text-xs text-amber-600">No subjects available in this batch</p>
+                <p className="text-xs text-amber-600">{t("No subjects available in this batch")}</p>
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Duration (minutes)</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Duration (minutes)")}</label>
               <input type="number" min="15" max="300" value={form.duration_min}
                 onChange={e => setForm(f => ({ ...f, duration_min: e.target.value }))}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div className="space-y-1 sm:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">Room / Link</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Room / Link")}</label>
               <input value={form.room_or_link}
                 onChange={e => setForm(f => ({ ...f, room_or_link: e.target.value }))}
                 placeholder="Room 101 or meet.google.com/..."
@@ -205,10 +207,10 @@ function ClassesTab({
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => setShowForm(false)}
-              className="rounded-lg border px-4 py-1.5 text-sm hover:bg-accent transition-colors">Cancel</button>
+              className="rounded-lg border px-4 py-1.5 text-sm hover:bg-accent transition-colors">{t("Cancel")}</button>
             <button type="submit" disabled={submitting}
               className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
-              {submitting ? "Scheduling..." : "Schedule"}
+              {submitting ? t("Scheduling...") : t("Schedule")}
             </button>
           </div>
         </form>
@@ -216,17 +218,17 @@ function ClassesTab({
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {classes.length === 0 && !showForm && (
-          <p className="text-sm text-muted-foreground text-center py-8">No classes scheduled yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-8">{t("No classes scheduled yet.")}</p>
         )}
         {classes.map((c: any, i: number) => (
           <div key={c.id ?? `class-${i}`}
             className="flex items-center justify-between rounded-lg border p-3 gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{c.title}</p>
+              <p className="text-sm font-medium truncate">{t(c.title) || c.title}</p>
               <p className="text-xs text-muted-foreground">
                 {c.scheduled_at ? format(new Date(c.scheduled_at), "dd MMM, h:mm a") : "—"}
                 {c.duration_min ? ` · ${c.duration_min} min` : ""}
-                {c.room_or_link ? ` · ${c.room_or_link}` : ""}
+                {c.room_or_link ? ` · ${t(c.room_or_link) || c.room_or_link}` : ""}
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -235,10 +237,10 @@ function ClassesTab({
                 c.status === "completed"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                   : "border-blue-200 bg-blue-50 text-blue-700"
-              )}>{c.status}</span>
+              )}>{t(c.status) || c.status}</span>
               {c.status !== "completed" && (
                 <button onClick={() => onMarkDone(String(c.id))}
-                  className="rounded-md border px-2 py-1 text-[10px] hover:bg-accent transition-colors">Done</button>
+                  className="rounded-md border px-2 py-1 text-[10px] hover:bg-accent transition-colors">{t("Done")}</button>
               )}
             </div>
           </div>
@@ -251,6 +253,7 @@ function ClassesTab({
 
 // ── Page ───────────────────────────────────────────────────────
 export default function BatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { language, t } = useLanguage();
   const { id }  = use(params);
   const router  = useRouter();
   const store   = useAcademicStore();
@@ -536,10 +539,10 @@ async function loadAvailableStudents() {
     ? Math.round((completedTopics / syllabus.length) * 100) : 0;
 
   const TABS: { key: Tab; label: string; count: number }[] = [
-    { key: "students", label: "Students", count: students.length },
-    { key: "classes",  label: "Classes",  count: classes.length  },
-    { key: "leads",    label: "Leads",    count: leads.length    },
-    { key: "syllabus", label: "Syllabus", count: syllabus.length },  // ← uses syllabus state
+    { key: "students", label: t("Students"), count: students.length },
+    { key: "classes",  label: t("Classes"),  count: classes.length  },
+    { key: "leads",    label: t("Leads"),    count: leads.length    },
+    { key: "syllabus", label: t("Syllabus"), count: syllabus.length },  // ← uses syllabus state
   ];
 
   return (
@@ -554,17 +557,17 @@ async function loadAvailableStudents() {
           </button>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">{batch.name}</h1>
+              <h1 className="text-2xl font-bold">{t(batch.name) || batch.name}</h1>
               {batch.code && (
                 <span className="rounded-md bg-violet-500/10 px-2 py-0.5 text-xs font-bold text-violet-700 border border-violet-500/20">
-                  Code: {batch.code}
+                  {t("Code:")} {batch.code}
                 </span>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {batch.subject && `${batch.subject} · `}
-              {batch.teacher && `${batch.teacher} · `}
-              {batch.grade}
+              {batch.subject && `${t(batch.subject) || batch.subject} · `}
+              {batch.teacher && `${t(batch.teacher) || batch.teacher} · `}
+              {t(batch.grade) || batch.grade}
             </p>
           </div>
         </div>
@@ -593,26 +596,26 @@ async function loadAvailableStudents() {
                   attendanceAverage: 92.4,
                   topPerformer: students[0]?.name || "Top Student",
                 });
-                toast.success("Batch Performance Report downloaded!", { id: `batch-rep-${id}` });
+                toast.success(t("Batch Performance Report downloaded successfully!"), { id: `batch-rep-${id}` });
               } catch (err: any) {
                 toast.error(err.message || "Failed to download report", { id: `batch-rep-${id}` });
               }
             }}
             className="flex items-center gap-1.5 rounded-lg border bg-background px-3.5 py-2 text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors shadow-xs"
           >
-            <FileText className="h-3.5 w-3.5" /> PDF Report
+            <FileText className="h-3.5 w-3.5" /> {t("PDF Report")}
           </button>
 
           <button
             onClick={handleDeleteBatch}
             className="flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3.5 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors shadow-xs"
           >
-            <Trash2 className="h-3.5 w-3.5" /> Delete Batch
+            <Trash2 className="h-3.5 w-3.5" /> {t("Delete Batch")}
           </button>
 
           <Link href={`/batches/${id}/syllabus`}
             className="flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
-            <BookOpen className="h-4 w-4" /> Syllabus
+            <BookOpen className="h-4 w-4" /> {t("Syllabus")}
           </Link>
         </div>
       </div>
@@ -620,14 +623,14 @@ async function loadAvailableStudents() {
       {/* Subjects pills */}
       {batch.subjects && batch.subjects.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-muted-foreground mr-1">Curriculum Subjects:</span>
+          <span className="text-xs text-muted-foreground mr-1">{t("Curriculum Subjects:")}</span>
           {batch.subjects.map((sub: string) => (
             <span
               key={sub}
               className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:text-violet-300 border border-violet-500/20"
             >
               <BookOpen className="h-3 w-3 text-violet-500" />
-              {sub}
+              {t(sub) || sub}
             </span>
           ))}
         </div>
@@ -636,10 +639,10 @@ async function loadAvailableStudents() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Enrolled",  value: `${students.length} / ${batch.maxSize}`, icon: Users     },
-          { label: "Classes",   value: classes.length,                         icon: Calendar  },
-          { label: "Room",      value: batch.room || "Room 101",               icon: MapPin    },
-          { label: "Teacher",   value: batch.teacher || "Not assigned",        icon: GraduationCap },
+          { label: t("Enrolled"),  value: `${students.length} / ${batch.maxSize}`, icon: Users     },
+          { label: t("Classes"),   value: classes.length,                         icon: Calendar  },
+          { label: t("Room"),      value: t(batch.room) || batch.room || "Room 101",               icon: MapPin    },
+          { label: t("Teacher"),   value: t(batch.teacher) || batch.teacher || t("Not assigned"),        icon: GraduationCap },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="rounded-xl border bg-card p-4">
             <Icon className="h-4 w-4 text-muted-foreground mb-2" />
@@ -672,7 +675,7 @@ async function loadAvailableStudents() {
       {activeTab === "students" && (
         <div className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Enrolled Students ({students.length})</h3>
+          <h3 className="text-sm font-semibold">{t("Enrolled Students")} ({students.length})</h3>
           <button
             onClick={async () => {
               await loadAvailableStudents();
@@ -681,30 +684,30 @@ async function loadAvailableStudents() {
             className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="h-3.5 w-3.5" />
-            Assign Student
+            {t("Assign Student")}
           </button>
         </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {students.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No students enrolled yet.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("No students enrolled yet.")}</p>
             )}
             {students.map(s => (
               <div key={s.id}
                 className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors group">
                 <Link href={`/students/${s.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-                    {s.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                    {(t(s.name) || s.name).split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">{s.name}</p>
-                    <p className="text-xs text-muted-foreground">{s.grade}</p>
+                    <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">{t(s.name) || s.name}</p>
+                    <p className="text-xs text-muted-foreground">{t(s.grade) || s.grade}</p>
                   </div>
                   <span className={cn(
                     "text-[10px] font-medium rounded-full px-2 py-0.5 border shrink-0",
                     s.status === "ACTIVE"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-slate-100 text-slate-600"
-                  )}>{s.status}</span>
+                  )}>{t(s.status) || s.status}</span>
                 </Link>
                 <button onClick={() => handleRemove(s.id)}
                   className="rounded-md p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">
@@ -726,15 +729,15 @@ async function loadAvailableStudents() {
       {activeTab === "leads" && (
         <div className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold">Leads Assigned to This Batch ({leads.length})</h3>
+            <h3 className="text-sm font-semibold">{t("Leads Assigned to This Batch")} ({leads.length})</h3>
             <Link href={`/leads?batch=${id}`} className="text-xs text-primary hover:underline">
-              View all in Leads →
+              {t("View all in Leads →")}
             </Link>
           </div>
           {leads.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <p className="text-sm text-muted-foreground">No leads assigned to this batch yet.</p>
-              <p className="text-xs text-muted-foreground">When adding a lead, select this batch from the Batch Name dropdown.</p>
+              <p className="text-sm text-muted-foreground">{t("No leads assigned to this batch yet.")}</p>
+              <p className="text-xs text-muted-foreground">{t("When adding a lead, select this batch from the Batch Name dropdown.")}</p>
             </div>
           )}
           <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -742,23 +745,23 @@ async function loadAvailableStudents() {
               <Link key={lead.id} href={`/leads/${lead.id}`}
                 className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors group">
                 <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-700 shrink-0">
-                  {lead.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                  {(t(lead.name) || lead.name).split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">{lead.name}</p>
+                  <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">{t(lead.name) || lead.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[lead.phone, lead.grade, lead.standard, lead.board].filter(Boolean).join(" · ")}
+                    {[lead.phone, t(lead.grade) || lead.grade, t(lead.standard) || lead.standard, t(lead.board) || lead.board].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 {lead.course && (
                   <span className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium shrink-0 hidden sm:block">
-                    {lead.course}
+                    {t(lead.course) || lead.course}
                   </span>
                 )}
                 <span className={cn(
                   "text-[10px] font-medium rounded-full px-2.5 py-0.5 border shrink-0",
                   STAGE_COLORS[lead.stage] ?? "bg-muted text-muted-foreground"
-                )}>{lead.stage}</span>
+                )}>{t(lead.stage) || lead.stage}</span>
               </Link>
             ))}
           </div>
@@ -769,29 +772,29 @@ async function loadAvailableStudents() {
       {activeTab === "syllabus" && syllabus.length > 0 && (
         <div className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold">Syllabus Progress</h3>
-            <span className="text-xs text-muted-foreground">{completedTopics}/{syllabus.length} topics</span>
+            <h3 className="text-sm font-semibold">{t("Syllabus Progress")}</h3>
+            <span className="text-xs text-muted-foreground">{completedTopics}/{syllabus.length} {t("topics")}</span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted overflow-hidden mb-4">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${syllabusProgress}%` }} />
           </div>
           <div className="space-y-2">
-            {syllabus.map((t: any) => (
-              <div key={t.id} className="flex items-center gap-3 text-sm">
+            {syllabus.map((topicItem: any) => (
+              <div key={topicItem.id} className="flex items-center gap-3 text-sm">
                 <div className={cn(
   "h-4 w-4 rounded-full border-2 shrink-0",
-  t.status === "completed" ? "bg-primary border-primary" : "border-muted-foreground/30"
+  topicItem.status === "completed" ? "bg-primary border-primary" : "border-muted-foreground/30"
 )} />
-<span className={t.status === "completed" ? "line-through text-muted-foreground" : ""}>{t.title}</span>
-{t.subjectName && (
-  <span className="ml-auto text-xs text-muted-foreground">{t.subjectName}</span>
+<span className={topicItem.status === "completed" ? "line-through text-muted-foreground" : ""}>{t(topicItem.title) || topicItem.title}</span>
+{topicItem.subjectName && (
+  <span className="ml-auto text-xs text-muted-foreground">{t(topicItem.subjectName) || topicItem.subjectName}</span>
 )}
               </div>
             ))}
           </div>
           <div className="mt-4 pt-3 border-t">
             <Link href={`/batches/${id}/syllabus`} className="text-xs text-primary hover:underline">
-              Manage Syllabus →
+              {t("Manage Syllabus →")}
             </Link>
           </div>
         </div>
@@ -799,9 +802,9 @@ async function loadAvailableStudents() {
 
       {activeTab === "syllabus" && syllabus.length === 0 && (
         <div className="rounded-xl border bg-card p-5 flex flex-col items-center justify-center py-12 gap-2">
-          <p className="text-sm text-muted-foreground">No syllabus topics added yet.</p>
+          <p className="text-sm text-muted-foreground">{t("No syllabus topics added yet.")}</p>
           <Link href={`/batches/${id}/syllabus`} className="text-xs text-primary hover:underline">
-            Manage Syllabus →
+            {t("Manage Syllabus →")}
           </Link>
         </div>
       )}
@@ -810,17 +813,17 @@ async function loadAvailableStudents() {
         <>
           <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowEnrollModal(false)} />
           <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-background p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold">Assign Student</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t("Assign Student")}</h2>
 
             <select
               className="w-full rounded-lg border px-3 py-2"
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
             >
-              <option value="">Select Student</option>
+              <option value="">{t("Select Student")}</option>
               {availableStudents.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {t(s.name) || s.name}
                 </option>
               ))}
             </select>
@@ -830,7 +833,7 @@ async function loadAvailableStudents() {
                 onClick={() => setShowEnrollModal(false)}
                 className="rounded-lg border px-4 py-2"
               >
-                Cancel
+                {t("Cancel")}
               </button>
 
               <button
@@ -842,7 +845,7 @@ async function loadAvailableStudents() {
                 }}
                 className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
               >
-                Assign
+                {t("Assign")}
               </button>
             </div>
           </div>

@@ -45,13 +45,9 @@ export function useLogout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: () =>
-      // DELETE clears HttpOnly cookies server-side.
-      // Also calls FastAPI logout to invalidate the refresh token on the backend.
-      Promise.all([
-        fetch("/api/auth/session", { method: "DELETE" }),
-        api.post("/auth/logout", {}).catch(() => {}), // best-effort
-      ]),
+    mutationFn: async () => {
+      await fetch("/api/auth/session", { method: "DELETE" });
+    },
 
     onSettled: () => {
       clear();        // wipes display state from Zustand + localStorage

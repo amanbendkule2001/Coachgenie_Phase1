@@ -27,6 +27,7 @@ import type { Batch } from "@/lib/types/academic";
 import { copilotApi } from "@/lib/copilot-api";
 import { authHeaders } from "@/lib/auth-headers";
 import { generateBatchPerformancePDF } from "@/lib/utils/generate-report-pdf";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const API = "/api/proxy";
 
@@ -96,6 +97,7 @@ function BatchForm({
   onCancel: () => void;
   defaultValues?: Partial<BatchFormValues>;
 }) {
+  const { language, t } = useLanguage();
   const [form, setForm] = useState<BatchFormValues>({
     name: defaultValues?.name ?? "",
     academic_year: defaultValues?.academic_year ?? "2025-26",
@@ -145,7 +147,7 @@ function BatchForm({
     <form onSubmit={handleSubmit} className="space-y-4 text-xs">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div className="col-span-1 sm:col-span-2 space-y-1">
-          <label className="font-semibold text-foreground">Batch Name *</label>
+          <label className="font-semibold text-foreground">{t("Batch Name *")}</label>
           <input
             {...field("name")}
             required
@@ -155,7 +157,7 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Academic Year *</label>
+          <label className="font-semibold text-foreground">{t("Academic Year *")}</label>
           <input
             {...field("academic_year")}
             required
@@ -165,7 +167,7 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Batch Code</label>
+          <label className="font-semibold text-foreground">{t("Batch Code")}</label>
           <input
             {...field("code")}
             placeholder="e.g. SCI-10A"
@@ -174,7 +176,7 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Target Exam / Board</label>
+          <label className="font-semibold text-foreground">{t("Target Exam / Board")}</label>
           <input
             {...field("target_exam")}
             placeholder="e.g. CBSE 10th Board, JEE Main"
@@ -183,7 +185,7 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Maximum Student Capacity</label>
+          <label className="font-semibold text-foreground">{t("Maximum Student Capacity")}</label>
           <input
             type="number"
             value={form.capacity}
@@ -195,20 +197,20 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Batch Status *</label>
+          <label className="font-semibold text-foreground">{t("Batch Status *")}</label>
           <select
             value={form.status}
             onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as Batch["status"] }))}
             className="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary shadow-xs outline-none cursor-pointer"
           >
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="UPCOMING">UPCOMING</option>
-            <option value="COMPLETED">COMPLETED</option>
+            <option value="ACTIVE">{t("ACTIVE")}</option>
+            <option value="UPCOMING">{t("UPCOMING")}</option>
+            <option value="COMPLETED">{t("COMPLETED")}</option>
           </select>
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">Start Date</label>
+          <label className="font-semibold text-foreground">{t("Start Date")}</label>
           <input
             type="date"
             {...field("start_date")}
@@ -217,7 +219,7 @@ function BatchForm({
         </div>
 
         <div className="space-y-1">
-          <label className="font-semibold text-foreground">End Date</label>
+          <label className="font-semibold text-foreground">{t("End Date")}</label>
           <input
             type="date"
             {...field("end_date")}
@@ -226,7 +228,7 @@ function BatchForm({
         </div>
 
         <div className="col-span-1 sm:col-span-2 space-y-1">
-          <label className="font-semibold text-foreground">Batch Subjects</label>
+          <label className="font-semibold text-foreground">{t("Batch Subjects")}</label>
           <div className="flex gap-2">
             <input
               value={subjectInput}
@@ -245,14 +247,14 @@ function BatchForm({
               onClick={addSubject}
               className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 transition-all shadow-xs"
             >
-              Add
+              {t("Add")}
             </button>
           </div>
 
           <div className="flex flex-wrap gap-1.5 pt-2">
             {form.subjects.map((s) => (
               <span key={s} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-[11px] font-bold">
-                {s}
+                {t(s) || s}
                 <button type="button" onClick={() => removeSubject(s)} className="hover:text-destructive">
                   <X className="h-3 w-3" />
                 </button>
@@ -264,7 +266,7 @@ function BatchForm({
 
       <div className="flex justify-end gap-2 pt-3 border-t">
         <button type="button" onClick={onCancel} className="rounded-xl border px-4 py-2 text-xs font-semibold hover:bg-accent">
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="submit"
@@ -272,7 +274,7 @@ function BatchForm({
           className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-5 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-          <span>{loading ? "Saving…" : "Save Batch"}</span>
+          <span>{loading ? t("Saving…") : t("Save Batch")}</span>
         </button>
       </div>
     </form>
@@ -280,6 +282,7 @@ function BatchForm({
 }
 
 export default function BatchesPage() {
+  const { language, t } = useLanguage();
   const { batches, setBatches, addBatch, updateBatch: updateBatchStore, deleteBatch: deleteBatchStore } = useAcademicStore();
 
   const [statusFilter, setStatusFilter] = useState<Batch["status"] | "ALL">("ALL");
@@ -332,7 +335,7 @@ export default function BatchesPage() {
       }
 
       updateBatchStore(batchId, { status });
-      toast.success(`Batch status updated to ${status}!`);
+      toast.success(t("Batch status updated successfully!"));
       fetchBatches();
     } catch (err: any) {
       toast.error(err.message || "Failed to update status");
@@ -371,7 +374,7 @@ export default function BatchesPage() {
       const created = json.data ?? json;
       addBatch(mapBatch(created));
 
-      toast.success("New batch created successfully!");
+      toast.success(t("New batch created successfully!"));
       setShowCreate(false);
       fetchBatches();
     } catch (err: any) {
@@ -430,7 +433,7 @@ export default function BatchesPage() {
         subjects: data.subjects,
       });
 
-      toast.success("Batch updated successfully!");
+      toast.success(t("Batch updated successfully!"));
       setEditBatch(null);
       fetchBatches();
     } catch (err: any) {
@@ -451,7 +454,7 @@ export default function BatchesPage() {
         throw new Error(errJson.detail ?? errJson.message ?? "Failed to delete batch");
       }
       deleteBatchStore(batchId);
-      toast.success(`Batch "${name}" deleted successfully!`);
+      toast.success(t("Batch deleted successfully!"));
       fetchBatches();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete batch");
@@ -506,7 +509,7 @@ export default function BatchesPage() {
         topPerformer: enrolledStudents.length > 0 ? `${enrolledStudents[0].name} (Rank 1)` : undefined,
       });
 
-      toast.success("Batch Performance Report downloaded successfully!", { id: `report-${batch.id}` });
+      toast.success(t("Batch Performance Report downloaded successfully!"), { id: `report-${batch.id}` });
     } catch (err: any) {
       toast.error(err.message || "Failed to generate batch report", { id: `report-${batch.id}` });
     } finally {
@@ -552,13 +555,13 @@ export default function BatchesPage() {
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Batches &amp; Class Timetables
+            {t("Batches & Class Timetables")}
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-600">
-              <Sparkles className="h-3 w-3" /> Timetable Engine
+              <Sparkles className="h-3 w-3" /> {t("Timetable Engine")}
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Configure course batches, assign faculty tutors, track student capacity meters, and schedule class lectures
+            {t("Configure course batches, assign faculty tutors, track student capacity meters, and schedule class lectures")}
           </p>
         </div>
 
@@ -567,7 +570,7 @@ export default function BatchesPage() {
             onClick={fetchBatches}
             disabled={loading}
             className="rounded-xl border p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shadow-xs"
-            title="Refresh list"
+            title={t("Refresh list")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
@@ -576,7 +579,7 @@ export default function BatchesPage() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all shadow-sm"
           >
-            <Plus className="h-4 w-4" /> Create New Batch
+            <Plus className="h-4 w-4" /> {t("Create New Batch")}
           </button>
         </div>
       </div>
@@ -584,21 +587,21 @@ export default function BatchesPage() {
       {/* 📊 KPI Summary Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Course Batches</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Total Course Batches")}</span>
           <p className="text-3xl font-extrabold tracking-tight">{kpiStats.totalCount}</p>
-          <p className="text-xs text-muted-foreground">Configured in institute</p>
+          <p className="text-xs text-muted-foreground">{t("Configured in institute")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Running Batches</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Active Running Batches")}</span>
           <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">{kpiStats.activeCount}</p>
-          <p className="text-xs text-emerald-600 font-medium">100% Tutor Assigned</p>
+          <p className="text-xs text-emerald-600 font-medium">{t("100% Tutor Assigned")}</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Enrolled Roster Capacity</span>
-          <p className="text-3xl font-extrabold text-blue-600 tracking-tight">{kpiStats.totalEnrolledStudents} Students</p>
-          <p className="text-xs text-muted-foreground">Across all active batches</p>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Enrolled Roster Capacity")}</span>
+          <p className="text-3xl font-extrabold text-blue-600 tracking-tight">{kpiStats.totalEnrolledStudents} {t("Students")}</p>
+          <p className="text-xs text-muted-foreground">{t("Across all active batches")}</p>
         </div>
       </div>
 
@@ -609,7 +612,7 @@ export default function BatchesPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search batch name, tutor, or course..."
+              placeholder={t("Search batch name, tutor, or course...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 w-full rounded-xl border bg-background pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-primary outline-none"
@@ -618,7 +621,7 @@ export default function BatchesPage() {
 
           {subjects.length > 1 && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-muted-foreground">Exam/Subject:</label>
+              <label className="text-xs font-semibold text-muted-foreground">{t("Exam/Subject:")}</label>
               <select
                 value={subjectFilter}
                 onChange={(e) => setSubjectFilter(e.target.value)}
@@ -626,7 +629,7 @@ export default function BatchesPage() {
               >
                 {subjects.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {s === "ALL" ? t("ALL") : (t(s) || s)}
                   </option>
                 ))}
               </select>
@@ -644,7 +647,7 @@ export default function BatchesPage() {
                 statusFilter === s ? "bg-foreground text-background shadow-xs" : "hover:bg-accent text-muted-foreground"
               )}
             >
-              {s} ({s === "ALL" ? batches.length : batches.filter((b) => b.status === s).length})
+              {t(s)} ({s === "ALL" ? batches.length : batches.filter((b) => b.status === s).length})
             </button>
           ))}
         </div>
@@ -660,7 +663,7 @@ export default function BatchesPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-2xl border border-dashed bg-card text-center">
           <BookOpen className="h-8 w-8 text-muted-foreground/40" />
-          <p className="font-semibold text-sm">No batches match your query.</p>
+          <p className="font-semibold text-sm">{t("No batches match your query.")}</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -677,20 +680,20 @@ export default function BatchesPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-violet-600">{b.subject}</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-violet-600">{t(b.subject) || b.subject}</span>
                         {b.code && (
                           <span className="rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 border border-violet-500/20">
                             {b.code}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-base font-bold tracking-tight text-foreground">{b.name}</h3>
+                      <h3 className="text-base font-bold tracking-tight text-foreground">{t(b.name) || b.name}</h3>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <select
                         value={b.status}
                         onChange={(e) => handleStatusChange(b.id, e.target.value as Batch["status"])}
-                        title="Change Batch Status"
+                        title={t("Change Batch Status")}
                         className={cn(
                           "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase cursor-pointer border-none outline-none transition-colors shadow-2xs",
                           b.status === "ACTIVE"
@@ -700,20 +703,20 @@ export default function BatchesPage() {
                             : "bg-muted text-muted-foreground hover:bg-accent"
                         )}
                       >
-                        <option value="ACTIVE" className="bg-background text-foreground font-semibold">ACTIVE</option>
-                        <option value="UPCOMING" className="bg-background text-foreground font-semibold">UPCOMING</option>
-                        <option value="COMPLETED" className="bg-background text-foreground font-semibold">COMPLETED</option>
+                        <option value="ACTIVE" className="bg-background text-foreground font-semibold">{t("ACTIVE")}</option>
+                        <option value="UPCOMING" className="bg-background text-foreground font-semibold">{t("UPCOMING")}</option>
+                        <option value="COMPLETED" className="bg-background text-foreground font-semibold">{t("COMPLETED")}</option>
                       </select>
                       <button
                         onClick={() => setEditBatch(b)}
-                        title="Edit Batch"
+                        title={t("Edit Batch")}
                         className="rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(b.id, b.name)}
-                        title="Delete Batch"
+                        title={t("Delete Batch")}
                         className="rounded-lg p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -724,19 +727,19 @@ export default function BatchesPage() {
                   {/* Tutor & Capacity */}
                   <div className="space-y-2 pt-2 border-t text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium">Assigned Tutor</span>
-                      <span className="font-bold text-foreground">{b.teacher || "Rahul Verma"}</span>
+                      <span className="text-muted-foreground font-medium">{t("Assigned Tutor")}</span>
+                      <span className="font-bold text-foreground">{t(b.teacher) || b.teacher || "Rahul Verma"}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium">Room / Classroom</span>
-                      <span className="font-semibold text-foreground">{b.room || "Room 101"}</span>
+                      <span className="text-muted-foreground font-medium">{t("Room / Classroom")}</span>
+                      <span className="font-semibold text-foreground">{t(b.room) || b.room || "Room 101"}</span>
                     </div>
 
                     {/* Capacity Progress Bar */}
                     <div className="space-y-1 pt-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-muted-foreground">Enrolled Capacity</span>
+                        <span className="text-muted-foreground">{t("Enrolled Capacity")}</span>
                         <span className="text-violet-600">
                           {studentCount} / {b.maxSize || 30} ({capPct}%)
                         </span>
@@ -753,7 +756,12 @@ export default function BatchesPage() {
                     {b.schedule && b.schedule.length > 0 && (
                       <div className="flex items-center gap-1.5 text-muted-foreground pt-1">
                         <Clock className="h-3.5 w-3.5 text-violet-600 shrink-0" />
-                        <span className="truncate text-[11px] font-medium">{b.schedule.join(" • ")}</span>
+                        <span className="truncate text-[11px] font-medium">
+                          {b.schedule.map((s: any) => {
+                            const str = typeof s === "string" ? s : `${s?.day ?? ""} ${s?.time ?? ""}`.trim();
+                            return t(str) || str;
+                          }).join(" • ")}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -766,14 +774,14 @@ export default function BatchesPage() {
                     disabled={generatingReport === b.id}
                     className="flex items-center gap-1 font-bold text-violet-600 hover:underline disabled:opacity-50"
                   >
-                    <FileText className="h-3.5 w-3.5" /> PDF Report
+                    <FileText className="h-3.5 w-3.5" /> {t("PDF Report")}
                   </button>
 
                   <Link
                     href={`/batches/${b.id}`}
                     className="flex items-center gap-1 font-bold text-primary hover:underline"
                   >
-                    Manage Batch →
+                    {t("Manage Batch →")}
                   </Link>
                 </div>
               </div>
@@ -788,7 +796,7 @@ export default function BatchesPage() {
           <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs" onClick={() => setShowCreate(false)} />
           <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-2xl border bg-background shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b px-6 py-4">
-              <h2 className="text-base font-bold">Create New Course Batch</h2>
+              <h2 className="text-base font-bold">{t("Create New Course Batch")}</h2>
               <button onClick={() => setShowCreate(false)} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>
@@ -806,7 +814,7 @@ export default function BatchesPage() {
           <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs" onClick={() => setEditBatch(null)} />
           <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-2xl border bg-background shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b px-6 py-4">
-              <h2 className="text-base font-bold">Edit Batch Details</h2>
+              <h2 className="text-base font-bold">{t("Edit Batch Details")}</h2>
               <button onClick={() => setEditBatch(null)} className="rounded-xl p-1.5 hover:bg-accent text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>

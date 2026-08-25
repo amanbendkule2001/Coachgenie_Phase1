@@ -113,6 +113,10 @@ async def create_batch(
     return {"success": True, "data": BatchOut.model_validate(batch)}
 
 
+from app.models.student import Student
+from sqlalchemy import select, and_
+from fastapi import HTTPException
+
 @router.get("/by-student/{student_id}")
 async def get_batches_for_student(
     student_id: str,
@@ -121,6 +125,16 @@ async def get_batches_for_student(
     current_user=Depends(require_roles("owner", "counselor", "tutor", "student")),
 ):
     """Return all batches a student is enrolled in."""
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        linked = res.scalar_one_or_none()
+        if not linked or str(linked.id) != student_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
     batches = await batch_service.get_batches_for_student(db, str(tenant.id), student_id)
     return {"success": True, "data": [BatchOut.model_validate(b) for b in batches]}
 

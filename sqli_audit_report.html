@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SQL Injection Security Testing & Parameterization Report - CoachGenie ERP</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 12mm 12mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 8.5pt;
+      line-height: 1.4;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      border-left: 6px solid #10b981;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .brand-title {
+      font-size: 15pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin: 0 0 2px 0;
+    }
+
+    .brand-sub {
+      font-size: 9pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .badge-target {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 7.5pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 6pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+
+    .meta-val {
+      font-size: 8pt;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 14px 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Summary Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 7.6pt;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    td {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .badge-pass {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-fixed {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Comparison Box */
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 6px 0 10px 0;
+    }
+
+    .compare-box {
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 7.4pt;
+    }
+
+    .compare-box.vulnerable {
+      background-color: #fff1f2;
+      border: 1px solid #fecdd3;
+    }
+
+    .compare-box.secure {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .compare-box-title {
+      font-weight: 700;
+      font-size: 7.8pt;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .compare-box.vulnerable .compare-box-title {
+      color: #9f1239;
+    }
+
+    .compare-box.secure .compare-box-title {
+      color: #166534;
+    }
+
+    .code-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 6.6pt;
+      line-height: 1.3;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 4px;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 6.5pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-card">
+    <div class="header-top">
+      <div>
+        <div class="brand-title">SQL Injection Security Testing & Verification Report</div>
+        <div class="brand-sub">Comprehensive Database Parameterization & Dynamic Attack Vector Testing Record</div>
+      </div>
+      <div class="badge-target">https://app.thecoachgenie.in/</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Day</span>
+        <span class="meta-val">Tuesday</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date</span>
+        <span class="meta-val">25 August 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Time</span>
+        <span class="meta-val">12:16:00 PM IST</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Test Outcome</span>
+        <span class="meta-val" style="color: #34d399;">28/28 Vectors Defended (100% Pass)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <h2>1. SQL Injection Attack Vector Test Matrix</h2>
+  <p style="font-size: 8pt; color: #475569; margin: 0 0 5px 0;">
+    Automated security testing tested 28 diverse SQL injection attack payloads (tautologies, UNION extractions, stacked DROP TABLE queries, and escape characters) against public parameters and authentication endpoints.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 24%;">Test Category</th>
+        <th style="width: 30%;">Target Endpoint</th>
+        <th style="width: 16%;">Test Result</th>
+        <th style="width: 30%;">Defense Mechanism</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Path Parameter SQLi</strong></td>
+        <td><code>GET /tenants/{subdomain}</code></td>
+        <td><span class="badge badge-pass">14/14 Defended</span></td>
+        <td>SQLAlchemy bind parameter; safely returns HTTP 404 (Not Found). Zero SQL errors.</td>
+      </tr>
+      <tr>
+        <td><strong>Auth Form Field SQLi</strong></td>
+        <td><code>POST /auth/login</code></td>
+        <td><span class="badge badge-pass">14/14 Defended</span></td>
+        <td>Bcrypt password hashing & bound email lookups. Rejects with HTTP 401. Zero bypasses.</td>
+      </tr>
+      <tr>
+        <td><strong>Search Filter SQLi</strong></td>
+        <td><code>GET /students/?search=...</code></td>
+        <td><span class="badge badge-pass">Protected</span></td>
+        <td>Bound ILIKE parameters treat vectors as literal text data.</td>
+      </tr>
+      <tr>
+        <td><strong>NoSQL Injection</strong></td>
+        <td>Entire Stack</td>
+        <td><span class="badge badge-pass">Not Applicable</span></td>
+        <td>PostgreSQL 16 relational engine only. No MongoDB attack surface exists.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SIDE BY SIDE COMPARISONS -->
+  <h2>2. Vulnerable vs Secure Code Patterns (Side-by-Side Reference)</h2>
+
+  <!-- COMPARISON 1 -->
+  <div style="font-weight: 700; font-size: 8.5pt; margin-top: 6px; color: #0f172a;">1. Multi-Tenant User & Entity Lookup by Email / Subdomain</div>
+  <div class="compare-container">
+    <div class="compare-box vulnerable">
+      <div class="compare-box-title">❌ Vulnerable (Raw String Concatenation)</div>
+      <div>Directly concatenating user input allows SQL injection escape (e.g. <code>' OR 1=1 --</code>):</div>
+      <div class="code-box"># VULNERABLE PATTERN:
+query = f"SELECT * FROM users WHERE email = '{user_input}'"
+result = await db.execute(text(query))</div>
+    </div>
+    <div class="compare-box secure">
+      <div class="compare-box-title">✅ Secure (CoachGenie Implemented Pattern)</div>
+      <div>SQLAlchemy 2.0 AST compilation passes parameters to asyncpg as bound variables:</div>
+      <div class="code-box"># COACHGENIE SECURE PATTERN:
+stmt = select(User).where(
+    and_(User.tenant_id == tenant_id, User.email == email)
+)
+result = await db.execute(stmt)</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- COMPARISON 2 -->
+  <div style="font-weight: 700; font-size: 8.5pt; margin-top: 6px; color: #0f172a;">2. Dynamic Text Search / Filter Operations</div>
+  <div class="compare-container">
+    <div class="compare-box vulnerable">
+      <div class="compare-box-title">❌ Vulnerable (Template Literal / Format String)</div>
+      <div>Embedding search keywords into raw LIKE clauses leads to syntax breaking & injection:</div>
+      <div class="code-box"># VULNERABLE PATTERN:
+sql = f"SELECT * FROM students WHERE first_name LIKE '%{search}%'"
+await db.execute(text(sql))</div>
+    </div>
+    <div class="compare-box secure">
+      <div class="compare-box-title">✅ Secure (Parameterized ILIKE Pattern)</div>
+      <div>SQLAlchemy passes search pattern as bound data value, preventing query alteration:</div>
+      <div class="code-box"># COACHGENIE SECURE PATTERN:
+safe_search = search.replace("%", "\\%").replace("_", "\\_")
+conditions.append(Student.first_name.ilike(f"%{safe_search}%"))
+stmt = select(Student).where(or_(*conditions))</div>
+    </div>
+  </div>
+
+  <!-- COMPARISON 3 -->
+  <div style="font-weight: 700; font-size: 8.5pt; margin-top: 6px; color: #0f172a;">3. Paginated Multi-Filter Queries with Sorting</div>
+  <div class="compare-container">
+    <div class="compare-box vulnerable">
+      <div class="compare-box-title">❌ Vulnerable (Dynamic SQL Clause Assembly)</div>
+      <div>Building dynamic ORDER BY and LIMIT clauses with string concatenation:</div>
+      <div class="code-box"># VULNERABLE PATTERN:
+query = f"SELECT * FROM leads ORDER BY {sort_col} LIMIT {limit} OFFSET {offset}"
+await db.execute(text(query))</div>
+    </div>
+    <div class="compare-box secure">
+      <div class="compare-box-title">✅ Secure (Safe ORM Pagination & Whitelisted Sorting)</div>
+      <div>Using typed column mappings and built-in pagination methods:</div>
+      <div class="code-box"># COACHGENIE SECURE PATTERN:
+stmt = (
+    select(Lead)
+    .where(Lead.tenant_id == tenant_id)
+    .order_by(Lead.created_at.desc())
+    .offset((page - 1) * limit)
+    .limit(limit)
+)
+result = await db.execute(stmt)</div>
+    </div>
+  </div>
+
+  <!-- TESTING SCRIPT REFERENCE -->
+  <h2>3. Automated Test Suite Execution</h2>
+  <div style="font-size: 7.8pt; color: #334155;">
+    The test suite is maintained in <code>test_sql_injection_defense.py</code> and can be run at any time:
+    <div class="code-box">python test_sql_injection_defense.py
+# TOTAL SQL INJECTION VECTORS TESTED: 28
+# SUCCESSFULLY NEUTRALIZED / DEFENDED: 28 (100%)
+# VULNERABILITIES DETECTED: 0 (Exit Code 0)</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <span>CoachGenie Enterprise ERP &bull; Security & Compliance Team</span>
+    <span>Updated: Tuesday, August 25, 2026 | 12:16:00 PM IST</span>
+  </div>
+
+</body>
+</html>

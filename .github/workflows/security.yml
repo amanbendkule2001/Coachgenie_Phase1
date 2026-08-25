@@ -1,0 +1,42 @@
+name: CoachGenie Security & Compliance CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, staging ]
+  pull_request:
+    branches: [ main, master, staging ]
+  schedule:
+    # Run daily at 02:00 UTC for automated compliance monitoring
+    - cron: '0 2 * * *'
+
+jobs:
+  security-audit:
+    name: OWASP & Security Gates Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Set up Node.js 20 & pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Run Unified Security Test Suite
+        env:
+          DATABASE_URL: "postgresql+asyncpg://postgres:postgres@localhost:5432/test_db"
+          SECRET_KEY: "ci_cd_temporary_test_secret_key_minimum_32_characters"
+        run: |
+          python run_ci_security_suite.py

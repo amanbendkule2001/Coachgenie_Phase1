@@ -43,9 +43,7 @@ export const authService = {
   },
 
   async logout() {
-    try { await api.post("/auth/logout"); } catch {}
-
-    // Clears httpOnly cookies server-side
+    // Revokes backend token and clears httpOnly cookies server-side
     await fetch("/api/auth/session", { method: "DELETE" });
     useAuthStore.getState().clear();
     window.location.href = "/login";

@@ -42,7 +42,9 @@ async def verify_otp(
 
 
 @router.post("/reset-password")
+@limiter.limit("3/minute")
 async def reset_password(
+    request: Request,
     body: ResetPasswordRequest,
     db: DB,
     tenant=Depends(get_tenant),

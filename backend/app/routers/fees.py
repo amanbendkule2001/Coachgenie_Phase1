@@ -157,6 +157,29 @@ async def get_payments(
     tenant=Depends(get_tenant),
     current_user=Depends(require_roles("owner", "counselor", "student", "parent")),
 ):
+    if current_user.role in ("student", "parent"):
+        invoice = await fee_service.get_invoice_by_id(db, str(tenant.id), invoice_id)
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        if current_user.role == "student":
+            res = await db.execute(
+                select(Student).where(
+                    and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+                )
+            )
+            s = res.scalar_one_or_none()
+            if not s or str(s.id) != str(invoice.student_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+        elif current_user.role == "parent":
+            res = await db.execute(
+                select(Student).where(
+                    and_(Student.tenant_id == tenant.id, Student.parent_email == current_user.email)
+                )
+            )
+            s = res.scalar_one_or_none()
+            if not s or str(s.id) != str(invoice.student_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+
     payments = await fee_service.get_payments(db, str(tenant.id), invoice_id)
     return {"success": True, "data": [PaymentOut.model_validate(p) for p in payments]}
 
@@ -177,6 +200,17 @@ async def get_payment_history(
     student_id: Optional[str] = None,
     current_user=Depends(require_roles("owner", "counselor", "tutor", "student")),
 ):
+    if current_user.role == "student":
+        res = await db.execute(
+            select(Student).where(
+                and_(Student.tenant_id == tenant.id, Student.user_id == current_user.id)
+            )
+        )
+        s = res.scalar_one_or_none()
+        if not s:
+            raise HTTPException(status_code=403, detail="Access denied")
+        student_id = str(s.id)
+
     payments = await fee_service.get_all_payments_for_tenant(db, str(tenant.id), student_id)
     return {"success": True, "data": payments}
 

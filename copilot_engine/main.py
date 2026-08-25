@@ -52,6 +52,45 @@ app.add_middleware(
     RequestContextMiddleware
 )
 
+import logging
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
+
+logger = logging.getLogger("copilot_engine")
+
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def copilot_starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail},
+    )
+
+@app.exception_handler(HTTPException)
+async def copilot_http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail},
+    )
+
+@app.exception_handler(SQLAlchemyError)
+async def copilot_sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error("Copilot database execution exception: %s", exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "message": "A database operation error occurred during AI processing."},
+    )
+
+@app.exception_handler(Exception)
+async def copilot_global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled copilot exception: %s", exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "message": "An error occurred during AI processing. Please try again later."},
+    )
+
 app.include_router(
     copilot_router
 )

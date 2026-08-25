@@ -136,12 +136,13 @@ async def chat(
     }
 
 
-async def end_session(db: AsyncSession, tenant_id: str, session_id: str):
-    result = await db.execute(
-        select(AISession).where(
-            and_(AISession.id == session_id, AISession.tenant_id == tenant_id)
-        )
+async def end_session(db: AsyncSession, tenant_id: str, session_id: str, user_id: str | None = None):
+    stmt = select(AISession).where(
+        and_(AISession.id == session_id, AISession.tenant_id == tenant_id)
     )
+    if user_id:
+        stmt = stmt.where(AISession.user_id == user_id)
+    result = await db.execute(stmt)
     session = result.scalar_one_or_none()
     if not session:
         raise NotFoundError("AI Session")
@@ -158,7 +159,16 @@ async def get_sessions(db: AsyncSession, tenant_id: str, user_id: str) -> list:
     return result.scalars().all()
 
 
-async def get_messages(db: AsyncSession, tenant_id: str, session_id: str) -> list:
+async def get_messages(db: AsyncSession, tenant_id: str, session_id: str, user_id: str | None = None) -> list:
+    stmt = select(AISession).where(
+        and_(AISession.id == session_id, AISession.tenant_id == tenant_id)
+    )
+    if user_id:
+        stmt = stmt.where(AISession.user_id == user_id)
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    if not session:
+        raise NotFoundError("AI Session")
+
     result = await db.execute(
         select(AIMessage).where(
             and_(AIMessage.session_id == session_id, AIMessage.tenant_id == tenant_id)

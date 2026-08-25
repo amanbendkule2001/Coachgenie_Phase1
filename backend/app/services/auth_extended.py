@@ -210,7 +210,6 @@ async def reset_password(
             and_(
                 OTPCode.tenant_id == tenant_id,
                 OTPCode.email == email,
-                OTPCode.code == otp,
                 OTPCode.purpose == "password_reset",
                 OTPCode.is_used == False
             )
@@ -221,8 +220,16 @@ async def reset_password(
     if not otp_record:
         raise BadRequestError("Invalid OTP.")
 
+    if otp_record.attempts >= 3:
+        raise BadRequestError("Too many invalid attempts. Please request a new OTP.")
+
     if otp_record.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        raise BadRequestError("OTP has expired.")
+        raise BadRequestError("OTP has expired. Please request a new one.")
+
+    if otp_record.code != otp:
+        otp_record.attempts += 1
+        await db.flush()
+        raise BadRequestError("Invalid OTP.")
 
     # Update password
     user_result = await db.execute(
