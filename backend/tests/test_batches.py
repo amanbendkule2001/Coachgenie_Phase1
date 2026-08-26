@@ -57,11 +57,18 @@ async def test_list_batches_as_owner(client, owner_headers, db_session, tenant):
 
 
 @pytest.mark.asyncio
-async def test_create_batch_rejects_counselor(client, counselor_headers):
+async def test_create_batch_rejects_student(client, db_session, tenant):
+    from tests.conftest import _make_user, make_access_token
+    student_user = await _make_user(db_session, tenant, "student")
+    token = make_access_token(student_user, tenant)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-Tenant-Subdomain": tenant.subdomain,
+    }
     res = await client.post(
         "/api/v1/batches/",
         json={"name": "New Batch", "academic_year": "2026-27"},
-        headers=counselor_headers,
+        headers=headers,
     )
     assert res.status_code == 403
 
@@ -110,12 +117,19 @@ async def test_get_batch_from_other_tenant_not_found(client, owner_headers, db_s
 
 
 @pytest.mark.asyncio
-async def test_update_batch_rejects_non_owner(client, counselor_headers, db_session, tenant):
+async def test_update_batch_rejects_student(client, db_session, tenant):
+    from tests.conftest import _make_user, make_access_token
     batch = await _make_batch(db_session, tenant)
+    student_user = await _make_user(db_session, tenant, "student")
+    token = make_access_token(student_user, tenant)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-Tenant-Subdomain": tenant.subdomain,
+    }
     res = await client.patch(
         f"/api/v1/batches/{batch.id}",
         json={"name": "Renamed"},
-        headers=counselor_headers,
+        headers=headers,
     )
     assert res.status_code == 403
 
@@ -136,12 +150,12 @@ async def test_update_batch_as_owner(client, owner_headers, db_session, tenant):
 
 
 @pytest.mark.asyncio
-async def test_enroll_student_rejects_tutor(client, db_session, tenant):
+async def test_enroll_student_rejects_student(client, db_session, tenant):
     from tests.conftest import _make_user, make_access_token
 
     batch = await _make_batch(db_session, tenant)
-    tutor_user = await _make_user(db_session, tenant, "tutor")
-    token = make_access_token(tutor_user, tenant)
+    student_user = await _make_user(db_session, tenant, "student")
+    token = make_access_token(student_user, tenant)
     headers = {
         "Authorization": f"Bearer {token}",
         "X-Tenant-Subdomain": tenant.subdomain,

@@ -53,10 +53,11 @@ def run_sqli_tests():
     # Test Suite 1: Public Dynamic Path Parameter (Subdomain lookup)
     # -------------------------------------------------------------
     print("\n[+] Test Suite 1: Testing Public Subdomain Parameter Endpoint (/api/v1/tenants/{subdomain})")
+    import urllib.parse
     for vector in SQLI_TEST_VECTORS:
         total_tests += 1
         try:
-            url = f"{BASE_URL}/tenants/{vector}"
+            url = f"{BASE_URL}/tenants/{urllib.parse.quote(vector)}"
             resp = client.get(url)
             # Must return 404 (safe parameter lookup not found) or 400/422, NEVER 500 (SQL syntax error)
             if resp.status_code in (404, 400, 422):

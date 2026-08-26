@@ -491,6 +491,42 @@ async def test_get_batches_for_student_empty_when_unenrolled(client, owner_heade
 
 @pytest.mark.asyncio
 async def test_get_batches_for_student_allows_student_role(client, db_session, tenant):
-    headers = await _headers_for_role(db_session, tenant, "student")
-    res = await client.get(f"/api/v1/batches/by-student/{uuid.uuid4()}", headers=headers)
+    from tests.conftest import _make_user, make_access_token
+    from app.models.admission import Admission
+    from app.models.student import Student
+
+    user = await _make_user(db_session, tenant, "student")
+    token = make_access_token(user, tenant)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-Tenant-Subdomain": tenant.subdomain,
+    }
+
+    admission = Admission(
+        id=uuid.uuid4(),
+        tenant_id=tenant.id,
+        admission_number=f"ADM-{uuid.uuid4().hex[:8]}",
+        academic_year="2026-27",
+        applied_course="NEET",
+        status="CONFIRMED",
+    )
+    db_session.add(admission)
+    await db_session.flush()
+
+    student = Student(
+        id=uuid.uuid4(),
+        tenant_id=tenant.id,
+        admission_id=admission.id,
+        user_id=user.id,
+        enrollment_no=f"ENR-{uuid.uuid4().hex[:8]}",
+        first_name="Aarav",
+        last_name="Sharma",
+        is_active=True,
+        subjects=[],
+    )
+    db_session.add(student)
+    await db_session.flush()
+
+    res = await client.get(f"/api/v1/batches/by-student/{student.id}", headers=headers)
     assert res.status_code == 200
+    assert res.json()["data"] == []

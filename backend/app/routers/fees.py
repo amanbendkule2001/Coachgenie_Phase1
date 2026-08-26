@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from app.dependencies import get_tenant, require_roles, DB
 from app.schemas.fee import FeeStructureCreate, FeeInvoiceCreate, FeeInvoiceOut, PaymentCreate, PaymentOut
 from app.services import fee as fee_service
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from fastapi import HTTPException
 from app.models.student import Student
 

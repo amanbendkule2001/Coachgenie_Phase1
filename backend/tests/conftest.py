@@ -101,6 +101,11 @@ async def db_session(setup_test_db):
 async def client(db_session):
     """Authenticated-agnostic async test client wired to the test DB."""
 
+    from app.core.rate_limit import limiter
+    limiter.enabled = False
+    if hasattr(app.state, "limiter"):
+        app.state.limiter.enabled = False
+
     async def _override_get_db():
         yield db_session
 

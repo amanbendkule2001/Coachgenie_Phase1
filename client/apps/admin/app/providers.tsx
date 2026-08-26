@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { PWAInstallBanner } from "@/components/common/PWAInstallBanner";
+import { OfflineBanner } from "@/components/common/OfflineBanner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [qc] = useState(
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <LanguageProvider>
           {children}
           <PWAInstallBanner />
+          <OfflineBanner />
           <Toaster richColors position="top-right" />
         </LanguageProvider>
       </ThemeProvider>

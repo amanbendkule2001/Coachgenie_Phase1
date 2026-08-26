@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main
           data-testid="main-content"
-          className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-6 pb-24 lg:pb-6 overscroll-contain"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-6 pb-24 lg:pb-6 overscroll-contain page-fade-in"
         >
           {children}
         </main>
